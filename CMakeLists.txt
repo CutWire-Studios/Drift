@@ -1928,6 +1928,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
+        src/qml/components/preview/ClipCropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
         src/qml/components/manip/HandleKnob.qml
@@ -1943,6 +1944,11 @@ qt_add_qml_module(drift
         src/qml/components/manip/ManipOverlay.qml
         src/qml/components/manip/TouchContextBar.qml
         src/qml/components/manip/ViewNavigation.qml
+        src/qml/components/manip/CropFrame.qml
+        src/qml/components/manip/crop/CropGrip.qml
+        src/qml/components/manip/crop/CropPresets.qml
+        src/qml/components/manip/crop/CropScrim.qml
+        src/qml/components/manip/crop/CropThirds.qml
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/ShapePathOverlay.qml
@@ -1953,7 +1959,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/DepthLight3dOverlay.qml
         src/qml/components/preview/Checkerboard.qml
-        src/qml/components/android/AndroidClipCropOverlay.qml
         src/qml/components/android/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml
         src/qml/MulticamWindow.qml
@@ -2530,9 +2535,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/media/MediaPreviewPlayheadLine.qml
         src/qml/components/preview/media/MediaPreviewPlayheadCap.qml
         src/qml/components/preview/media/MediaPreviewGradeChip.qml
-        src/qml/components/preview/media/MediaPreviewCropScrim.qml
-        src/qml/components/preview/media/MediaPreviewCropGrip.qml
-        src/qml/components/preview/media/MediaPreviewCropFrame.qml
         src/qml/components/preview/media/MediaPreviewAudioPlaceholder.qml
         src/qml/components/preview/media/MediaPreviewView.qml
         src/qml/components/preview/mask/MaskOverlayVertexHandle.qml
@@ -2575,12 +2577,8 @@ qt_add_qml_module(drift
         src/qml/components/preview/depth/DepthEffectFocusReticle.qml
         src/qml/components/preview/depth/DepthEffectAimRing.qml
         src/qml/components/preview/depth/DepthEffectAimLine.qml
-        src/qml/components/preview/crop/CropOverlayThirdGuides.qml
         src/qml/components/preview/crop/CropOverlaySizeBadge.qml
-        src/qml/components/preview/crop/CropOverlayScrim.qml
         src/qml/components/preview/crop/CropOverlayHint.qml
-        src/qml/components/preview/crop/CropOverlayGrip.qml
-        src/qml/components/preview/crop/CropOverlayFrame.qml
         src/qml/components/preview/axis/ViewAxisShaft.qml
         src/qml/components/preview/axis/ViewAxisKnob.qml
         src/qml/components/preview/axis/ViewAxisDisc.qml
@@ -2638,9 +2636,6 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidMediaSavingScrim.qml
         src/qml/components/android/AndroidMediaPreviewHeader.qml
         src/qml/components/android/AndroidMediaPlayBadge.qml
-        src/qml/components/android/AndroidMediaCropShade.qml
-        src/qml/components/android/AndroidMediaCropOverlay.qml
-        src/qml/components/android/AndroidMediaCropGrip.qml
         src/qml/components/android/AndroidLinkBusyStatus.qml
         src/qml/components/android/AndroidLayoutTemplateCard.qml
         src/qml/components/android/AndroidLayoutSummarySwatch.qml
@@ -2684,9 +2679,6 @@ qt_add_qml_module(drift
         src/qml/components/android/pages/AndroidCropPage.qml
         src/qml/components/android/pages/AndroidBackgroundPage.qml
         src/qml/components/android/AndroidCropHint.qml
-        src/qml/components/android/AndroidCropGrip.qml
-        src/qml/components/android/AndroidCropFrame.qml
-        src/qml/components/android/AndroidCropDimMask.qml
         src/qml/components/android/AndroidComposerTimingEdge.qml
         src/qml/components/android/AndroidClipToolbarSlot.qml
         src/qml/components/android/AndroidClipToolbarHint.qml

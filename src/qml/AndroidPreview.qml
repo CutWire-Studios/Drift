@@ -259,8 +259,9 @@ Item {
 
     Component {
         id: clipCropTool
-        AndroidClipCropOverlay {
+        ClipCropOverlay {
             canvas: viewport.canvas
+            touch: true
         }
     }
 

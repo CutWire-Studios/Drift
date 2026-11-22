@@ -2836,9 +2836,13 @@
       "light": "$semantic.preview.checkerboardLight",
       "dark": "$semantic.preview.checkerboardDark"
     },
-    "cropOverlayFrame": {
+    "cropFrame": {
       "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidthFocus"
+      "borderWidth": "$metrics.borderWidthFocus",
+      "guide": "$semantic.guide.weak",
+      "guideWidth": "$metrics.borderWidth",
+      "scrim": "$semantic.overlay",
+      "scrimOpacity": 0.65
     },
     "cropOverlayGrip": {
       "background": "$semantic.primary",
@@ -2857,19 +2861,12 @@
       "foregroundMuted": "$semantic.guide.medium",
       "separator": "$semantic.guide.weak"
     },
-    "cropOverlayScrim": {
-      "background": "$semantic.overlay",
-      "opacity": 0.65
-    },
     "cropOverlaySizeBadge": {
       "background": "$semantic.scrimStrong",
       "border": "$semantic.guide.weak",
       "borderWidth": "$metrics.borderWidth",
       "foreground": "$semantic.onMedia",
       "radius": "$metrics.radius.sm"
-    },
-    "cropOverlayThirdGuides": {
-      "background": "$semantic.guide.weak"
     },
     "depthEffectAimLine": {
       "background": "$semantic.onMedia",
@@ -3067,17 +3064,6 @@
     },
     "mediaPreviewAudioPlaceholder": {
       "icon": "$semantic.mutedForeground"
-    },
-    "mediaPreviewCropFrame": {
-      "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidthFocus"
-    },
-    "mediaPreviewCropGrip": {
-      "background": "$semantic.primary",
-      "radius": 1
-    },
-    "mediaPreviewCropScrim": {
-      "background": "$semantic.scrimStrong"
     },
     "mediaPreviewGradeChip": {
       "foreground": "$semantic.preview.gradeChipForeground"
@@ -4094,10 +4080,6 @@
     "androidLayoutSheet": {
       "icon": "$semantic.panel.foreground"
     },
-    "androidMediaCropOverlay": {
-      "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidthFocus"
-    },
     "androidTransformSizeReadout": {
       "background": "$semantic.scrimStrong",
       "border": "$semantic.guide.weak",
@@ -4190,13 +4172,6 @@
       "grip": "$semantic.primaryForeground",
       "gripRadius": 1
     },
-    "androidMediaCropGrip": {
-      "background": "$semantic.primary",
-      "radius": "$metrics.radius.xs"
-    },
-    "androidMediaCropShade": {
-      "background": "$semantic.scrimStrong"
-    },
     "androidTimelineLiveRecording": {
       "background": "$semantic.destructive",
       "border": "$semantic.destructive",
@@ -4283,12 +4258,6 @@
       "background": "$semantic.clip.transform",
       "foreground": "$semantic.onMedia"
     },
-    "androidCropGrip": {
-      "handle": "$semantic.primary",
-      "handlePressed": "$semantic.onMedia",
-      "length": 20,
-      "thickness": 4
-    },
     "androidMediaPlayBadge": {
       "background": "$semantic.scrimStrong",
       "icon": "$semantic.onMedia"
@@ -4309,15 +4278,6 @@
     "androidTransformSnapLine": {
       "background": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth"
-    },
-    "androidCropFrame": {
-      "border": "$semantic.primary",
-      "borderWidth": "$metrics.borderWidthFocus",
-      "guide": "$semantic.guide.weak",
-      "guideWidth": "$metrics.borderWidth"
-    },
-    "androidCropDimMask": {
-      "background": "$semantic.overlay"
     },
     "androidCropHint": {
       "background": "$semantic.scrimStrong",

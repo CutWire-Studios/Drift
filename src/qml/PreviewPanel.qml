@@ -65,6 +65,7 @@ PanelFrame {
                 transform: transformTool,
                 mask: maskTool,
                 crop: cropTool,
+                clipCrop: clipCropTool,
                 guideEdit: guideEditTool,
                 shapePath: shapePathTool,
                 maskDraw: maskDrawTool,
@@ -236,6 +237,14 @@ PanelFrame {
             previewCanvas: panelViewport.canvas
             hintDismissed: root.cropHintDismissed
             onHintDismissedChanged: root.cropHintDismissed = hintDismissed
+        }
+    }
+
+    Component {
+        id: clipCropTool
+        ClipCropOverlay {
+            canvas: panelViewport.canvas
+            viewport: panelViewport
         }
     }
 

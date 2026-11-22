@@ -9,13 +9,17 @@ import Drift
 Item {
     id: knob
 
-    // "dot", "square", "diamond" or "bracket" (an L opening toward the middle of what it frames).
+    // "dot", "square", "diamond", "bracket" (an L opening toward the middle of what it frames),
+    // "bar" (a stroke, turned by bracketAngle) or "none" for a caller that draws its own glyph.
     property string shape: "dot"
     property bool selected: false
     property var cursor: Qt.PointingHandCursor
     property real visualSize: 8
     property real mouseHitSize: 14
     property real touchHitSize: Theme.androidMinTouchTarget
+    // A tall or wide grip (a trim handle) reaches further along one axis than across it.
+    property real mouseHitHeight: mouseHitSize
+    property real touchHitHeight: touchHitSize
     // Rotates the bracket's corner, in degrees; 0 puts the corner at the top-left.
     property real bracketAngle: 0
     // Where the point arguments of the signals are expressed.
@@ -32,7 +36,7 @@ Item {
     signal clicked(point point, int modifiers, int device)
 
     width: touchHitSize
-    height: touchHitSize
+    height: touchHitHeight
     // Callers place the knob by its centre.
     transformOrigin: Item.Center
 
@@ -72,6 +76,17 @@ Item {
                                                        : Theme.c.manipHandle.border
         }
 
+        Rectangle {
+            visible: knob.shape === "bar"
+            anchors.centerIn: parent
+            width: parent.width
+            height: Theme.c.manipHandle.borderWidth * 2
+            rotation: knob.bracketAngle
+            color: knob.fill
+            border.width: 1
+            border.color: Theme.c.manipHandle.outline
+        }
+
         Item {
             visible: knob.shape === "bracket"
             anchors.fill: parent
@@ -103,7 +118,7 @@ Item {
         id: cursorItem
         anchors.centerIn: parent
         width: knob.mouseHitSize
-        height: knob.mouseHitSize
+        height: knob.mouseHitHeight
     }
 
     ToolCursor {
@@ -116,7 +131,8 @@ Item {
         anchors.fill: parent
         enabled: knob.enabled
         hoverEnabled: true
-        preventStealing: true
+        // A finger's drag can be taken over by a two-finger pinch above or behind the grip.
+        preventStealing: !pressedByTouch
         acceptedButtons: Qt.LeftButton
         cursorShape: typeof knob.cursor === "number" ? knob.cursor : Qt.ArrowCursor
 
@@ -127,8 +143,10 @@ Item {
         readonly property bool hot: near || dragging
 
         function reach(mouse) {
-            const half = (mouse.source !== Qt.MouseEventNotSynthesized ? knob.touchHitSize : knob.mouseHitSize) / 2
-            return Math.abs(mouse.x - width / 2) <= half && Math.abs(mouse.y - height / 2) <= half
+            const touch = mouse.source !== Qt.MouseEventNotSynthesized
+            const halfW = (touch ? knob.touchHitSize : knob.mouseHitSize) / 2
+            const halfH = (touch ? knob.touchHitHeight : knob.mouseHitHeight) / 2
+            return Math.abs(mouse.x - width / 2) <= halfW && Math.abs(mouse.y - height / 2) <= halfH
         }
 
         function device() {

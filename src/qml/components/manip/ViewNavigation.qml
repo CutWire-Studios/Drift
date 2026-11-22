@@ -37,8 +37,10 @@ Item {
         panned(dx, dy)
     }
 
+    // Hidden when it has nothing to take, so its arrow cursor does not cover what is beneath.
     MouseArea {
         anchors.fill: parent
+        visible: nav.middlePan || nav.wheelZoom
         enabled: nav.middlePan || nav.wheelZoom
         acceptedButtons: nav.middlePan ? Qt.MiddleButton : Qt.NoButton
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor

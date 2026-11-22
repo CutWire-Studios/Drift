@@ -8,7 +8,7 @@ import Drift
 // frame is simply lost.
 //
 // Navigation is not owned here: the viewport's pinch gesture zooms and pans
-// underneath, so this overlay only claims the grips.
+// underneath, so this overlay only claims the frame.
 Item {
     id: root
 
@@ -28,38 +28,18 @@ Item {
     readonly property int outW: Math.round(cropW)
     readonly property int outH: Math.round(cropH)
 
-    readonly property real gripTouch: 44
-
     property bool didResize: false
-    // The frame may be moved past the canvas, as its edges may: that grows the output.
-    readonly property size moveBounds: Qt.size(0, 0)
 
-    // Locked w / h of the frame; 0 leaves it free. Read by the grips.
-    property real aspect: 0
+    // Locked w / h of the frame; 0 leaves it free. Set by the ratio chips and the crop page.
+    property alias aspect: frame.aspect
     // The phone crop page owns Apply/Cancel and the readout, so the overlay shows only the frame.
     property bool hostedByPage: false
-
-    function gripReleased() {
-    }
-
-    // The frame is re-fitted to the ratio about its centre, within the canvas-sized area at most.
-    onAspectChanged: {
-        if (aspect <= 0)
-            return
-        const cx = cropX + cropW / 2
-        const cy = cropY + cropH / 2
-        let w = Math.min(cropW, cropH * aspect)
-        let h = w / aspect
-        cropW = w
-        cropH = h
-        cropX = cx - w / 2
-        cropY = cy - h / 2
-    }
 
     readonly property bool changed: outW !== projW || outH !== projH
                                     || Math.round(cropX) !== 0 || Math.round(cropY) !== 0
 
     function reset() {
+        frame.aspect = 0
         cropX = 0
         cropY = 0
         cropW = projW
@@ -76,44 +56,26 @@ Item {
         EditorState.preview.canvasCropMode = false
     }
 
-    // Screen-space crop frame, relative to the viewport.
-    readonly property real frameX: root.previewCanvas.x + cropX * pxScale
-    readonly property real frameY: root.previewCanvas.y + cropY * pxScale
-    readonly property real frameW: cropW * pxScale
-    readonly property real frameH: cropH * pxScale
-
-    AndroidCropDimMask {
+    // The frame may be dragged and moved past the canvas edges: that grows the output.
+    CropFrame {
+        id: frame
         anchors.fill: parent
-        frameX: root.frameX
-        frameY: root.frameY
-        frameW: root.frameW
-        frameH: root.frameH
-    }
-
-    AndroidCropFrame {
-        crop: root
-        x: root.frameX
-        y: root.frameY
-        width: root.frameW
-        height: root.frameH
-    }
-
-    // Eight drag handles: 4 edges then 4 corners. `dx`/`dy` say which edges each
-    // handle moves (-1 = left/top, +1 = right/bottom).
-    Repeater {
-        model: [
-            { dx: -1, dy:  0 },
-            { dx:  1, dy:  0 },
-            { dx:  0, dy: -1 },
-            { dx:  0, dy:  1 },
-            { dx: -1, dy: -1 },
-            { dx:  1, dy:  1 },
-            { dx:  1, dy: -1 },
-            { dx: -1, dy:  1 }
-        ]
-
-        delegate: AndroidCropGrip {
-            crop: root
+        touch: true
+        stageRect: Qt.rect(root.previewCanvas.x, root.previewCanvas.y,
+                           root.previewCanvas.width, root.previewCanvas.height)
+        spaceSize: Qt.size(root.projW, root.projH)
+        crop: Qt.rect(root.cropX, root.cropY, root.cropW, root.cropH)
+        minSize: 16
+        overflow: true
+        scrimFillsViewport: true
+        showPresets: true
+        undoText: qsTr("Crop canvas")
+        onEdited: (c) => {
+            root.cropX = c.x
+            root.cropY = c.y
+            root.cropW = c.width
+            root.cropH = c.height
+            root.didResize = true
         }
     }
 

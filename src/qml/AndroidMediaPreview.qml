@@ -399,14 +399,26 @@ Item {
 
         // Crop frame. Only while the Crop tab is open, so the picture is a plain picture until
         // the user asks to crop it.
-        AndroidMediaCropOverlay {
+        CropFrame {
             id: cropHost
             visible: root.canCrop && root.mode === "crop"
             x: stage.fit.x
             y: stage.fit.y
             width: stage.fit.w
             height: stage.fit.h
-            preview: root
+            touch: true
+            spaceSize: Qt.size(1, 1)
+            contentSize: Qt.size(Math.max(1, root.displayW), Math.max(1, root.displayH))
+            crop: Qt.rect(root.cropX, root.cropY, root.cropW, root.cropH)
+            aspect: root.cropRatioLocked ? root.displayW / Math.max(1, root.displayH) : 0
+            minSize: 0.08
+            editable: !root.saving
+            onEdited: (c) => {
+                root.cropX = c.x
+                root.cropY = c.y
+                root.cropW = c.width
+                root.cropH = c.height
+            }
         }
 
         IconButton {

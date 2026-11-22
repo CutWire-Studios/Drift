@@ -1,28 +1,28 @@
 import QtQuick
 import Drift
 
-// Rule-of-thirds inside the crop frame, the usual cue for judging a reframe.
+// Rule-of-thirds lines inside the crop frame, the usual cue for judging a reframe.
 Item {
-    anchors.fill: parent
-
     Repeater {
         model: 2
+
         Rectangle {
             required property int index
-            width: 1
+            width: Theme.c.cropFrame.guideWidth
             height: parent.height
             x: parent.width * (index + 1) / 3
-            color: Theme.c.cropOverlayThirdGuides.background
+            color: Theme.c.cropFrame.guide
         }
     }
     Repeater {
         model: 2
+
         Rectangle {
             required property int index
-            height: 1
+            height: Theme.c.cropFrame.guideWidth
             width: parent.width
             y: parent.height * (index + 1) / 3
-            color: Theme.c.cropOverlayThirdGuides.background
+            color: Theme.c.cropFrame.guide
         }
     }
 }

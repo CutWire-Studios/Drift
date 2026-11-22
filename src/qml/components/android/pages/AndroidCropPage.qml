@@ -1,9 +1,10 @@
 import QtQuick
 import Drift
 // Crop tool page. "Clip" crops the selected clip's source frame; "Video" crops the canvas itself.
-// Both drive a gizmo on the shared preview; ✓ commits the canvas crop (the clip crop lands as it is
-// dragged) and everything inside the scaffold's edit group is undone by Cancel. Open with
-// props {mode: "video"} to skip the toggle's default.
+// Both drive a frame on the shared preview, whose context bar holds the ratio presets;
+// ✓ commits the canvas crop (the clip crop lands as it is dragged) and everything inside the
+// scaffold's edit group is undone by Cancel. Open with props {mode: "video"} to skip the toggle's
+// default.
 Item {
     id: root
 
@@ -13,34 +14,11 @@ Item {
     // "clip" or "video"; empty until the first pass picks the default.
     property string mode: ""
 
-    // Aspect chip: ratio is w / h, 0 is free, -1 is "Original" (the source or the current canvas).
-    property real ratio: 0
-
     readonly property var preview: scaffold ? scaffold.previewItem : null
     readonly property var overlay: preview ? preview.toolHost.item : null
     readonly property var clipData: EditorState.selectedClipData
     readonly property bool canCropClip: !!clipData && (clipData.kind === "video" || clipData.kind === "image")
     readonly property bool clipMode: mode === "clip"
-
-    readonly property var ratios: [
-        { label: qsTr("Free"), value: 0 },
-        { label: qsTr("Original"), value: -1 },
-        { label: "1:1", value: 1 },
-        { label: "16:9", value: 16 / 9 },
-        { label: "9:16", value: 9 / 16 },
-        { label: "4:5", value: 4 / 5 },
-        { label: "3:4", value: 3 / 4 }
-    ]
-
-    function effectiveRatio(value) {
-        if (value >= 0)
-            return value
-        if (root.clipMode)
-            return root.overlay ? root.overlay.sourceAspect : 0
-        const w = EditorState.projectFile.projectWidth()
-        const h = EditorState.projectFile.projectHeight()
-        return h > 0 ? w / h : 0
-    }
 
     function pushOverlay() {
         const o = root.overlay
@@ -49,12 +27,10 @@ Item {
             return
         if (!root.clipMode)
             o.hostedByPage = true
-        o.aspect = root.effectiveRatio(root.ratio)
     }
 
     function enter(next) {
         root.mode = next
-        root.ratio = 0
         const p = EditorState.preview
         if (next === "clip") {
             p.clipCropMode = true
@@ -70,11 +46,8 @@ Item {
     }
 
     function resetAll() {
-        root.ratio = 0
-        if (root.overlay) {
-            root.overlay.aspect = 0
+        if (root.overlay)
             root.overlay.reset()
-        }
         if (root.clipMode)
             EditorState.setClipRotationSnap(EditorState.selectedTrack, EditorState.selectedClip, 0)
     }
@@ -122,31 +95,6 @@ Item {
                 variant: "outline"
                 selected: !root.clipMode
                 onClicked: root.enter("video")
-            }
-        }
-
-        ScrollStrip {
-            width: parent.width
-            height: Theme.controlHeight
-
-            Row {
-                spacing: Theme.spacingSm
-                anchors.verticalCenter: parent.verticalCenter
-
-                Repeater {
-                    model: root.ratios
-
-                    delegate: ThemedChip {
-                        required property var modelData
-                        text: modelData.label
-                        variant: "outline"
-                        selected: root.ratio === modelData.value
-                        onClicked: {
-                            root.ratio = modelData.value
-                            root.pushOverlay()
-                        }
-                    }
-                }
             }
         }
 

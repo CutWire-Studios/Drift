@@ -505,10 +505,20 @@ Item {
                     }
                 }
             }
-            ThemedButton {
-                text: qsTr("Crop…")
-                visible: root.canCrop && !!ShellBridge.main?.openCrop
-                onClicked: ShellBridge.main.openCrop(EditorState.selectedTrack, EditorState.selectedClip)
+            Row {
+                spacing: Theme.spacingSm
+
+                ThemedButton {
+                    text: qsTr("Crop…")
+                    visible: root.canCrop && !!ShellBridge.main?.openCrop
+                    onClicked: ShellBridge.main.openCrop(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+
+                ThemedButton {
+                    text: qsTr("Crop on canvas")
+                    visible: root.canCrop && !!ShellBridge.main?.openCrop
+                    onClicked: EditorState.preview.clipCropMode = !EditorState.preview.clipCropMode
+                }
             }
         }
 
