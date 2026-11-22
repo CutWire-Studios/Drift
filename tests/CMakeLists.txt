@@ -67,6 +67,16 @@ target_include_directories(tst_curveedit PRIVATE ../src)
 target_link_libraries(tst_curveedit PRIVATE Qt6::Test Qt6::Core driftengine)
 add_test(NAME CurveEdit COMMAND tst_curveedit)
 
+qt_add_executable(tst_manip
+    tst_manip.cpp
+    ../src/ui/manip/ManipModifiers.h
+    ../src/ui/manip/SnapService.cpp
+    ../src/ui/manip/DragSession.cpp
+    ../src/ui/manip/ClipFrameMapper.cpp)
+target_include_directories(tst_manip PRIVATE ../src)
+target_link_libraries(tst_manip PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)
+add_test(NAME Manip COMMAND tst_manip)
+
 qt_add_executable(tst_colorwheel tst_colorwheel.cpp)
 target_include_directories(tst_colorwheel PRIVATE ../src)
 target_link_libraries(tst_colorwheel PRIVATE Qt6::Test Qt6::Core Qt6::Gui)

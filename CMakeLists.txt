@@ -619,6 +619,8 @@ add_library(driftcore STATIC
     src/core/shapes/ShapeStyle.cpp
     src/core/shapes/ShapePath.h
     src/core/shapes/ShapePath.cpp
+    src/core/geom/BezierPath.h
+    src/core/geom/BezierPath.cpp
     src/core/project/sources/VectorSource.h
     src/core/project/sources/VectorSource.cpp
     src/core/project/sources/Model3dSource.h
@@ -1277,6 +1279,13 @@ qt_add_executable(drift
     src/ui/preview/BrushStrokeItem.cpp
     src/ui/preview/ToolCursor.h
     src/ui/preview/ToolCursor.cpp
+    src/ui/manip/ManipModifiers.h
+    src/ui/manip/SnapService.h
+    src/ui/manip/SnapService.cpp
+    src/ui/manip/DragSession.h
+    src/ui/manip/DragSession.cpp
+    src/ui/manip/ClipFrameMapper.h
+    src/ui/manip/ClipFrameMapper.cpp
     src/ui/color/ColorWheelMath.h
     src/ui/color/ColorWheelPad.h
     src/ui/color/ColorWheelPad.cpp
