@@ -674,7 +674,6 @@
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "curve": "$semantic.primary",
-      "curveMuted": "$semantic.mutedForeground",
       "curveWidth": "$metrics.borderWidthFocus",
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
@@ -784,7 +783,6 @@
       "selectedBackground": "$semantic.panel.accent",
       "hoverBackground": "$semantic.panel.muted",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.sm"
@@ -851,8 +849,7 @@
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "badgeBackground": "$semantic.primary",
-      "badgeForeground": "$semantic.primaryForeground",
-      "check": "$semantic.primary"
+      "badgeForeground": "$semantic.primaryForeground"
     },
     "quickSetupMockEditor": {
       "window": "$semantic.surface.app",
@@ -884,7 +881,6 @@
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.sm",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
       "badgeBackground": "$semantic.panel.muted",
       "badgeForeground": "$semantic.panel.foreground",
       "swatchRadius": "$metrics.radius.xs"
@@ -1161,7 +1157,6 @@
       "good": "$semantic.constructive",
       "warn": "$semantic.warning",
       "bad": "$semantic.destructive",
-      "error": "$semantic.destructive",
       "listBackground": "$semantic.panel.muted",
       "listBorder": "$semantic.panel.border",
       "rowHover": "$semantic.popoverHover",
@@ -1458,7 +1453,6 @@
       "foreground": "$semantic.clip.panelWaveform"
     },
     "timelineAdjustmentLaneChrome": {
-      "background": "$semantic.clip.effect",
       "edge": "$semantic.timeline.scrimSoft",
       "videoTint": "$semantic.clip.adjustment.video",
       "audioTint": "$semantic.clip.adjustment.audio",
@@ -1738,7 +1732,6 @@
       "borderWidth": "$metrics.borderWidth",
       "borderWidthSelected": "$metrics.borderWidthFocus",
       "outline": "$semantic.timeline.scrimStrong",
-      "grip": "$semantic.onMedia",
       "foreground": "$semantic.onMedia",
       "chevron": "$semantic.onMedia",
       "handle": "$semantic.primary",
@@ -1801,8 +1794,7 @@
       "video": "$semantic.clip.adjustment.video",
       "audio": "$semantic.clip.adjustment.audio",
       "mask": "$semantic.clip.adjustment.mask",
-      "foreground": "$semantic.mutedForeground",
-      "foregroundDimmed": "$semantic.mutedForeground"
+      "foreground": "$semantic.mutedForeground"
     },
     "trackHeaderLaneToggle": {
       "foreground": "$semantic.mutedForeground",
@@ -2050,7 +2042,6 @@
       "warning": "$semantic.warning"
     },
     "effectsMaskSection": {
-      "foregroundMuted": "$semantic.mutedForeground",
       "warning": "$semantic.warning"
     },
     "effectsOccludeSection": {
@@ -2347,7 +2338,6 @@
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
       "foregroundError": "$semantic.destructive",
       "bannerBackground": "$semantic.panel.accent",
       "bannerForeground": "$semantic.panel.foreground",
@@ -2355,7 +2345,6 @@
       "selectionForeground": "$semantic.primaryForeground"
     },
     "subtitleTimingPanel": {
-      "background": "$semantic.surface.panel",
       "stickyBackground": "$semantic.panel.accent",
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
@@ -2421,15 +2410,13 @@
     },
     "keyframesPanel": {
       "splitter": "$semantic.panel.border",
-      "splitterHover": "$semantic.primary",
-      "foregroundMuted": "$semantic.mutedForeground"
+      "splitterHover": "$semantic.primary"
     },
     "keyframesScrubber": {
       "background": "$semantic.panel.accent",
       "backgroundHover": "$semantic.panel.muted",
       "border": "$semantic.focusRing",
       "borderWidth": "$metrics.borderWidthFocus",
-      "fill": "$semantic.primary",
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm"
@@ -2445,8 +2432,7 @@
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "groupBackground": "$semantic.panel.secondary.background",
-      "groupForeground": "$semantic.panel.secondary.foreground",
-      "radius": "$metrics.radius.sm"
+      "groupForeground": "$semantic.panel.secondary.foreground"
     },
     "maskingPanel": {
       "divider": "$semantic.panel.border",
@@ -2495,7 +2481,6 @@
       "foregroundMuted": "$semantic.mutedForeground"
     },
     "proceduralInspector": {
-      "foregroundMuted": "$semantic.mutedForeground",
       "iconError": "$semantic.destructive",
       "foregroundError": "$semantic.destructive"
     },
@@ -2504,8 +2489,6 @@
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "foregroundError": "$semantic.destructive",
       "bannerBackground": "$semantic.panel.accent",
       "bannerForeground": "$semantic.panel.foreground",
       "gutterBackground": "$semantic.panel.accent",
@@ -2524,7 +2507,6 @@
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "headerBackground": "$semantic.panel.accent",
-      "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "error": "$semantic.destructive",
       "warning": "$semantic.warning",
@@ -3054,8 +3036,7 @@
       "rangeFavorite": "$semantic.constructive",
       "rangeReject": "$semantic.destructive",
       "rangeOpacity": 0.28,
-      "marker": "$semantic.warning",
-      "snapGuide": "$semantic.timeline.snapGuide"
+      "marker": "$semantic.warning"
     },
     "sourceLabPanel": {
       "rowHover": "$semantic.popoverHover",
@@ -3606,8 +3587,7 @@
       "tileBackground": "$semantic.panel.secondary.background",
       "tileForeground": "$semantic.foreground",
       "tileForegroundOnAccent": "$semantic.onMedia",
-      "tileRadius": "$metrics.radius.md",
-      "warning": "$semantic.warning"
+      "tileRadius": "$metrics.radius.md"
     },
     "maskPresetCard": {
       "background": "$semantic.panel.accent",
@@ -3816,7 +3796,6 @@
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "divider": "$semantic.panel.border",
-      "foregroundMuted": "$semantic.mutedForeground",
       "radius": "$metrics.radius.md"
     },
     "transitionPresetCard": {
@@ -4075,7 +4054,6 @@
       "borderWidth": "$metrics.borderWidth",
       "borderWidthSelected": "$metrics.borderWidthFocus",
       "outline": "$semantic.timeline.scrimStrong",
-      "grip": "$semantic.onMedia",
       "foreground": "$semantic.onMedia",
       "chevron": "$semantic.onMedia",
       "handle": "$semantic.primary",
@@ -4211,7 +4189,6 @@
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.md",
       "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
       "primaryForeground": "$semantic.primaryForeground"
     },
     "androidLayoutTemplateCard": {
@@ -4244,8 +4221,7 @@
       "background": "$semantic.preview.letterbox"
     },
     "androidHomeWordmark": {
-      "foreground": "$semantic.foreground",
-      "foregroundMuted": "$semantic.mutedForeground"
+      "foreground": "$semantic.foreground"
     },
     "androidLayoutSummarySwatch": {
       "background": "$semantic.surface.app",
@@ -4345,10 +4321,6 @@
         "neutral": "$semantic.mutedForeground"
       }
     },
-    "nodeInputControl": {
-      "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground"
-    },
     "nodeAngleDial": {
       "background": "$semantic.panel.secondary.background",
       "border": "$semantic.panel.border",
@@ -4386,7 +4358,6 @@
       "foreground": "$semantic.mutedForeground"
     },
     "forgePanel": {
-      "background": "$semantic.surface.panel",
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "headerBackground": "$semantic.panel.accent",
