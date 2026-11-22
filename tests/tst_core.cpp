@@ -22,7 +22,10 @@
 #include "core/project/clip/Stabilize.h"
 #include "core/shapes/ShapePath.h"
 #include "core/interchange/KdenliveReader.h"
+#include "core/interchange/ResolveReader.h"
+#include "core/interchange/EdlReader.h"
 #include "core/interchange/OtioReader.h"
+#include "core/interchange/TimelineExporter.h"
 #include "core/interchange/subtitles/SrtIO.h"
 #include "core/interchange/subtitles/VttIO.h"
 #include "core/project/SubtitleCue.h"
@@ -274,6 +277,7 @@ private slots:
     void shotcutImportMapsTracksSpeedAndRoot();
     void kdenliveImportExpandsNestedTractors();
     void otioImportMapsTracksAndTimeWarp();
+    void timelineExporterRoundTripsFcpxmlEdlOtioAndTsv();
 };
 
 void CoreTest::timeConversion()
@@ -9385,6 +9389,84 @@ void CoreTest::otioImportMapsTracksAndTimeWarp()
     QCOMPARE(tracks[1].clips[0].assetId, video.assetId);
     QCOMPARE(proj->assets().size(), 1);
     QCOMPARE(proj->assets().cbegin().value().kind, drift::MediaKind::Video);
+}
+
+void CoreTest::timelineExporterRoundTripsFcpxmlEdlOtioAndTsv()
+{
+    drift::Project p;
+    p.setName(QStringLiteral("Interchange Export Sequence"));
+    p.setFps(24);
+    p.setResolution(1920, 1080);
+    if (p.tracks().isEmpty())
+        p.tracks().append(drift::Track{.id = QStringLiteral("v1"), .type = drift::TrackType::Video});
+    p.tracks().append(drift::Track{.id = QStringLiteral("a1"), .type = drift::TrackType::Audio});
+
+    drift::Clip vClip;
+    vClip.id = QStringLiteral("v1");
+    vClip.name = QStringLiteral("Shot A");
+    vClip.path = QStringLiteral("/tmp/shot_a.mov");
+    vClip.type = drift::ClipType::Video;
+    vClip.timelineStart = 0;
+    vClip.timelineDuration = drift::secondsToUs(3.0);
+    vClip.srcIn = drift::secondsToUs(1.0);
+    vClip.srcOut = drift::secondsToUs(4.0);
+    p.tracks()[0].clips.append(vClip);
+
+    drift::Clip aClip;
+    aClip.id = QStringLiteral("a1");
+    aClip.name = QStringLiteral("Dialogue");
+    aClip.path = QStringLiteral("/tmp/dialogue.wav");
+    aClip.type = drift::ClipType::Audio;
+    aClip.timelineStart = drift::secondsToUs(0.5);
+    aClip.timelineDuration = drift::secondsToUs(2.0);
+    aClip.srcIn = 0;
+    aClip.srcOut = drift::secondsToUs(2.0);
+    p.tracks()[1].clips.append(aClip);
+
+    drift::Bookmark bm;
+    bm.timeUs = drift::secondsToUs(1.0);
+    bm.label = QStringLiteral("Beat 1");
+    p.bookmarks().append(bm);
+
+    QString err;
+    // 1. FCPXML round-trip via ResolveReader.
+    const QByteArray fcpxml = drift::interchange::exportToFcpxml(p, &err);
+    QVERIFY2(!fcpxml.isEmpty(), qPrintable(err));
+    QVERIFY(fcpxml.contains("<marker "));
+    const auto parsedFcpxml = drift::resolve::readFcpxmlData(fcpxml, QString(), &err);
+    QVERIFY2(parsedFcpxml.has_value(), qPrintable(err));
+    QVERIFY(!parsedFcpxml->tracks().isEmpty());
+    QVERIFY(!parsedFcpxml->tracks().at(0).clips.isEmpty());
+
+    // 2. CMX 3600 EDL round-trip via EdlReader.
+    const QByteArray edl = drift::interchange::exportToEdl(p, &err);
+    QVERIFY2(!edl.isEmpty(), qPrintable(err));
+    const auto parsedEdl = drift::edl::readProjectData(edl, QString(), &err);
+    QVERIFY2(parsedEdl.has_value(), qPrintable(err));
+    QVERIFY(!parsedEdl->tracks().isEmpty());
+    QVERIFY(!parsedEdl->tracks().at(0).clips.isEmpty());
+
+    // 3. OpenTimelineIO JSON round-trip via OtioReader.
+    const QByteArray otio = drift::interchange::exportToOtio(p, &err);
+    QVERIFY2(!otio.isEmpty(), qPrintable(err));
+    const auto parsedOtio = drift::otio::readProjectData(otio, QString(), &err);
+    QVERIFY2(parsedOtio.has_value(), qPrintable(err));
+    QCOMPARE(parsedOtio->tracks().size(), 2);
+    QCOMPARE(parsedOtio->tracks().at(0).clips.size(), 1);
+    QCOMPARE(parsedOtio->tracks().at(1).clips.size(), 1);
+
+    // 4. Markers/Regions TSV.
+    const QByteArray tsv = drift::interchange::exportToVegasMarkersTsv(p, &err);
+    QVERIFY2(!tsv.isEmpty(), qPrintable(err));
+    const QString tsvStr = QString::fromUtf8(tsv);
+    QVERIFY(tsvStr.contains(QStringLiteral("Beat 1")));
+
+    // 5. File writer helper.
+    QTemporaryDir tmpDir;
+    QVERIFY(tmpDir.isValid());
+    const QString outOtio = tmpDir.filePath(QStringLiteral("timeline.otio"));
+    QVERIFY(drift::interchange::exportProjectInterchange(p, outOtio, QString(), &err));
+    QVERIFY(QFileInfo::exists(outOtio));
 }
 
 QTEST_MAIN(CoreTest)

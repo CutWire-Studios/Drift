@@ -647,6 +647,8 @@ add_library(driftcore STATIC
     src/core/interchange/EdlReader.cpp
     src/core/interchange/OtioReader.h
     src/core/interchange/OtioReader.cpp
+    src/core/interchange/TimelineExporter.h
+    src/core/interchange/TimelineExporter.cpp
     src/core/edit/TimelineOps.h
     src/core/edit/TimelineOps.cpp
     src/core/project/ProjectDiff.h
