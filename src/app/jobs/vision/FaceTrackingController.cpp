@@ -190,6 +190,11 @@ void FaceTrackingController::detect(int trackIndex, int clipIndex)
                 finish(false, tr("Could not decode frame %1").arg(i), {});
                 return;
             }
+            // Taken from the pixels rather than from the asset: the decode fits the frame inside
+            // the canvas and applies the display-matrix rotation, and the clip may be reading a
+            // proxy or a stabilized render instead of the original.
+            if (faceTrack.frameAspect <= 0.0 && frame.width() > 0)
+                faceTrack.frameAspect = double(frame.height()) / double(frame.width());
 
             // The previous frame seeds the next one's ROI, which is what keeps a face in the same
             // slot for the whole clip and skips the detector while tracking holds.

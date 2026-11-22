@@ -2,6 +2,7 @@
 
 #include "engine/face/tracking/FaceMask.h"
 
+#include <QTemporaryDir>
 #include <QtMath>
 
 using namespace drift;
@@ -19,6 +20,7 @@ private slots:
     void gapClosesTheMaskAndReopens();
     void longGapKeysOnlyItsEdges();
     void leadingGapStartsClosed();
+    void frameAspectSurvivesTheSidecar();
 };
 
 namespace {
@@ -184,6 +186,31 @@ void FaceMaskTest::leadingGapStartsClosed()
     QVERIFY(mask.valueAt(QStringLiteral("w"), 2 * step) > 0.0);
     // The mask was never anywhere but on the face it is waiting for.
     QVERIFY(qFuzzyCompare(mask.valueAt(QStringLiteral("x"), 0), 0.6));
+}
+
+void FaceMaskTest::frameAspectSurvivesTheSidecar()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("track.json"));
+
+    FaceTrack written = trackOf({{anchorsAt(0.5, 0.5, 0.1, 0.1)}});
+    written.frameAspect = 9.0 / 16.0;
+    QString error;
+    QVERIFY2(writeFaceTrack(path, written, &error), qPrintable(error));
+
+    FaceTrack read;
+    QVERIFY2(readFaceTrack(path, &read, &error), qPrintable(error));
+    QVERIFY(qFuzzyCompare(read.frameAspect, 9.0 / 16.0));
+
+    // A sidecar written before the aspect was recorded reads as unknown, which is what lets the
+    // caller fall back to the host clip rather than silently assuming a square frame.
+    FaceTrack legacy = trackOf({{anchorsAt(0.5, 0.5, 0.1, 0.1)}});
+    const QString legacyPath = dir.filePath(QStringLiteral("legacy.json"));
+    QVERIFY2(writeFaceTrack(legacyPath, legacy, &error), qPrintable(error));
+    FaceTrack legacyRead;
+    QVERIFY2(readFaceTrack(legacyPath, &legacyRead, &error), qPrintable(error));
+    QCOMPARE(legacyRead.frameAspect, 0.0);
 }
 
 QTEST_MAIN(FaceMaskTest)

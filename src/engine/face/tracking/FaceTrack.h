@@ -25,6 +25,12 @@ struct FaceTrack
 {
     int fps = 0;
     TimeUs startSrcUs = 0; // source time of frame 0, for diagnostics
+    // Height / width of the frames the scan ran on, which is the space FaceAnchors normalizes
+    // lengths into (see applyFaceUniforms). Anything converting an anchor back to a per-axis
+    // measure needs it, and re-deriving it from the asset means reconstructing the display-matrix
+    // rotation and whichever file the clip actually decoded from. 0 in sidecars written before
+    // this was recorded; callers fall back to the host clip's own aspect there.
+    double frameAspect = 0.0;
     QList<FaceTrackFrame> frames;
 
     bool isEmpty() const { return frames.isEmpty(); }
