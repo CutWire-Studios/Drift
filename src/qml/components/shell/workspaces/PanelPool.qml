@@ -291,7 +291,7 @@ Item {
         case "timeline":
             root.timelinePanel = Qt.binding(() => w.item)
             w.setup = item => {
-                item.keyframesTab = Qt.binding(() => (root.propertiesPanel?.keyframesTab ?? false) && !root.keyframesShown)
+                item.keyframesTab = Qt.binding(() => !root.keyframesShown)
                 item.externalMixerShown = Qt.binding(() => root.audioMixerShown)
             }
             break

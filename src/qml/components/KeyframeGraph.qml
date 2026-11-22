@@ -282,10 +282,13 @@ Item {
             laneHeight = expandedHeight
     }
 
-    height: visible ? laneHeight : 0
-    // Open whenever the clip has an animation to show, even if every curve is currently folded
-    // away — otherwise hiding the last one would take the chips with it.
-    visible: keyframesTab && hasClip && clipData && allSeries.length > 0
+    readonly property bool hasKeys: allSeries.length > 0
+    readonly property real emptyHeight: 28
+
+    height: visible ? (hasKeys ? laneHeight : emptyHeight) : 0
+    // Open even if every curve is currently folded away, otherwise hiding the last one would take
+    // the chips with it. A clip with nothing animated gets a slim empty lane so the toggle shows.
+    visible: keyframesTab && hasClip && !!clipData
 
     // Curve editing focuses one series: it gets tangent handles and owns the value axis,
     // while the others stay drawn as dimmed context. Handles from two series normalized to
@@ -330,8 +333,20 @@ Item {
 
     KeyframeGraphFrame { anchors.fill: parent }
 
+    Text {
+        anchors.fill: parent
+        anchors.leftMargin: root.labelsWidth + Theme.spacingMd
+        visible: !root.hasKeys
+        verticalAlignment: Text.AlignVCenter
+        elide: Text.ElideRight
+        text: qsTr("No keyframes on this clip")
+        color: Theme.c.keyframeGraphLaneStatus.foregroundMuted
+        font.pixelSize: Theme.fontSizeXs
+    }
+
     Row {
         anchors.fill: parent
+        visible: root.hasKeys
 
         // Left gutter — same width as track labels so the graph lines up.
         Item {
@@ -516,6 +531,7 @@ Item {
     KeyframeGraphResizeGrip {
         id: resizeGrip
         host: root
+        visible: root.hasKeys
     }
 
     KeyframeSelection {

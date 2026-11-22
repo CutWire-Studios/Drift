@@ -1371,8 +1371,8 @@ PanelFrame {
             width: parent.width
             height: parent.height - toolbar.height - overviewStrip.height
 
-            // Loaded only on the tabs it can show on; the graph still hides itself when the
-            // clip has no curves. Its height is left to the item, so the lane can resize.
+            // Hidden while the Keyframes panel is on screen, which shows the same keys. Its height
+            // is left to the item, so the lane can resize.
             Loader {
                 id: keyframesBar
                 width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
