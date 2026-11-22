@@ -27015,6 +27015,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">সাবটাইটেল সময় সামঞ্জস্য করুন</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29393,6 +29404,10 @@ If playback stutters, try another.</source>
         <translation>ফেইড সামঞ্জস্য করুন</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 সেকেন্ড</translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>ফেইড আউট %1 সে</translation>
     </message>
@@ -30043,6 +30058,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -30055,6 +30081,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag to trim the end</source>
         <translation>শেষ ট্রিম করতে টেনে আনুন</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30138,6 +30168,17 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30542,6 +30583,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Track name</source>
         <translation>ট্র্যাক নাম</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31847,6 +31899,10 @@ If playback stutters, try another.</source>
             <numerusform>%nটি ট্র্যাকের আওতায়</numerusform>
             <numerusform>%nটি ট্র্যাকের আওতায়</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">ট্রান্সফর্ম স্প্যান পরিবর্তন করুন</translation>
     </message>
 </context>
 <context>

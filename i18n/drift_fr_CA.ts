@@ -27016,6 +27016,17 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">Ajuster le timing des sous-titres</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29396,6 +29407,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Ajuster le fondu</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>Fondu de sortie de %1s</translation>
     </message>
@@ -30046,6 +30061,17 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -30058,6 +30084,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Drag to trim the end</source>
         <translation>Glisser pour raccourcir la fin</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30141,6 +30171,17 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30545,6 +30586,17 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Track name</source>
         <translation>Nom de la piste</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31850,6 +31902,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
             <numerusform>Couvre %n piste</numerusform>
             <numerusform>Couvre %n pistes</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">Modifier l&apos;étendue de la transformation</translation>
     </message>
 </context>
 <context>

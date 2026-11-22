@@ -27111,6 +27111,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">Настроить время субтитров</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29495,6 +29506,10 @@ If playback stutters, try another.</source>
         <translation>Настроить плавный переход</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 с</translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>Исчезновение за %1 с</translation>
     </message>
@@ -30147,6 +30162,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -30159,6 +30185,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag to trim the end</source>
         <translation>Перетащите, чтобы обрезать конец</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30243,6 +30273,17 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30648,6 +30689,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Track name</source>
         <translation>Название дорожки</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31957,6 +32009,10 @@ If playback stutters, try another.</source>
             <numerusform>Охватывает %n дорожки</numerusform>
             <numerusform>Охватывает %n дорожек</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">Изменить охват трансформации</translation>
     </message>
 </context>
 <context>

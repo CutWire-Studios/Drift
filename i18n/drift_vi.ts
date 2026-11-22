@@ -26920,6 +26920,17 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">Điều chỉnh thời gian phụ đề</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29292,6 +29303,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Điều chỉnh độ mờ</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>Rõ dần trong %1 giây</translation>
     </message>
@@ -29940,6 +29955,17 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -29952,6 +29978,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Drag to trim the end</source>
         <translation>Kéo để cắt phần cuối</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30034,6 +30064,17 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30437,6 +30478,17 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Track name</source>
         <translation>Tên track</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31738,6 +31790,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>
             <numerusform>Lớp phủ %n track</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">Thay đổi khoảng chuyển đổi</translation>
     </message>
 </context>
 <context>

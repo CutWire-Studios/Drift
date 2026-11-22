@@ -26911,6 +26911,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">자막 타이밍 조정</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29283,6 +29294,10 @@ If playback stutters, try another.</source>
         <translation>페이드 조정</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1초</translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>페이드 아웃 %1초</translation>
     </message>
@@ -29931,6 +29946,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -29943,6 +29969,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag to trim the end</source>
         <translation>드래그하여 끝 부분 자르기</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30025,6 +30055,17 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30428,6 +30469,17 @@ If playback stutters, try another.</source>
     <message>
         <source>Track name</source>
         <translation>트랙 이름</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31729,6 +31781,10 @@ If playback stutters, try another.</source>
         <translation>
             <numerusform>트랙 %n개 포함</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">변환 범위 변경</translation>
     </message>
 </context>
 <context>

@@ -27016,6 +27016,17 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">Ajustar tempo da legenda</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29394,6 +29405,10 @@ Se a reprodução engasgar, experimente outro.</translation>
         <translation>Ajustar fade</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>Fade de saída %1s</translation>
     </message>
@@ -30044,6 +30059,17 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -30056,6 +30082,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Drag to trim the end</source>
         <translation>Arraste para aparar o fim</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30139,6 +30169,17 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30543,6 +30584,17 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Track name</source>
         <translation>Nome da faixa</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31848,6 +31900,10 @@ Se a reprodução engasgar, experimente outro.</translation>
             <numerusform>Abrange %n faixa</numerusform>
             <numerusform>Abrange %n faixas</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">Alterar alcance da transformação</translation>
     </message>
 </context>
 <context>

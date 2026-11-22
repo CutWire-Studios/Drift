@@ -27015,6 +27015,17 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">Ajustar sincronización de subtítulos</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -29393,6 +29404,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Ajustar fundido</translation>
     </message>
     <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
         <source>Fade out %1s</source>
         <translation>Fundido de salida %1s</translation>
     </message>
@@ -30043,6 +30058,17 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -30055,6 +30081,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Drag to trim the end</source>
         <translation>Arrastra para recortar el final</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -30138,6 +30168,17 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30542,6 +30583,17 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Track name</source>
         <translation>Nombre de la pista</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31847,6 +31899,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
             <numerusform>Cubre %n pista</numerusform>
             <numerusform>Cubre %n pistas</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">Cambiar alcance de transformación</translation>
     </message>
 </context>
 <context>
