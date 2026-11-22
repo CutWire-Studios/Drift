@@ -222,6 +222,18 @@ PanelFrame {
             "gapOutline": Theme.c.timelineClipItem.gapOutline,
             "keyframeMarker": Theme.c.timelineClipItem.keyframeMarker,
             "keyframeMarkerRim": Theme.c.timelineClipItem.keyframeMarkerRim,
+            "waveformBarBackground": Theme.c.timelineClipItem.waveformBarBackground,
+            "fadeFill": Theme.c.timelineClipItem.fadeFill,
+            "fadeStroke": Theme.c.timelineClipItem.fadeStroke,
+            "disabledChipForegroundOpacity": Theme.c.timelineClipItem.disabledChipForegroundOpacity,
+            "clipEdgeOpacity": Theme.c.timelineClipItem.clipEdgeOpacity,
+            "effectDropTintOpacity": Theme.c.timelineClipItem.effectDropTintOpacity,
+            "rippleTintOpacity": Theme.c.timelineClipItem.rippleTintOpacity,
+            "rippleOutlineOpacity": Theme.c.timelineClipItem.rippleOutlineOpacity,
+            "waveformDividerOpacity": Theme.c.timelineClipItem.waveformDividerOpacity,
+            "clipEdgeWidth": Theme.c.timelineClipItem.clipEdgeWidth,
+            "rippleOutlineWidth": Theme.c.timelineClipItem.rippleOutlineWidth,
+            "fadeStrokeWidth": Theme.c.timelineClipItem.fadeStrokeWidth,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -1371,8 +1383,8 @@ PanelFrame {
             width: parent.width
             height: parent.height - toolbar.height - overviewStrip.height
 
-            // Loaded only on the tabs it can show on; the graph still hides itself when the
-            // clip has no curves. Its height is left to the item, so the lane can resize.
+            // Hidden while the Keyframes panel is on screen, which shows the same keys. Its height
+            // is left to the item, so the lane can resize.
             Loader {
                 id: keyframesBar
                 width: parent.width - (audioMixer.visible ? audioMixer.width : 0)
@@ -1380,7 +1392,7 @@ PanelFrame {
                         && EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0
                 // A Loader keeps its last height after unloading; hiding it is what makes the
                 // Column give the space back.
-                visible: !!item && item.visible
+                visible: !!item && item.shown
                 sourceComponent: Component {
                     KeyframeGraph {
                         pxPerSecond: root.pxPerSecond
@@ -1796,12 +1808,8 @@ PanelFrame {
                                 // Faint row tint on hover, and an empty track now
                                 // reads as a track rather than as blank space.
                                 color: trackHover.hovered
-                                       ? Qt.rgba(Theme.c.timelinePanel.trackBackground.r,
-                                                 Theme.c.timelinePanel.trackBackground.g,
-                                                 Theme.c.timelinePanel.trackBackground.b, 0.5)
-                                       : Qt.rgba(Theme.c.timelinePanel.trackBackground.r,
-                                                 Theme.c.timelinePanel.trackBackground.g,
-                                                 Theme.c.timelinePanel.trackBackground.b, 0.22)
+                                       ? Qt.alpha(Theme.c.timelinePanel.trackBackground, Theme.c.timelinePanel.trackBackgroundOpacityHover)
+                                       : Qt.alpha(Theme.c.timelinePanel.trackBackground, Theme.c.timelinePanel.trackBackgroundOpacity)
 
                                 Behavior on color {
                                     ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -2585,5 +2593,29 @@ PanelFrame {
             root.savePresetTrack = -1
             root.savePresetClip = -1
         }
+    }
+
+    property point dragPointer
+    function setDragPointer(sceneX, sceneY) {
+        dragPointer = dragReadout.parent.mapFromItem(null, sceneX, sceneY)
+    }
+    function formatTimecode(seconds, withFrames) {
+        const fps = Math.max(1, EditorState.projectFile.projectFps())
+        const total = Math.round(Math.max(0, seconds) * fps)
+        const whole = Math.floor(total / fps)
+        const pad = (n) => (n < 10 ? "0" : "") + n
+        const hms = Math.floor(whole / 3600) + ":" + pad(Math.floor(whole / 60) % 60) + ":" + pad(whole % 60)
+        return withFrames ? hms + ":" + pad(total - whole * fps) : hms
+    }
+    function formatDelta(seconds) {
+        return (seconds < 0 ? "-" : "+") + formatTimecode(Math.abs(seconds), false)
+    }
+
+    LiveReadout {
+        id: dragReadout
+        visible: EditorState.drag.interacting && text.length > 0
+                 && ["fadeIn", "fadeOut", "trimStart", "trimEnd", "transitionResize"].indexOf(EditorState.drag.kind) >= 0
+        text: EditorState.drag.hudText
+        pointer: root.dragPointer
     }
 }

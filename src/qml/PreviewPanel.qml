@@ -65,6 +65,7 @@ PanelFrame {
                 transform: transformTool,
                 mask: maskTool,
                 crop: cropTool,
+                clipCrop: clipCropTool,
                 guideEdit: guideEditTool,
                 shapePath: shapePathTool,
                 maskDraw: maskDrawTool,
@@ -103,7 +104,7 @@ PanelFrame {
         visible: EditorState.color.bypass
         height: 22
         width: originalText.implicitWidth + Theme.spacingLg * 2
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.previewOriginalBadge.background
         border.width: Theme.c.previewOriginalBadge.borderWidth
         border.color: Theme.c.previewOriginalBadge.border
@@ -197,7 +198,7 @@ PanelFrame {
 
     Component {
         id: transformTool
-        TransformOverlay {
+        TransformManip {
             canvas: panelViewport.canvas
             onTextEditRequested: (track, clip) => panelViewport.textEditor.start(track, clip, false)
         }
@@ -225,7 +226,9 @@ PanelFrame {
 
     Component {
         id: trackerTool
-        TrackerOverlay { }
+        TrackerOverlay {
+            canvas: panelViewport.canvas
+        }
     }
 
     // Built fresh each crop session, so the frame starts from the whole canvas every time.
@@ -240,9 +243,20 @@ PanelFrame {
     }
 
     Component {
-        id: shapePathTool
-        ShapePathOverlay {
+        id: clipCropTool
+        ClipCropOverlay {
             canvas: panelViewport.canvas
+            viewport: panelViewport
+        }
+    }
+
+    Component {
+        id: shapePathTool
+        PathEditor {
+            canvas: panelViewport.canvas
+            backend: EditorState.preview.shapePathMode === "draw" ? "draft" : "shape"
+            draftTarget: "shape"
+            onExited: EditorState.preview.shapePathMode = ""
         }
     }
 

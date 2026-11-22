@@ -45,7 +45,7 @@ Item {
             ShapePath {
                 id: _qt_node6_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.3)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.onboardingFinishIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 4 Q 0 2.34315 1.17157 1.17157 Q 2.34315 2.22045e-16 4 0 L 284 0 Q 285.657 0 286.828 1.17157 Q 288 2.34315 288 4 L 288 12 Q 288 13.6569 286.828 14.8284 Q 285.657 16 284 16 L 4 16 Q 2.34315 16 1.17157 14.8284 Q 2.22045e-16 13.6569 0 12 L 0 4 " }
@@ -67,7 +67,7 @@ Item {
             ShapePath {
                 id: _qt_node9_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.3)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.onboardingFinishIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 4 Q 0 2.34315 1.17157 1.17157 Q 2.34315 2.22045e-16 4 0 L 64 0 Q 65.6569 0 66.8284 1.17157 Q 68 2.34315 68 4 L 68 112 Q 68 113.657 66.8284 114.828 Q 65.6569 116 64 116 L 4 116 Q 2.34315 116 1.17157 114.828 Q 2.22045e-16 113.657 0 112 L 0 4 " }
@@ -89,7 +89,7 @@ Item {
             ShapePath {
                 id: _qt_node12_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.3)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.onboardingFinishIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 4 Q 0 2.34315 1.17157 1.17157 Q 2.34315 2.22045e-16 4 0 L 64 0 Q 65.6569 0 66.8284 1.17157 Q 68 2.34315 68 4 L 68 112 Q 68 113.657 66.8284 114.828 Q 65.6569 116 64 116 L 4 116 Q 2.34315 116 1.17157 114.828 Q 2.22045e-16 113.657 0 112 L 0 4 " }
@@ -111,7 +111,7 @@ Item {
             ShapePath {
                 id: _qt_node15_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.3)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.onboardingFinishIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 4 Q 0 2.34315 1.17157 1.17157 Q 2.34315 2.22045e-16 4 0 L 284 0 Q 285.657 0 286.828 1.17157 Q 288 2.34315 288 4 L 288 62 Q 288 63.6569 286.828 64.8284 Q 285.657 66 284 66 L 4 66 Q 2.34315 66 1.17157 64.8284 Q 0 63.6569 0 62 L 0 4 " }

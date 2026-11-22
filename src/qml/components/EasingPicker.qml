@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Shapes
 import QtQuick.Controls.Basic
 import Drift
 
@@ -242,159 +241,59 @@ Column {
         spacing: Theme.spacingMd
 
         // --- Shape editor -------------------------------------------------------
-        Item {
-            id: editorBox
-            visible: root.handles !== null
+        // Cubic handles over the unit square, with y widened to [-0.5, 1.5] so overshoot can be
+        // dragged out; function curves (Back, Elastic, ...) are drawn read-only on the same plot.
+        CurveGraphView {
+            id: graphView
+            visible: root.handles !== null || root.kind === "function"
             width: body.width
-            height: 120
+            height: Theme.touchInput ? 160 : 120
+            backend: root.handles !== null ? "cubic" : "samples"
+            unitRange: root.unitRange
+            zoomX: true
+            zoomY: true
+            projectBacked: !root.curveMode
+            undoText: qsTr("Edit easing")
 
-            readonly property real pad: 8
-            readonly property real handleSize: Theme.touchInput ? 14 : 10
-            readonly property var h: root.handles ? root.handles : { x1: 0, y1: 0, x2: 1, y2: 1 }
-
-            // Unit square with y widened to [-0.5, 1.5] so overshoot can be dragged out.
-            function px(x) { return pad + x * (width - 2 * pad) }
-            function py(y) { return height - pad - (y + 0.5) / 2 * (height - 2 * pad) }
-            function toX(x) { return Math.max(0, Math.min(1, (x - pad) / (width - 2 * pad))) }
-            function toY(y) {
-                const v = (height - pad - y) / (height - 2 * pad) * 2 - 0.5
-                return Math.max(root.unitRange ? 0 : -0.5, Math.min(root.unitRange ? 1 : 1.5, v))
+            function sync() {
+                if (graphView.graph.dragging)
+                    return
+                const h = root.handles
+                if (h)
+                    graphView.graph.setCubic([h.x1, h.y1, h.x2, h.y2])
+                else if (root.kind === "function")
+                    graphView.graph.setSamples(root.curveSamples)
             }
 
-            readonly property var curvePath: {
-                void width
-                void height
-                const out = []
-                const samples = root.curveSamples
-                for (let i = 0; i < samples.length; ++i)
-                    out.push(Qt.point(editorBox.px(samples[i].x), editorBox.py(samples[i].y)))
-                return out
+            onSetupDone: sync()
+            onEdited: {
+                if (graphView.backend !== "cubic")
+                    return
+                const c = graphView.graph.cubic()
+                const s = { kind: "bezier", x1: c[0], y1: c[1], x2: c[2], y2: c[3] }
+                root.dragSpec = s
+                if (!root.curveMode)
+                    EditorState.previewSetKeyframeSegmentEasing(root.trackIndex, root.clipIndex,
+                                                                root.propKey, root.keySeconds, s)
+            }
+            onGestureEnded: {
+                if (root.curveMode && root.dragSpec) {
+                    const s = root.dragSpec
+                    root.draft = s
+                    root.picked(s)
+                }
+                root.dragSpec = null
+            }
+            onGestureCancelled: {
+                root.dragSpec = null
+                root.revision++
+                sync()
             }
 
-            Rectangle {
-                anchors.fill: parent
-                radius: Theme.c.easingPicker.radius
-                color: Theme.c.easingPicker.background
-                border.width: Theme.c.easingPicker.borderWidth
-                border.color: Theme.c.easingPicker.border
-            }
-
-            Shape {
-                anchors.fill: parent
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    strokeColor: Theme.c.easingPicker.gridLine
-                    strokeWidth: Theme.c.easingPicker.borderWidth
-                    fillColor: "transparent"
-                    PathPolyline { path: [Qt.point(editorBox.px(0), editorBox.py(0)), Qt.point(editorBox.px(1), editorBox.py(0))] }
-                }
-                ShapePath {
-                    strokeColor: Theme.c.easingPicker.gridLine
-                    strokeWidth: Theme.c.easingPicker.borderWidth
-                    fillColor: "transparent"
-                    PathPolyline { path: [Qt.point(editorBox.px(0), editorBox.py(1)), Qt.point(editorBox.px(1), editorBox.py(1))] }
-                }
-                ShapePath {
-                    strokeColor: Theme.c.easingPicker.handleLine
-                    strokeWidth: Theme.c.easingPicker.borderWidth
-                    fillColor: "transparent"
-                    PathPolyline { path: [Qt.point(editorBox.px(0), editorBox.py(0)), Qt.point(editorBox.px(editorBox.h.x1), editorBox.py(editorBox.h.y1))] }
-                }
-                ShapePath {
-                    strokeColor: Theme.c.easingPicker.handleLine
-                    strokeWidth: Theme.c.easingPicker.borderWidth
-                    fillColor: "transparent"
-                    PathPolyline { path: [Qt.point(editorBox.px(1), editorBox.py(1)), Qt.point(editorBox.px(editorBox.h.x2), editorBox.py(editorBox.h.y2))] }
-                }
-                ShapePath {
-                    strokeColor: Theme.c.easingPicker.curve
-                    strokeWidth: Theme.c.easingPicker.curveWidth
-                    fillColor: "transparent"
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathPolyline { path: editorBox.curvePath }
-                }
-            }
-
-            Repeater {
-                model: [
-                    { x: editorBox.h.x1, y: editorBox.h.y1 },
-                    { x: editorBox.h.x2, y: editorBox.h.y2 }
-                ]
-                delegate: Rectangle {
-                    required property var modelData
-                    width: editorBox.handleSize
-                    height: editorBox.handleSize
-                    radius: width / 2
-                    x: editorBox.px(modelData.x) - width / 2
-                    y: editorBox.py(modelData.y) - height / 2
-                    color: Theme.c.easingPicker.handle
-                }
-            }
-
-            MouseArea {
-                id: dragArea
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-
-                // 0 = P1, 1 = P2, -1 = nothing grabbed.
-                property int grabbed: -1
-                // Latched per press: a touch that lands far from both handles is ignored, a
-                // mouse press always grabs the nearer one.
-                property bool pressedByTouch: false
-
-                function nearest(mx, my) {
-                    const d1 = Math.hypot(mx - editorBox.px(editorBox.h.x1), my - editorBox.py(editorBox.h.y1))
-                    const d2 = Math.hypot(mx - editorBox.px(editorBox.h.x2), my - editorBox.py(editorBox.h.y2))
-                    return { index: d1 <= d2 ? 0 : 1, distance: Math.min(d1, d2) }
-                }
-
-                onPressed: (mouse) => {
-                    pressedByTouch = mouse.source !== Qt.MouseEventNotSynthesized
-                    const hit = nearest(mouse.x, mouse.y)
-                    if (pressedByTouch && hit.distance > 28) {
-                        grabbed = -1
-                        return
-                    }
-                    grabbed = hit.index
-                    root.dragSpec = { kind: "bezier", x1: editorBox.h.x1, y1: editorBox.h.y1,
-                                      x2: editorBox.h.x2, y2: editorBox.h.y2 }
-                    if (!root.curveMode)
-                        EditorState.beginPreviewDrag(qsTr("Edit easing"))
-                }
-                onPositionChanged: (mouse) => {
-                    if (grabbed < 0)
-                        return
-                    const s = Object.assign({}, root.dragSpec)
-                    if (grabbed === 0) {
-                        s.x1 = editorBox.toX(mouse.x)
-                        s.y1 = editorBox.toY(mouse.y)
-                    } else {
-                        s.x2 = editorBox.toX(mouse.x)
-                        s.y2 = editorBox.toY(mouse.y)
-                    }
-                    root.dragSpec = s
-                    if (!root.curveMode)
-                        EditorState.previewSetKeyframeSegmentEasing(root.trackIndex, root.clipIndex,
-                                                                    root.propKey, root.keySeconds, s)
-                }
-                onReleased: endDrag()
-                onCanceled: endDrag()
-
-                function endDrag() {
-                    if (grabbed < 0)
-                        return
-                    grabbed = -1
-                    if (root.curveMode) {
-                        const s = root.dragSpec
-                        root.draft = s
-                        root.picked(s)
-                    } else {
-                        EditorState.commitPreviewDrag()
-                    }
-                    root.dragSpec = null
-                }
+            Connections {
+                target: root
+                function onHandlesChanged() { graphView.sync() }
+                function onCurveSamplesChanged() { graphView.sync() }
             }
         }
 
@@ -404,13 +303,6 @@ Column {
             visible: root.kind === "function"
             width: body.width
             spacing: Theme.spacingSm
-
-            EasingThumb {
-                width: functionBox.width
-                height: 120
-                samples: root.curveSamples
-                curveColor: Theme.c.easingPicker.curve
-            }
 
             Repeater {
                 model: [

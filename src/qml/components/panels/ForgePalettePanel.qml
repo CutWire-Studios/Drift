@@ -104,7 +104,7 @@ PanelFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 8
                     height: 8
-                    radius: 4
+                    radius: Theme.radiusPill
                     color: row.accentTokens[row.modelData.header ? row.modelData.accent : row.modelData.entry.accent]
                            ?? Theme.c.forgePanel.foregroundMuted
                 }

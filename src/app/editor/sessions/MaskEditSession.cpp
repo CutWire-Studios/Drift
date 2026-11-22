@@ -1,9 +1,11 @@
 #include "app/editor/sessions/MaskEditSession.h"
 
 #include "app/editor/AppController.h"
+#include "app/editor/AppControllerDetail.h"
 #include "app/editor/sessions/MaskingController.h"
 #include "app/jobs/vision/TrackingController.h"
 #include "core/project/Project.h"
+#include "ui/manip/SnapService.h"
 #include "core/project/Track.h"
 
 #include <QSizeF>
@@ -16,34 +18,21 @@
 
 namespace {
 
-constexpr double kSnapTolPx = 8.0;
-
-// Nearest target within `tol` of any candidate, as the delta to add to the moving value.
-double snapAxis(const double (&candidates)[3], const double (&targets)[3], double tol, double *hit = nullptr)
+// Pull toward the clip frame's 0, 0.5 and 1, as the delta to add to the moving value. `tol` is in
+// normalized units; `hit` is the target landed on, else -1.
+double snapToFrame(const QList<double> &candidates, double tol, double *hit)
 {
-    if (hit)
-        *hit = -1.0;
-    double result = 0.0;
-    double best = tol;
-    for (const double c : candidates) {
-        for (const double t : targets) {
-            const double d = t - c;
-            if (std::abs(d) < best) {
-                best = std::abs(d);
-                result = d;
-                if (hit)
-                    *hit = t;
-            }
-        }
-    }
-    return result;
+    const drift::manip::AxisHit r = drift::manip::snapAxis(candidates, drift::manip::clipFrameTargets().x, tol);
+    *hit = r.snapped ? r.target : -1.0;
+    return r.snapped ? r.delta : 0.0;
 }
 
-QVariantList pointsToVariant(const QList<QPointF> &points)
+QList<QPointF> positionsOf(const QVector<drift::ShapeVertex> &vertices)
 {
-    QVariantList out;
-    for (const QPointF &p : points)
-        out.append(QVariantMap{{QStringLiteral("x"), p.x()}, {QStringLiteral("y"), p.y()}});
+    QList<QPointF> out;
+    out.reserve(vertices.size());
+    for (const drift::ShapeVertex &v : vertices)
+        out.append(v.p);
     return out;
 }
 
@@ -54,6 +43,16 @@ MaskEditSession::MaskEditSession(AppController *app, MaskingController *owner)
     , m_app(app)
     , m_owner(owner)
 {
+}
+
+QList<QPointF> MaskEditSession::livePoints() const
+{
+    return positionsOf(m_vertices);
+}
+
+QVariantList MaskEditSession::liveVertices() const
+{
+    return drift::appdetail::maskVerticesToVariant(m_vertices);
 }
 
 QPointF MaskEditSession::bounds(const QList<QPointF> &points, QSizeF *size)
@@ -110,11 +109,11 @@ bool MaskEditSession::load(const QString &clipId)
     m_w = m_base.w;
     m_h = m_base.h;
     m_rotation = m_base.rotation;
-    m_points = QList<QPointF>(m_base.points.begin(), m_base.points.end());
+    m_vertices = m_base.vertices;
     if (m_freeform) {
         QSizeF size;
-        const QPointF centre = bounds(m_points, &size);
-        if (!m_points.isEmpty()) {
+        const QPointF centre = bounds(positionsOf(m_vertices), &size);
+        if (!m_vertices.isEmpty()) {
             m_x = centre.x();
             m_y = centre.y();
             m_w = size.width();
@@ -125,17 +124,19 @@ bool MaskEditSession::load(const QString &clipId)
     return true;
 }
 
-bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH)
+bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH, bool ownsDrag)
 {
     if (!load(clipId))
         return false;
+    m_ownsDrag = ownsDrag;
     m_frameW = std::max(1.0, frameW);
     m_frameH = std::max(1.0, frameH);
     m_active = true;
     m_bodyMoved = false;
     m_snapGuideX = m_snapGuideY = -1;
-    m_startPoints = m_points;
-    m_app->beginPreviewDrag(tr("Mask changed"));
+    m_startVertices = m_vertices;
+    if (m_ownsDrag)
+        m_app->beginPreviewDrag(tr("Mask changed"));
     emit liveChanged();
     return true;
 }
@@ -152,7 +153,8 @@ void MaskEditSession::commit()
     m_snapGuideX = m_snapGuideY = -1;
     emit snapGuidesChanged();
     emit liveChanged();
-    m_app->commitPreviewDrag();
+    if (m_ownsDrag)
+        m_app->commitPreviewDrag();
     // Dragging a tracked mask back onto the object is the correction gesture.
     if (movedBody)
         m_app->tracking()->correctFromMask(clipId);
@@ -168,7 +170,8 @@ void MaskEditSession::cancel()
     m_snapGuideX = m_snapGuideY = -1;
     emit snapGuidesChanged();
     emit liveChanged();
-    m_app->cancelPreviewDrag();
+    if (m_ownsDrag)
+        m_app->cancelPreviewDrag();
 }
 
 void MaskEditSession::writeStatic(const drift::Mask &mask)
@@ -188,12 +191,12 @@ void MaskEditSession::write(bool includeRotation)
             const Ref ref = find(m_clipId);
             if (ref.track >= 0) {
                 m_owner->previewSetMaskPathKey(ref.track, ref.clip, m_app->playheadSeconds(),
-                                               pointsToVariant(m_points));
+                                               drift::appdetail::maskVerticesToVariant(m_vertices));
             }
             return;
         }
         drift::Mask mask = m_base;
-        mask.points = QVector<QPointF>(m_points.begin(), m_points.end());
+        mask.vertices = m_vertices;
         writeStatic(mask);
         return;
     }
@@ -231,7 +234,7 @@ void MaskEditSession::beginBody(double nx, double ny)
     m_bodyMoved = false;
     m_startX = m_x;
     m_startY = m_y;
-    m_startPoints = m_points;
+    m_startVertices = m_vertices;
 }
 
 void MaskEditSession::setSnapGuides(double x, double y)
@@ -249,7 +252,6 @@ void MaskEditSession::snapCentre(double &nx, double &ny)
         setSnapGuides(-1, -1);
         return;
     }
-    static constexpr double targets[3] = {0.0, 0.5, 1.0};
     const bool seam = m_base.shape == drift::MaskShape::Split;
     const double halfW = seam ? 0.0 : m_w / 2;
     const double halfH = seam ? 0.0 : m_h / 2;
@@ -257,8 +259,8 @@ void MaskEditSession::snapCentre(double &nx, double &ny)
     const double ys[3] = {ny - halfH, ny, ny + halfH};
     double gx = -1;
     double gy = -1;
-    nx += snapAxis(xs, targets, kSnapTolPx / m_frameW, &gx);
-    ny += snapAxis(ys, targets, kSnapTolPx / m_frameH, &gy);
+    nx += snapToFrame({xs[0], xs[1], xs[2]}, drift::manip::toleranceInUnits(m_frameW), &gx);
+    ny += snapToFrame({ys[0], ys[1], ys[2]}, drift::manip::toleranceInUnits(m_frameH), &gy);
     setSnapGuides(gx, gy);
 }
 
@@ -278,9 +280,9 @@ void MaskEditSession::moveBody(double nx, double ny, bool bypassSnap)
     if (m_freeform) {
         const double dx = x - m_startX;
         const double dy = y - m_startY;
-        m_points = m_startPoints;
-        for (QPointF &p : m_points)
-            p += QPointF(dx, dy);
+        m_vertices = m_startVertices;
+        for (drift::ShapeVertex &v : m_vertices)
+            v.p += QPointF(dx, dy);
     }
     write(false);
     emit liveChanged();
@@ -298,7 +300,7 @@ void MaskEditSession::beginResize(int gripDx, int gripDy, double nx, double ny)
     m_startH = m_h;
 }
 
-void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassSnap)
+void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassSnap, bool fromCenter)
 {
     if (!m_active)
         return;
@@ -308,11 +310,12 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassS
     const double lx = ddx * std::cos(a) + ddy * std::sin(a);
     const double ly = -ddx * std::sin(a) + ddy * std::cos(a);
 
-    double w = std::max(0.01, m_startW + lx * m_gripDx);
-    double h = std::max(0.01, m_startH + ly * m_gripDy);
+    const double span = fromCenter ? 2.0 : 1.0;
+    double w = std::max(0.01, m_startW + span * lx * m_gripDx);
+    double h = std::max(0.01, m_startH + span * ly * m_gripDy);
     const bool corner = m_gripDx != 0 && m_gripDy != 0;
     const bool locked = corner && lockAspect;
-    const bool snapping = !bypassSnap && std::abs(m_rotation) < 0.01;
+    const bool snapping = !bypassSnap && !fromCenter && std::abs(m_rotation) < 0.01;
     bool snapX = snapping && m_gripDx != 0;
     bool snapY = snapping && m_gripDy != 0;
     if (locked) {
@@ -327,12 +330,10 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassS
 
     double gx = -1;
     double gy = -1;
-    static constexpr double targets[3] = {0.0, 0.5, 1.0};
     if (snapX) {
         const double fixed = m_startX - m_gripDx * m_startW / 2;
         const double edge = fixed + m_gripDx * w;
-        const double c[3] = {edge, edge, edge};
-        const double snapped = edge + snapAxis(c, targets, kSnapTolPx / m_frameW, &gx);
+        const double snapped = edge + snapToFrame({edge}, drift::manip::toleranceInUnits(m_frameW), &gx);
         const double nw = m_gripDx * (snapped - fixed);
         if (gx >= 0 && nw >= 0.01) {
             w = nw;
@@ -345,8 +346,7 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassS
     if (snapY) {
         const double fixed = m_startY - m_gripDy * m_startH / 2;
         const double edge = fixed + m_gripDy * h;
-        const double c[3] = {edge, edge, edge};
-        const double snapped = edge + snapAxis(c, targets, kSnapTolPx / m_frameH, &gy);
+        const double snapped = edge + snapToFrame({edge}, drift::manip::toleranceInUnits(m_frameH), &gy);
         const double nh = m_gripDy * (snapped - fixed);
         if (gy >= 0 && nh >= 0.01) {
             h = nh;
@@ -358,8 +358,8 @@ void MaskEditSession::resize(double nx, double ny, bool lockAspect, bool bypassS
     }
     setSnapGuides(gx, gy);
 
-    const double shiftX = (w - m_startW) / 2 * m_gripDx;
-    const double shiftY = (h - m_startH) / 2 * m_gripDy;
+    const double shiftX = fromCenter ? 0.0 : (w - m_startW) / 2 * m_gripDx;
+    const double shiftY = fromCenter ? 0.0 : (h - m_startH) / 2 * m_gripDy;
     m_x = m_startX + shiftX * std::cos(a) - shiftY * std::sin(a);
     m_y = m_startY + shiftX * std::sin(a) + shiftY * std::cos(a);
     m_w = w;
@@ -382,18 +382,61 @@ void MaskEditSession::rotate(double nx, double ny, bool snap15)
 
 void MaskEditSession::movePoint(int index, double nx, double ny)
 {
-    if (!m_active || !m_freeform || index < 0 || index >= m_points.size())
+    if (!m_active || !m_freeform || index < 0 || index >= m_vertices.size())
         return;
-    m_points[index] = QPointF(nx, ny);
+    m_vertices[index].p = QPointF(nx, ny);
     syncFreeformBounds();
     write(false);
     emit liveChanged();
 }
 
+void MaskEditSession::setOutline(const QVector<drift::ShapeVertex> &vertices, const QVector<drift::geom::PathOp> &ops)
+{
+    if (!m_active || !m_freeform || vertices.size() < 3)
+        return;
+    if (!ops.isEmpty() && m_pathAnimated) {
+        const Ref ref = find(m_clipId);
+        if (ref.track >= 0) {
+            drift::Mask mask = m_app->m_project.tracks().at(ref.track).clips.at(ref.clip).mask;
+            const auto replay = [&ops](QVector<drift::ShapeVertex> &list) {
+                drift::ShapeContour contour{list, true};
+                for (const drift::geom::PathOp &op : ops) {
+                    if (!drift::geom::applyPathOp(contour, op))
+                        return;
+                }
+                list = contour.vertices;
+            };
+            replay(mask.vertices);
+            for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it)
+                replay(it.value());
+            m_app->beginImplicitPreviewDrag(tr("Mask changed"));
+            m_app->writeClipMask(ref.track, ref.clip, mask);
+        }
+    }
+    m_vertices = vertices;
+    syncFreeformBounds();
+    write(false);
+    emit liveChanged();
+}
+
+QVector<drift::ShapeVertex> MaskEditSession::outlineOf(const QString &clipId) const
+{
+    if (m_active && m_clipId == clipId)
+        return m_vertices;
+    const Ref ref = find(clipId);
+    if (ref.track < 0)
+        return {};
+    const drift::Clip &clip = m_app->m_project.tracks().at(ref.track).clips.at(ref.clip);
+    if (clip.type != drift::ClipType::Adjustment || clip.mask.shape != drift::MaskShape::Freeform)
+        return {};
+    return (clip.mask.isAnimated() ? clip.mask.resolvedAt(m_app->m_playheadUs - clip.timelineStart) : clip.mask)
+        .vertices;
+}
+
 void MaskEditSession::syncFreeformBounds()
 {
     QSizeF size;
-    const QPointF centre = bounds(m_points, &size);
+    const QPointF centre = bounds(positionsOf(m_vertices), &size);
     m_x = centre.x();
     m_y = centre.y();
     m_w = size.width();
@@ -402,19 +445,19 @@ void MaskEditSession::syncFreeformBounds()
 
 void MaskEditSession::movePointGroup(int anchorIndex, double nx, double ny)
 {
-    if (!m_active || !m_freeform || anchorIndex < 0 || anchorIndex >= m_points.size()
-        || m_startPoints.size() != m_points.size()) {
+    if (!m_active || !m_freeform || anchorIndex < 0 || anchorIndex >= m_vertices.size()
+        || m_startVertices.size() != m_vertices.size()) {
         return;
     }
-    const QPointF delta = QPointF(nx, ny) - m_startPoints.at(anchorIndex);
-    m_points = m_startPoints;
+    const QPointF delta = QPointF(nx, ny) - m_startVertices.at(anchorIndex).p;
+    m_vertices = m_startVertices;
     if (m_selClipId == m_clipId && m_selected.contains(anchorIndex)) {
         for (const int i : std::as_const(m_selected)) {
-            if (i < m_points.size())
-                m_points[i] += delta;
+            if (i < m_vertices.size())
+                m_vertices[i].p += delta;
         }
     } else {
-        m_points[anchorIndex] += delta;
+        m_vertices[anchorIndex].p += delta;
     }
     syncFreeformBounds();
     write(false);
@@ -424,7 +467,7 @@ void MaskEditSession::movePointGroup(int anchorIndex, double nx, double ny)
 QList<QPointF> MaskEditSession::pointsOf(const QString &clipId) const
 {
     if (m_active && m_clipId == clipId)
-        return m_points;
+        return positionsOf(m_vertices);
     const Ref ref = find(clipId);
     if (ref.track < 0)
         return {};
@@ -433,7 +476,7 @@ QList<QPointF> MaskEditSession::pointsOf(const QString &clipId) const
         return {};
     const drift::Mask mask =
         clip.mask.isAnimated() ? clip.mask.resolvedAt(m_app->m_playheadUs - clip.timelineStart) : clip.mask;
-    return QList<QPointF>(mask.points.begin(), mask.points.end());
+    return positionsOf(mask.vertices);
 }
 
 void MaskEditSession::setSelection(const QString &clipId, QList<int> indices)
@@ -538,13 +581,13 @@ void MaskEditSession::nudge(const QString &clipId, int dirX, int dirY, bool coar
     const double dy = dirY * step / m_frameH;
     if (m_freeform && m_selClipId == clipId && !m_selected.isEmpty()) {
         for (const int i : std::as_const(m_selected)) {
-            if (i < m_points.size())
-                m_points[i] += QPointF(dx, dy);
+            if (i < m_vertices.size())
+                m_vertices[i].p += QPointF(dx, dy);
         }
         syncFreeformBounds();
     } else if (m_freeform) {
-        for (QPointF &p : m_points)
-            p += QPointF(dx, dy);
+        for (drift::ShapeVertex &v : m_vertices)
+            v.p += QPointF(dx, dy);
         m_x += dx;
         m_y += dy;
     } else {

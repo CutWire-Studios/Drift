@@ -304,7 +304,7 @@ PreferencesController::PreferencesController(QObject *parent)
     m_trackLabelsWidth = qBound(64.0,
         settings.value(QStringLiteral("ui/trackLabelsWidth"), 170.0).toDouble(), 360.0);
     m_androidTrackLabelsWidth = qBound(56.0,
-        settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 80.0).toDouble(), 200.0);
+        settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 68.0).toDouble(), 200.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
     m_timelineMenuItems = settings.value(QStringLiteral("ui/timelineMenuItems")).toStringList();
     m_proxyNamePatterns = settings.contains(QStringLiteral("proxy/namePatterns"))

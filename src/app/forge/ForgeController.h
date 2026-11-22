@@ -80,6 +80,7 @@ public:
     bool canRedo() const override { return m_undo.canRedo(); }
     void moveNodes(const QStringList &ids, qreal dx, qreal dy) override;
     void endMove() override;
+    void cancelMove() override;
     bool canConnect(const QString &fromNode, const QString &fromPort, const QString &toNode,
                     const QString &toPort) const override;
     bool connectPorts(const QString &fromNode, const QString &fromPort, const QString &toNode,

@@ -109,6 +109,21 @@ void BlendPreviewController::startRender()
         snapshot->tracks()[i].clips.clear();
         snapshot->tracks()[i].transitions.clear();
     }
+    // With nothing under the clip every mode blends with the flat background, and on the
+    // default black one most of the tiles came out solid black. Mid grey shows what each does.
+    bool anythingBeneath = false;
+    for (int i = t + 1; i < snapshot->tracks().size() && !anythingBeneath; ++i) {
+        const drift::Track &track = snapshot->tracks().at(i);
+        if (track.hidden)
+            continue;
+        for (const drift::Clip &clip : track.clips)
+            anythingBeneath = anythingBeneath || clip.containsTime(timeUs);
+    }
+    if (!anythingBeneath && snapshot->background().kind == drift::BackgroundKind::Color) {
+        drift::Background backdrop = snapshot->background();
+        backdrop.color = QColor(128, 128, 128);
+        snapshot->setBackground(backdrop);
+    }
 
     m_rendering = true;
     auto *watcher = new QFutureWatcher<void>(this);

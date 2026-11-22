@@ -72,8 +72,9 @@ Column {
         curves: root.hue
             ? ({ hue: root.pointsJson, sat: root.pointsJson, lum: root.pointsJson })
             : ({ master: root.pointsJson, r: root.pointsJson, g: root.pointsJson, b: root.pointsJson })
-        onBegan: EditorState.beginPreviewDrag(qsTr("Edit %1").arg(root.row.paramData.label))
+        onBegan: EditorState.drag.begin("curve", DragSession.Mouse, qsTr("Edit %1").arg(root.row.paramData.label))
         onChanged: (channel, json) => root.writePoints(json)
-        onEnded: EditorState.commitPreviewDrag()
+        onEnded: EditorState.drag.commit()
+        onCancelled: EditorState.drag.cancel()
     }
 }

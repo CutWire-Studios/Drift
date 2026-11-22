@@ -30,8 +30,8 @@ ThemeSlot {
         Rectangle {
             radius: Theme.c.themedSliderHandle.radius
             color: handleRect.slider.pressed ? Theme.c.themedSliderHandle.backgroundPressed
-                    : (handleRect.slider.hovered ? Qt.lighter(Theme.c.themedSliderHandle.background, 1.25)
-                                                 : Qt.lighter(Theme.c.themedSliderHandle.background, 1.15))
+                    : (handleRect.slider.hovered ? Theme.c.themedSliderHandle.backgroundHover
+                                                 : Theme.c.themedSliderHandle.background)
             border.width: Theme.c.themedSliderHandle.borderWidth
             border.color: handleRect.slider.visualFocus ? Theme.c.themedSliderHandle.borderFocus
                                                         : Theme.c.themedSliderHandle.border

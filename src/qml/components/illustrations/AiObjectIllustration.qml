@@ -44,7 +44,7 @@ Item {
             ShapePath {
                 id: _qt_node6_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.muted, 0.22)
+                fillColor: Qt.alpha(Theme.c.illustration.muted, Theme.c.aiObjectIllustration.mutedOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 3 Q 0 1.75736 0.87868 0.87868 Q 1.75736 -1.11022e-16 3 0 L 97 0 Q 98.2426 0 99.1213 0.87868 Q 100 1.75736 100 3 L 100 57 Q 100 58.2426 99.1213 59.1213 Q 98.2426 60 97 60 L 3 60 Q 1.75736 60 0.87868 59.1213 Q 0 58.2426 0 57 L 0 3 " }
@@ -146,7 +146,7 @@ Item {
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
                 miterLimit: 0
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.4)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.aiObjectIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M -13 3 Q -13 0.100505 -10.9497 -1.94975 Q -8.8995 -4 -6 -4 L 6 -4 Q 8.8995 -4 10.9497 -1.94975 Q 13 0.100505 13 3 L 13 7 Q 13 9.8995 10.9497 11.9497 Q 8.8995 14 6 14 L -6 14 Q -8.8995 14 -10.9497 11.9497 Q -13 9.8995 -13 7 L -13 3 " }
@@ -163,7 +163,7 @@ Item {
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
                 miterLimit: 0
-                fillColor: Qt.alpha(Theme.c.illustration.accent, 0.4)
+                fillColor: Qt.alpha(Theme.c.illustration.accent, Theme.c.aiObjectIllustration.accentOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 0 -18.5 Q 2.27817 -18.5 3.88909 -16.8891 Q 5.5 -15.2782 5.5 -13 Q 5.5 -10.7218 3.88909 -9.11091 Q 2.27817 -7.5 0 -7.5 Q -2.27817 -7.5 -3.88909 -9.11091 Q -5.5 -10.7218 -5.5 -13 Q -5.5 -15.2782 -3.88909 -16.8891 Q -2.27817 -18.5 0 -18.5 " }

@@ -786,6 +786,7 @@ PanelFrame {
                             onBegan: root.colorState.beginEdit(qsTr("Adjust curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.curveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()
+                            onCancelled: root.colorState.cancelEdit()
                         }
                     }
 
@@ -815,6 +816,7 @@ PanelFrame {
                             onBegan: root.colorState.beginEdit(qsTr("Adjust hue curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.hueCurveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()
+                            onCancelled: root.colorState.cancelEdit()
                         }
                     }
                 }
@@ -868,9 +870,9 @@ PanelFrame {
                                 Rectangle {
                                     width: swatch.width
                                     height: width
-                                    radius: width / 2
+                                    radius: Theme.radiusPill
                                     color: "transparent"
-                                    border.width: 2
+                                    border.width: Theme.c.colorPanel.swatchFocusBorderWidth
                                     border.color: Theme.focusRing
                                     visible: swatch.selected || swatch.activeFocus
                                 }
@@ -880,7 +882,7 @@ PanelFrame {
                                     y: swatch.inset
                                     width: Theme.controlHeightSm
                                     height: width
-                                    radius: width / 2
+                                    radius: Theme.radiusPill
                                     color: Theme.c.colorGradeBands[swatch.modelData.name]
                                 }
 
@@ -889,7 +891,7 @@ PanelFrame {
                                     y: swatch.width + 1
                                     width: 5
                                     height: width
-                                    radius: width / 2
+                                    radius: Theme.radiusPill
                                     color: Theme.accentOnPanel
                                     visible: root.hslBandModified(swatch.modelData.param)
                                 }

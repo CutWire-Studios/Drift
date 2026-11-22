@@ -9,7 +9,7 @@ Rectangle {
     width: parent.width
     height: rowHeight
     color: Theme.c.trackHeaderWash.background
-    opacity: spanPreviewed ? 0.18 : (transformLayer ? 0.08 : 0)
+    opacity: spanPreviewed ? Theme.c.trackHeaderWash.backgroundOpacitySpan : (transformLayer ? Theme.c.trackHeaderWash.backgroundOpacityTransform : 0)
 
     Behavior on opacity {
         NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }

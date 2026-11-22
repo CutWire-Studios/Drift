@@ -468,7 +468,7 @@ ThemedDialog {
         property int dragLocks: 0
         interactive: contentHeight > height && dragLocks === 0
         ScrollBar.vertical: AppScrollBar {
-            policy: contentFlick.contentHeight > contentFlick.height
+            policy: contentFlick.contentHeight > contentFlick.height && !(Theme.touchInput && Theme.compact)
                     ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
         }
 
@@ -502,6 +502,11 @@ ThemedDialog {
 
             ExportDialogAudioSection {
                 id: audioSection
+                dialog: root
+            }
+
+            ExportDialogSizeEstimate {
+                width: parent.width
                 dialog: root
             }
         }

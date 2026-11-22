@@ -16,6 +16,12 @@ Item {
     property int trackIndex: -1
     property int clipIndex: -1
     property real previewFraction: 0.55
+    // The split the user dragged to on this page, remembered per page; < 0 uses previewFraction.
+    property real userFraction: -1
+    readonly property string splitKey: "phoneToolPage/split/" + root.title
+    readonly property real effectiveFraction: userFraction >= 0 ? userFraction : previewFraction
+    // A page that moves its own split mid-session (the mask page while drawing) wins over the drag.
+    onPreviewFractionChanged: if (root._open) root.userFraction = -1
     // Optional action centred in the controls header, e.g. "Apply to all".
     property string centerActionText: ""
     default property alias controls: controlsHost.data
@@ -46,6 +52,7 @@ Item {
         root.trackIndex = opts.trackIndex ?? EditorState.selectedTrack
         root.clipIndex = opts.clipIndex ?? EditorState.selectedClip
         root.previewFraction = opts.previewFraction ?? 0.55
+        root.userFraction = LayoutMemory.layoutNumber(root.splitKey, -1)
         root.centerActionText = opts.centerActionText ?? ""
 
         EditorState.beginEditGroup()
@@ -156,13 +163,74 @@ Item {
         anchors.leftMargin: SafeArea.margins.left
         anchors.right: parent.right
         anchors.rightMargin: SafeArea.margins.right
-        height: Math.round((root.height - root.safeTop - footer.height) * root.previewFraction)
+        height: Math.round(root.splitSpan * root.effectiveFraction)
         clip: true
+    }
+
+    readonly property real splitSpan: Math.max(1, root.height - root.safeTop - footer.height - splitHandle.height)
+
+    // Same affordance as the editor's preview/timeline splitter.
+    Item {
+        id: splitHandle
+        anchors.top: slot.bottom
+        anchors.left: slot.left
+        anchors.right: slot.right
+        height: Theme.spacing3xl
+
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.c.androidEditor.splitterBackground
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: 48
+            height: 6
+            radius: Theme.c.androidEditor.handleRadius
+            color: splitDrag.active ? Theme.c.androidEditor.handleBackgroundPressed
+                                    : Theme.c.androidEditor.handleBackground
+        }
+
+        // A taller hit area than the strip: it is the one target between two panes.
+        Item {
+            anchors.centerIn: parent
+            width: parent.width
+            height: Math.max(parent.height, Theme.androidMinTouchTarget)
+
+            property real startHeight: 0
+
+            DragHandler {
+                id: splitDrag
+                target: null
+                xAxis.enabled: false
+                onActiveChanged: {
+                    if (active)
+                        parent.startHeight = slot.height
+                    else if (root.userFraction >= 0)
+                        LayoutMemory.setLayoutNumber(root.splitKey, root.userFraction)
+                }
+                onTranslationChanged: {
+                    if (!active)
+                        return
+                    const minPreview = Theme.androidPreviewTransportHeight + 96
+                    const minControls = 160
+                    const h = Math.max(minPreview, Math.min(root.splitSpan - minControls,
+                                                            parent.startHeight + translation.y))
+                    root.userFraction = h / root.splitSpan
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                cursorShape: Qt.SplitVCursor
+            }
+        }
     }
 
     AndroidClipRangeBar {
         id: rangeBar
-        anchors.top: slot.bottom
+        anchors.top: splitHandle.bottom
         anchors.left: slot.left
         anchors.right: slot.right
         height: visible ? implicitHeight : 0
@@ -190,7 +258,7 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width
                 height: parent.height - Theme.spacingSm
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: Theme.c.androidToolPage.actionBackground
             }
 
@@ -230,7 +298,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: Theme.androidBottomRailHeight + root.safeBottom
+        height: Theme.androidTopBarHeight + root.safeBottom
 
         Rectangle {
             anchors.fill: parent
@@ -250,7 +318,7 @@ Item {
             anchors.right: parent.right
             anchors.leftMargin: SafeArea.margins.left + Theme.spacingMd
             anchors.rightMargin: SafeArea.margins.right + Theme.spacingMd
-            height: Theme.androidBottomRailHeight
+            height: Theme.androidTopBarHeight
 
             IconButton {
                 anchors.left: parent.left

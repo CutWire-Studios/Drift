@@ -34,7 +34,7 @@ Rectangle {
 
     radius: Theme.radiusMd
     color: Theme.panelSecondaryBg
-    border.width: 1
+    border.width: Theme.c.designerSlot.borderWidth
     border.color: Theme.panelBorder
     clip: true
 
@@ -150,8 +150,8 @@ Rectangle {
     Rectangle {
         id: indicator
         visible: root.hovered && root.dragAllowed
-        color: Qt.alpha(Theme.accent, 0.35)
-        border.width: 2
+        color: Qt.alpha(Theme.c.designerSlot.indicator, Theme.c.designerSlot.indicatorOpacity)
+        border.width: Theme.c.designerSlot.indicatorBorderWidth
         border.color: Theme.accent
         radius: Theme.radiusSm
         x: root.zone === "right" ? root.width / 2 : 0

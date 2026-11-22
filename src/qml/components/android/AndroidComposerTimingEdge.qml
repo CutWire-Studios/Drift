@@ -24,16 +24,19 @@ Column {
 
     Row {
         IconButton {
+            buttonSize: Theme.androidMinTouchTarget
             glyph: Theme.icons.chevronLeft
             tooltip: qsTr("Back one frame")
             onClicked: group.nudge(group.modelData.edge, -1)
         }
         IconButton {
+            buttonSize: Theme.androidMinTouchTarget
             glyph: Theme.icons.chevronRight
             tooltip: qsTr("Forward one frame")
             onClicked: group.nudge(group.modelData.edge, 1)
         }
         IconButton {
+            buttonSize: Theme.androidMinTouchTarget
             glyph: group.modelData.glyph
             tooltip: group.modelData.tip
             enabled: group.canSetPlayhead

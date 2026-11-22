@@ -7,6 +7,8 @@ Column {
     id: root
     required property var modelData
     required property real cardSize
+    // Set by the phone's add page: tap adds, hold opens the card menu.
+    property bool pickerMode: false
     signal added()
     width: cardSize
     spacing: Theme.spacingSm
@@ -26,6 +28,7 @@ Column {
         AssetDragSource {
             id: packDrag
             hasContextMenu: true
+            pickerMode: root.pickerMode
             onContextMenuRequested: cardMenu.popup()
             anchors.fill: parent
             kind: "textStyle"
@@ -44,6 +47,7 @@ Column {
         }
 
         AssetQuickAddButton {
+            visible: !root.pickerMode
             z: 5
             anchors.right: parent.right
             anchors.bottom: parent.bottom

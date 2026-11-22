@@ -470,10 +470,6 @@
         <translation>%1 সামঞ্জস্য করুন</translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation>রিসেট করুন</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>%1 রিসেট করুন</translation>
     </message>
@@ -515,6 +511,10 @@
     <message>
         <source>Fade curve</source>
         <translation>ফেড কার্ভ</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished">কার্ভ</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -627,14 +627,6 @@
         <translation>টেক্সট শৈলী</translation>
     </message>
     <message>
-        <source>Text settings</source>
-        <translation>টেক্সট সেটিংস</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>টেক্সট অ্যানিমেশন</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>সাবটাইটেল</translation>
     </message>
@@ -692,14 +684,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>বিরতি দিন</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>চালান</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>সময় বদলান</translation>
@@ -809,6 +793,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">ক্রপ ক্যানভাস</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>রিসেট করুন</translation>
     </message>
@@ -824,20 +812,16 @@
 <context>
     <name>AndroidCropPage</name>
     <message>
-        <source>Free</source>
-        <translation>মুক্ত</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>আসল</translation>
-    </message>
-    <message>
         <source>Clip</source>
         <translation>ক্লিপ</translation>
     </message>
     <message>
         <source>Video</source>
         <translation>ভিডিও</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished">সোজা করুন</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -929,18 +913,6 @@
         <translation>টেক্সট যোগ করুন</translation>
     </message>
     <message>
-        <source>Text style</source>
-        <translation>টেক্সট শৈলী</translation>
-    </message>
-    <message>
-        <source>Text settings</source>
-        <translation>টেক্সট সেটিংস</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>টেক্সট অ্যানিমেশন</translation>
-    </message>
-    <message>
         <source>Animation</source>
         <translation>অ্যানিমেশন</translation>
     </message>
@@ -1025,12 +997,16 @@
         <translation>আপনার টাইমলাইন খালি</translation>
     </message>
     <message>
-        <source>Import media or open the Media library to start editing.</source>
-        <translation>মিডিয়া ইমপোর্ট করুন বা সম্পাদনা শুরু করতে মিডিয়া লাইব্রেরি খুলুন.</translation>
+        <source>Clips you add appear here as layers.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open Media</source>
-        <translation>মিডিয়া খুলুন</translation>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">এখানে একটি নতুন ফোল্ডার তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">একটি খালি টাইমলাইন তৈরি করুন এবং এটি খুলুন</translation>
     </message>
 </context>
 <context>
@@ -1154,6 +1130,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>এখনও কিছু নেই — সংরক্ষণ করা প্রকল্পগুলো এই তালিকায় দেখা যাবে.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1358,6 +1341,41 @@
     <message>
         <source>Marketplace</source>
         <translation>মার্কেটপ্লেস</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMaskPage</name>
+    <message>
+        <source>Rectangle</source>
+        <translation type="unfinished">আয়তক্ষেত্র</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">উপবৃত্তাকার</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">পলিগন</translation>
+    </message>
+    <message>
+        <source>Brush</source>
+        <translation type="unfinished">ব্রাশ</translation>
+    </message>
+    <message>
+        <source>AI select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track</source>
+        <translation type="unfinished">ট্র্যাক</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">সম্পাদনা</translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1837,6 +1855,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidMotionPage</name>
+    <message>
+        <source>Not an animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion settings apply to Lottie and SVG clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
@@ -1869,6 +1898,18 @@
 <context>
     <name>AndroidPreview</name>
     <message>
+        <source>No media yet</source>
+        <translation type="unfinished">এখনো কোনো মিডিয়া নেই</translation>
+    </message>
+    <message>
+        <source>Add a video, photo or audio file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Seek</source>
         <translation>সময় বদলান</translation>
     </message>
@@ -1898,6 +1939,14 @@
     <message>
         <source>Quality: %1</source>
         <translation>গুণমান: %1</translation>
+    </message>
+    <message>
+        <source>Hardware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Guides</source>
@@ -2002,8 +2051,8 @@
         <translation>ভিডিওর আকার ক্রপ করুন</translation>
     </message>
     <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>যা অন্তর্ভুক্ত রয়েছে তা পরিবর্তন করতে পূর্বরূপের প্রান্তগুলি টেনে আনুন।</translation>
+        <source>Trim the frame to a smaller area</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -2020,6 +2069,14 @@
     <message>
         <source>Sync and switch between angles</source>
         <translation>সিঙ্ক করুন এবং কোণগুলির মধ্যে স্যুইচ করুন।</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">বিজ্ঞপ্তি</translation>
+    </message>
+    <message>
+        <source>Recent messages and finished jobs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -2159,10 +2216,10 @@
     </message>
 </context>
 <context>
-    <name>AndroidSpeedPage</name>
+    <name>AndroidSliderRow</name>
     <message>
-        <source>Speed curve</source>
-        <translation>স্পিড কার্ভ</translation>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
     </message>
 </context>
 <context>
@@ -2227,10 +2284,30 @@
     </message>
 </context>
 <context>
-    <name>AndroidTextPage</name>
+    <name>AndroidTextTabs</name>
     <message>
-        <source>Edit text</source>
-        <translation>টেক্সট সম্পাদনা করুন</translation>
+        <source>Font</source>
+        <translation type="unfinished">ফন্ট</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">স্টাইল</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">অ্যানিমেশন</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation type="unfinished">লেআউট</translation>
+    </message>
+    <message>
+        <source>Tap to type text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2395,8 +2472,24 @@
         <translation>ইন</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished">শুরুর অংশ ছাঁটুন</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>আউট</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished">শেষের অংশ ছাঁটুন</translation>
+    </message>
+    <message>
+        <source>%1 one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame later</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2457,31 +2550,6 @@
     <message>
         <source>Untitled</source>
         <translation>শিরোনামহীন</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>%1 নির্বাচন করুন</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
     </message>
 </context>
 <context>
@@ -2965,6 +3033,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2989,7 +3073,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Decrease brush hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase brush hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Brush: switch between paint and erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pen tool: add points to a path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert point between corner and smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point without keeping the curve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4195,6 +4299,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>ক্লিপ ঘোরান</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -6092,6 +6200,14 @@
         <source>Remove from history</source>
         <translation>ইতিহাস থেকে সরান</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">অনুসন্ধান করুন</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -6768,6 +6884,10 @@
         <source>Remove audio effect</source>
         <translation>অডিও ইফেক্ট সরান</translation>
     </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">আরও</translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectPresetCard</name>
@@ -6819,6 +6939,10 @@
         <translation>এখনো কোনো অডিও ইফেক্ট নেই</translation>
     </message>
     <message>
+        <source>Tap Browse audio effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
         <translation>এই ক্লিপে অডিও এফএক্স থেকে একটি প্রিসেট টেনে আনুন, অথবা একটি প্রিসেট কার্ডে ক্লিক করুন.</translation>
     </message>
@@ -6827,12 +6951,20 @@
         <translation>অডিও ইফেক্ট ব্রাউজ করুন</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>একটি সময়ে সরান, একটি মান সেট করুন, তারপর একটি কীফ্রেম যুক্ত করতে হীরাতে ক্লিক করুন। অটো কীফ্রেম চালু থাকলে, একটি স্লাইডার টেনে আনলে সেগুলিও তৈরি হয়.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>অটো কীফ্রেম</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effect settings</source>
@@ -8174,6 +8306,29 @@
     </message>
 </context>
 <context>
+    <name>BrushSideSliders</name>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">আকার</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">অস্বচ্ছতা</translation>
+    </message>
+    <message>
+        <source>Brush size</source>
+        <translation type="unfinished">ব্রাশের আকার</translation>
+    </message>
+    <message>
+        <source>Brush opacity</source>
+        <translation type="unfinished">ব্রাশের অপাসিটি</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <translation type="unfinished">%1 %</translation>
+    </message>
+</context>
+<context>
     <name>Camera3dPanel</name>
     <message>
         <source>Camera</source>
@@ -8363,6 +8518,29 @@
     <message>
         <source>Bounce</source>
         <translation>বাউন্স</translation>
+    </message>
+</context>
+<context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">ক্লিপ ক্রপ করুন</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">সম্পন্ন</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8973,7 +9151,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">ক্রপ ক্যানভাস</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>ফিট ভিউ</translation>
@@ -9008,6 +9205,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>প্যান করতে মাঝখানে টেনে আনুন</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">মুক্ত</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">আসল</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9053,8 +9265,12 @@
         <translation>In %1 → Out %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>বিন্দু যোগ করতে ক্লিক করুন। সরাতে টেনে আনুন। সরাতে ডাবল ক্লিক করুন বা টেনে বাইরে নিয়ে যান।</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9093,6 +9309,40 @@
     <message>
         <source>Bezier</source>
         <translation>বেজিয়ার</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">মুছুন</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">মসৃণ</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">সম্পন্ন</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">কার্ভ সম্পাদনা করুন</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10290,6 +10540,18 @@
         <translation>অনুসন্ধান ইফেক্ট</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">আরও</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">অ্যাডজাস্টমেন্ট লেয়ার যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>সমন্বয় স্তর</translation>
     </message>
@@ -10609,12 +10871,20 @@
 <context>
     <name>EffectsAutoKeyHint</name>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>একটি সময়ে সরান, একটি মান সেট করুন, তারপর একটি কীফ্রেম যুক্ত করতে হীরাতে ক্লিক করুন। অটো কীফ্রেম চালু থাকলে, একটি স্লাইডার টেনে আনলে সেগুলিও তৈরি হয়.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>অটো কীফ্রেম</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10754,6 +11024,10 @@
         <translation>ইফেক্ট নিচে সরান</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">আরও</translation>
+    </message>
+    <message>
         <source>Disable effect</source>
         <translation>ইফেক্ট নিষ্ক্রিয় করুন</translation>
     </message>
@@ -10859,6 +11133,10 @@
     <message>
         <source>No effects yet</source>
         <translation>এখনও কোন ইফেক্ট নেই</translation>
+    </message>
+    <message>
+        <source>Tap Browse effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
@@ -11171,6 +11449,33 @@
     </message>
 </context>
 <context>
+    <name>ExportDialogSizeEstimate</name>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished">%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
+    </message>
+    <message>
+        <source>Estimated size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate — varies with content</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ExportDialogVideoSection</name>
     <message>
         <source>Saves what you see in the preview. Pick a size — the picture shape stays the same.</source>
@@ -11183,6 +11488,10 @@
     <message>
         <source>%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2</source>
+        <translation type="unfinished">%1×%2</translation>
     </message>
     <message>
         <source>Choose layout…</source>
@@ -11221,6 +11530,10 @@
         <translation>fps</translation>
     </message>
     <message>
+        <source>Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn&apos;t, frames repeat.</source>
         <translation>প্রকল্পের হারের উপরে এক্সপোর্ট করা সোর্স ফুটেজ থেকে অতিরিক্ত ফ্রেম টেনে নেয় যেখানে সেগুলি রয়েছে — এটিই ধীরগতির ক্লিপগুলিকে মসৃণ দেখায়। যেখানে এটা না, ফ্রেম পুনরাবৃত্তি.</translation>
     </message>
@@ -11243,6 +11556,10 @@
     <message>
         <source>Constant Quality</source>
         <translation>স্থির মান</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">মান</translation>
     </message>
     <message>
         <source>Bitrate</source>
@@ -12008,12 +12325,16 @@
         <translation>ইজ আউট</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>কিউবিক আকার দিতে দুটি হ্যান্ডেল টেনে আনুন। প্রান্তগুলি পিনযুক্ত থাকে, এবং হ্যান্ডলগুলি বাক্সের ভিতরে রাখা হয় যাতে বক্ররেখাটি নিজের উপর আবার ভাঁজ করতে না পারে.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>র‍্যাম্পের আকার দিতে মাঝের বিন্দুগুলো টেনে আনুন (প্রান্তগুলো স্থির থাকে)। একটি বিন্দু যোগ করতে ডাবল ক্লিক করুন; Delete চাপলে নির্বাচনটি মুছে যাবে।</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">কার্ভ সম্পাদনা করুন</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -12683,6 +13004,10 @@
         <translation>সোজা করুন</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>এ শুরু হয়</translation>
     </message>
@@ -13015,6 +13340,10 @@
     <message>
         <source>Release to remove</source>
         <translation>সরাতে রিলিজ</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -13644,10 +13973,6 @@
         <translation>কীফ্রেম সাফ করা হয়েছে</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>কীফ্রেম সামান্য সরান</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>কীফ্রেম সরান</translation>
     </message>
@@ -13798,8 +14123,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
+        <source>No keyframes on this clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (keyframes off)</source>
@@ -13902,13 +14227,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>কীফ্রেম সরান</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -13935,10 +14253,29 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%nটি কী</numerusform>
+            <numerusform>%nটি কী</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">কীফ্রেম সরান</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
+        <translation type="unfinished">কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">কীফ্রেম প্রসারিত করুন</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">কীফ্রেম সামান্য সরান</translation>
     </message>
 </context>
 <context>
@@ -13985,31 +14322,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>কীফ্রেম সরান</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>কীফ্রেম বক্ররেখা সম্পাদনা করুন</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>কীফ্রেম সরান</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%nটি কী</numerusform>
-            <numerusform>%nটি কী</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -14038,13 +14350,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>এই ক্লিপের অ্যানিমেট করার মতো কোনো প্রোপার্টি নেই</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>কীফ্রেম প্রসারিত করুন</translation>
     </message>
 </context>
 <context>
@@ -14221,6 +14526,10 @@
     <message>
         <source>Masking</source>
         <translation type="unfinished">মাস্কিং</translation>
+    </message>
+    <message>
+        <source>Path editing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Tracking</source>
@@ -15380,6 +15689,22 @@
 <context>
     <name>MaskAiOverlay</name>
     <message>
+        <source>Tap the object to select it. Switch to Exclude to mark what to leave out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click the object to select it. Right-click, Alt-click or X to exclude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add points to refine, then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically. Press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking object… %1%</source>
         <translation>অবজেক্ট ট্র্যাক করা হচ্ছে… %1%</translation>
     </message>
@@ -15396,51 +15721,59 @@
         <translation>নির্বাচিত ক্লিপের ওপর প্লেহেড নিয়ে যান</translation>
     </message>
     <message>
-        <source>Click the object to select it · Right-click or Ctrl-click to exclude</source>
-        <translation>অবজেক্টটি নির্বাচন করতে ক্লিক করুন · বাদ দিতে রাইট-ক্লিক বা Ctrl-ক্লিক করুন</translation>
-    </message>
-    <message>
-        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
-        <translation>পরিমার্জিত করতে পয়েন্ট যোগ করুন · তারপর মাস্কিং প্যানেলে “পুরো ক্লিপ জুড়ে কাট আউট করুন”-এ চাপুন</translation>
-    </message>
-    <message>
         <source>Install a cutout model in the Masking panel first</source>
         <translation>প্রথমে মাস্কিং প্যানেলে একটি কাটআউট মডেল ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
-        <translation>মানুষ স্বয়ংক্রিয়ভাবে শনাক্ত করা হয় · মাস্কিং প্যানেলে “মানুষ কাট আউট করুন”-এ চাপুন</translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>%1 %</source>
-        <translation>%1 %</translation>
-    </message>
-    <message>
-        <source>Drag to draw an outline, release to fill it · Right-drag or Alt to subtract</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click along an edge to place points · Right-click or Alt to subtract</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 points · Click the first point or Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click to select a region of similar colour · Shift adds, Alt or right-click subtracts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
-        <translation>যোগ করতে আঁকুন · মুছতে রাইট-ড্র্যাগ বা %1 · আকার পরিবর্তন করতে [ ] বা Shift-ড্র্যাগ · জুম করতে Ctrl+স্ক্রোল</translation>
-    </message>
-    <message>
         <source>Move the playhead over the selected clip</source>
         <translation>নির্বাচিত ক্লিপের ওপর প্লেহেড নিয়ে যান</translation>
+    </message>
+    <message>
+        <source>Drag to draw an outline, release to fill it. Right-drag or Alt to subtract.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge to place points. Right-click or Alt to subtract.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 points. Click the first point or Enter to close, Backspace to undo, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to select a region of similar colour. Shift adds, Alt or right-click subtracts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint with one finger, or switch to Navigate to pan. Two fingers always zoom and pan.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add. Right-drag, Alt or %1 to subtract. [ ] sizes, Shift+[ ] sets hardness. Shift-drag or Alt+right-drag resizes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size %1 %   Hardness %2 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished">পেইন্ট</translation>
+    </message>
+    <message>
+        <source>One finger paints. Two fingers always zoom and pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One finger pans the preview. A stylus still paints</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a video or image clip to paint a mask</source>
@@ -15458,16 +15791,12 @@
         <translation>নির্বাচিত ক্লিপের ওপর প্লেহেড নিয়ে যান</translation>
     </message>
     <message>
-        <source>Click to place points. Click the first point or press Enter to close.</source>
-        <translation>পয়েন্ট বসাতে ক্লিক করুন। বন্ধ করতে প্রথম পয়েন্টে ক্লিক করুন বা Enter টিপুন।</translation>
-    </message>
-    <message>
-        <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation>%1টি পয়েন্ট · বন্ধ করতে Enter · পূর্বাবস্থায় আনতে Backspace · বাতিল করতে Esc</translation>
-    </message>
-    <message>
         <source>Drawing replaces this layer&apos;s mask</source>
         <translation>আঁকলে এই লেয়ারের মাস্ক প্রতিস্থাপিত হবে</translation>
+    </message>
+    <message>
+        <source>Drag on the picture to draw</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
@@ -15482,6 +15811,25 @@
     </message>
 </context>
 <context>
+    <name>MaskModeChips</name>
+    <message>
+        <source>Include</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to the mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take away from the mask. Alt or right-drag does this for one stroke</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MaskOverlay</name>
     <message>
         <source>Unlock aspect ratio</source>
@@ -15490,14 +15838,6 @@
     <message>
         <source>Lock aspect ratio</source>
         <translation>প্রস্থ ও উচ্চতার অনুপাত লক করুন</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation>পুনরায় আকার দিতে বিন্দুগুলো টানুন · একটি বিন্দু যোগ করতে কিনারায় ○ ট্যাপ করুন · মুছতে বিন্দু চেপে ধরে রাখুন</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation>পুনরায় আকার দিতে বিন্দুগুলো টানুন · একটি বিন্দু যোগ করতে কিনারায় ○ ক্লিক করুন · মুছতে বিন্দুতে রাইট-ক্লিক করুন</translation>
     </message>
 </context>
 <context>
@@ -15524,6 +15864,28 @@
     <message>
         <source>Feather</source>
         <translation>পালক</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayResizeGrip</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">সম্পাদনা %1</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRotateHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">সম্পাদনা %1</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
     </message>
 </context>
 <context>
@@ -15558,6 +15920,18 @@
 </context>
 <context>
     <name>MaskingController</name>
+    <message>
+        <source>Hard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detail</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>মাস্ক হিসেবে ব্যবহার করুন</translation>
@@ -15890,6 +16264,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 brush: %2 % size, %3 % hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Size</source>
         <translation>আকার</translation>
     </message>
@@ -15912,6 +16290,14 @@
     <message>
         <source>Brush opacity</source>
         <translation>ব্রাশের অপাসিটি</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation type="unfinished">স্মুথিং</translation>
+    </message>
+    <message>
+        <source>Brush smoothing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paint</source>
@@ -16949,6 +17335,18 @@
 <context>
     <name>MediaAssetsViewToolbar</name>
     <message>
+        <source>Switch to list view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Grid view</source>
         <translation>গ্রিড ভিউ</translation>
     </message>
@@ -17980,6 +18378,14 @@
         <source>No notifications yet.</source>
         <translation>এখনও কোনো বিজ্ঞপ্তি নেই।</translation>
     </message>
+    <message>
+        <source>No notifications yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages about exports, downloads and errors show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
@@ -18235,6 +18641,157 @@
     <message>
         <source>Video Effects (none)</source>
         <translation>ভিডিও ইফেক্ট (কোনটিই নয়)</translation>
+    </message>
+</context>
+<context>
+    <name>PathActionChips</name>
+    <message>
+        <source>Pen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">সম্পন্ন</translation>
+    </message>
+</context>
+<context>
+    <name>PathEditSession</name>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">পয়েন্ট যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Convert point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">মুছুন পয়েন্ট</translation>
+    </message>
+    <message>
+        <source>Change point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove point</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathEditor</name>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap for a corner point, drag for a smooth one. Tap the first point to close.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click or drag to extend the path. Enter or Esc ends it, Backspace removes the last point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Tap an edge to add a point, hold a point for more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Click an edge to add a point, Alt-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete heals.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished">নির্বাচিত ক্লিপের ওপর প্লেহেড নিয়ে যান</translation>
+    </message>
+</context>
+<context>
+    <name>PathPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">মুছুন</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">মসৃণ</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Heal</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathPointModeRow</name>
+    <message>
+        <source>Point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mirrored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aligned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">মুক্ত</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">মসৃণ</translation>
     </message>
 </context>
 <context>
@@ -19979,6 +20536,10 @@ If playback stutters, try another.</source>
         <translation>কাস্টম</translation>
     </message>
     <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 রিসেট করুন</translation>
+    </message>
+    <message>
         <source>Easing: %1 — click to change</source>
         <translation>ইজিং: %1 — পরিবর্তন করতে ক্লিক করুন</translation>
     </message>
@@ -20335,6 +20896,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Balanced</source>
         <translation>ব্যালেন্সড</translation>
+    </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">In %1 → Out %2</translation>
     </message>
 </context>
 <context>
@@ -23621,6 +24190,10 @@ If playback stutters, try another.</source>
         <translation>স্তর দেখান</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">আরও</translation>
+    </message>
+    <message>
         <source>Duplicate layer</source>
         <translation>ডুপ্লিকেট স্তর</translation>
     </message>
@@ -24143,64 +24716,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Tail size</source>
         <translation>লেজের আকার</translation>
-    </message>
-</context>
-<context>
-    <name>ShapePathHintBar</name>
-    <message>
-        <source>Add points</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep drawing from the selected end of the path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove the segment joining the last point to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Join the last point back to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">সম্পন্ন</translation>
-    </message>
-</context>
-<context>
-    <name>ShapePathOverlay</name>
-    <message>
-        <source>Move the playhead over the selected clip</source>
-        <translation type="unfinished">নির্বাচিত ক্লিপের ওপর প্লেহেড নিয়ে যান</translation>
-    </message>
-    <message>
-        <source>Drawing a path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Editing path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag points and handles. Click a segment to add a point, double-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete removes a point.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25063,6 +25578,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Shot %1</source>
         <translation>শট %1</translation>
+    </message>
+</context>
+<context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
     </message>
 </context>
 <context>
@@ -25999,6 +26521,10 @@ If playback stutters, try another.</source>
         <translation>রিসেট করুন</translation>
     </message>
     <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
         <translation>একটি নতুন ট্র্যাকে একটি অনুলিপি হিসাবে প্রয়োগ করা হয়েছে — মূল ক্লিপটি একা রাখা হয়েছে.</translation>
     </message>
@@ -26039,6 +26565,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Split the clip to speed up only part of it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ramp</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26251,12 +26781,28 @@ If playback stutters, try another.</source>
         <translation>মসৃণ ক্যামেরা শেক। Drift একবার ক্লিপটি স্ক্যান করে, তারপরে মিডিয়া বিনে একটি স্থিতিশীল অনুলিপি রেন্ডার করে এবং ক্লিপটিকে এতে স্যুইচ করে। আপনি প্রয়োগ না করা পর্যন্ত মসৃণতা বা ট্রাইপড পরিবর্তন করা প্রিভিউ আপডেট করে না.</translation>
     </message>
     <message>
+        <source>Smooths camera shake with position keyframes. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize</source>
         <translation>স্ট্যাবিলাইজ করুন</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>একটি স্থিতিশীল অনুলিপি রেন্ডার করুন, বা স্পার্স ট্রান্সফর্ম কী দিয়ে ক্লিপটিকে অ্যানিমেট করুন</translation>
+    </message>
+    <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>
@@ -26524,6 +27070,10 @@ If playback stutters, try another.</source>
         <translation>কোন স্টিকার প্যাক ইনস্টল করা নেই</translation>
     </message>
     <message>
+        <source>Install the emoji pack, or import your own images with the upload button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji pack to add stickers.</source>
         <translation>স্টিকার যোগ করতে ইমোজি প্যাক ইনস্টল করুন.</translation>
     </message>
@@ -26670,6 +27220,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">সাবটাইটেল সময় সামঞ্জস্য করুন</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -26810,6 +27371,18 @@ If playback stutters, try another.</source>
         <translation>WebVTT সাবটাইটেল (*.vtt)</translation>
     </message>
     <message>
+        <source>Import and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Timestamps from the start of the video</source>
         <translation>ভিডিওর শুরু থেকে টাইমস্ট্যাম্প</translation>
     </message>
@@ -26855,6 +27428,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
         <translation>একটি সাবটাইটেল যোগ করতে এই ক্লিপের ভিতরে একটি সময়ে সরান।</translation>
+    </message>
+    <message>
+        <source>Add subtitle at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead into this clip to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -27550,6 +28131,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>টেক্সট শৈলী এক্সপোর্ট করুন</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -28788,6 +29377,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ট্রান্সফর্ম</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -29042,6 +29635,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjust fade</source>
         <translation>ফেইড সামঞ্জস্য করুন</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 সেকেন্ড</translation>
     </message>
     <message>
         <source>Fade out %1s</source>
@@ -29694,6 +30291,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -29706,6 +30314,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag to trim the end</source>
         <translation>শেষ ট্রিম করতে টেনে আনুন</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -29763,6 +30375,44 @@ If playback stutters, try another.</source>
     <message>
         <source>Dismiss</source>
         <translation>খারিজ</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Constrain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30169,6 +30819,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TrackHeaderRow</name>
     <message>
         <source>Turn transform on</source>
@@ -30213,8 +30874,52 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Nudge tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers need a video clip</source>
         <translation>ট্র্যাকারের জন্য একটি ভিডিও ক্লিপ প্রয়োজন</translation>
+    </message>
+    <message>
+        <source>Move tracking outline corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize pattern box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize search box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tracking point</source>
+        <translation type="unfinished">ট্র্যাকিং পয়েন্ট সরান</translation>
+    </message>
+    <message>
+        <source>Corner %1   X %2 %   Y %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pattern %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X %1 %   Y %2 %   Box %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confidence %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tracker drives other clips. Remove it from the Tracking panel to choose what happens to their keys.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -30229,12 +30934,28 @@ If playback stutters, try another.</source>
         <translation>প্রিভিউতে ট্র্যাক করার বৈশিষ্ট্যটিতে ক্লিক করুন।</translation>
     </message>
     <message>
+        <source>Tap the feature to track on the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to add to this tracker.</source>
         <translation>এই ট্র্যাকারে যোগ করার জন্য বৈশিষ্ট্যটিতে ক্লিক করুন।</translation>
     </message>
     <message>
+        <source>Tap the feature to add to this tracker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object the clip should follow.</source>
         <translation>ক্লিপটি যে বস্তু অনুসরণ করবে সেটিতে ক্লিক করুন।</translation>
+    </message>
+    <message>
+        <source>Tap the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 corners · tap Done when you have four</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -30245,12 +30966,68 @@ If playback stutters, try another.</source>
         <translation>%1টি কোণ · শেষ করতে Enter · পূর্বাবস্থায় আনতে Backspace · বাতিল করতে Esc</translation>
     </message>
     <message>
+        <source>Pick Point or Planar, then tap the feature to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a marker to correct it, then track from this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use Point or Planar in the Tracking panel to start a track</source>
         <translation>ট্র্যাক শুরু করতে ট্র্যাকিং প্যানেলে পয়েন্ট বা প্ল্যানার ব্যবহার করুন</translation>
     </message>
     <message>
-        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation>সংশোধন করতে একটি মার্কার টানুন · ট্র্যাক করতে ট্র্যাকিং প্যানেলে ◀ ▶</translation>
+        <source>Drag a marker to correct it · Right-click to re-track from here · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tracker</source>
+        <translation type="unfinished">ট্র্যাকার মুছুন</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished">পয়েন্ট</translation>
+    </message>
+    <message>
+        <source>Tap the feature to follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar</source>
+        <translation type="unfinished">প্ল্যানার</translation>
+    </message>
+    <message>
+        <source>Tap the corners of a flat surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">সম্পন্ন</translation>
+    </message>
+    <message>
+        <source>Track back to the start</source>
+        <translation type="unfinished">শুরু পর্যন্ত পেছনে ট্র্যাক করুন</translation>
+    </message>
+    <message>
+        <source>Track one frame back</source>
+        <translation type="unfinished">এক ফ্রেম পেছনে ট্র্যাক করুন</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">এক ফ্রেম সামনে ট্র্যাক করুন</translation>
+    </message>
+    <message>
+        <source>Track to the end</source>
+        <translation type="unfinished">শেষ পর্যন্ত ট্র্যাক করুন</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>
@@ -30945,6 +31722,94 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">ক্লিপ সরান</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">ক্লিপের আকার পরিবর্তন করুন</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">ক্লিপ ঘোরান</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · %nটি ক্লিপ</numerusform>
+            <numerusform>%1 · %nটি ক্লিপ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">ট্রান্সফর্ম</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGizmo</name>
+    <message>
+        <source>%1 %2 / %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rot %1 %2°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1 %2×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">স্থানীয়</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished">ওয়ার্ল্ড</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -30965,6 +31830,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Select</source>
         <translation>নির্বাচন করুন</translation>
+    </message>
+    <message>
+        <source>Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
@@ -31202,32 +32071,73 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
+        <source>Multi-select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">সরান</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">ঘোরান</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">স্কেল</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">স্থানীয়</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished">X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation type="unfinished">Y</translation>
+    </message>
+    <message>
+        <source>Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">মুক্ত</translation>
+    </message>
+    <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished">3D তে ক্লিপ সরান</translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished">3D তে ক্লিপ ঘোরান</translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">স্কেল ক্লিপ</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>%1 নির্বাচন করুন</translation>
+        <translation type="unfinished">%1 নির্বাচন করুন</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
+        <translation type="unfinished">ট্রান্সফর্ম</translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>এই ক্লিপটি সরানো ট্রান্সফর্ম স্তর নির্বাচন করুন (%1)</translation>
+        <translation type="unfinished">এই ক্লিপটি সরানো ট্রান্সফর্ম স্তর নির্বাচন করুন (%1)</translation>
     </message>
 </context>
 <context>
@@ -31242,6 +32152,10 @@ If playback stutters, try another.</source>
             <numerusform>%nটি ট্র্যাকের আওতায়</numerusform>
             <numerusform>%nটি ট্র্যাকের আওতায়</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">ট্রান্সফর্ম স্প্যান পরিবর্তন করুন</translation>
     </message>
 </context>
 <context>
@@ -31274,6 +32188,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
+        <source>Tap the + on the cut between two clips to add a transition.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation>দুটি ক্লিপের মধ্যে কাটের উপর হভার করুন এবং ট্রানজিশন যোগ করতে + ক্লিক করুন।</translation>
     </message>
@@ -31290,8 +32208,16 @@ If playback stutters, try another.</source>
         <translation>ট্রানজিশন যোগ করুন…</translation>
     </message>
     <message>
+        <source>Overlap transition. Tap the type to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
         <translation>ওভারল্যাপ ট্রানজিশন। এটি প্রতিস্থাপন করতে ট্রানজিশন থেকে অন্য ধরনের টেনে আনুন.</translation>
+    </message>
+    <message>
+        <source>Transition to the next clip. Scrub across the cut to preview it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>
@@ -31304,6 +32230,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>প্রকার</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>
@@ -32124,8 +33054,12 @@ If playback stutters, try another.</source>
         <translation>রোটেশন স্টেপ</translation>
     </message>
     <message>
-        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation>গিজমো ড্র্যাগ এই পদক্ষেপে সরে এবং ঘোরে; অবাধে সরানোর জন্য Ctrl ধরে রাখুন। 0 পদক্ষেপটি বন্ধ করে।</translation>
+        <source>Scale step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Navigation</source>
@@ -33040,6 +33974,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">Hue %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">In %1 → Out %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">পয়েন্ট যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">মুছুন পয়েন্ট</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">কার্ভ সম্পাদনা করুন</translation>
     </message>
 </context>
 <context>

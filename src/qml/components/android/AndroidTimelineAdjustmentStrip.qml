@@ -15,13 +15,11 @@ Item {
     property int trackIndex: modelData
 
     height: Theme.adjustmentLaneHeight
-    opacity: laneStrip.panel.tracks[trackIndex].hidden === true ? 0.4 : 1
+    opacity: laneStrip.panel.tracks[trackIndex]?.hidden === true ? 0.4 : 1
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(Theme.c.androidTimelineAdjustmentStrip.background.r,
-                       Theme.c.androidTimelineAdjustmentStrip.background.g,
-                       Theme.c.androidTimelineAdjustmentStrip.background.b, 0.12)
+        color: Qt.alpha(Theme.c.androidTimelineAdjustmentStrip.background, Theme.c.androidTimelineAdjustmentStrip.backgroundOpacity)
     }
 
     TimelineTrackArea {

@@ -18,7 +18,12 @@ Item {
     readonly property bool matches: query.length === 0
         || (title + " " + description + " " + keywords).toLowerCase().indexOf(query) >= 0
 
-    readonly property real contentHeight: stacked
+    // A wide control beside the text leaves it a sliver on a phone and the description runs to a dozen lines.
+    readonly property bool phoneStacked: !stacked && Theme.touchInput && Theme.compact
+                                         && controlHost.childrenRect.width > root.width * 0.4
+    readonly property bool isStacked: stacked || phoneStacked
+
+    readonly property real contentHeight: isStacked
         ? textColumn.height + Theme.spacingMd + controlHost.height
         : Math.max(textColumn.height, controlHost.height)
 
@@ -41,7 +46,7 @@ Item {
         id: textColumn
         x: 0
         y: Theme.spacingLg
-        width: root.stacked ? root.width : root.width - controlHost.width - Theme.spacingXl
+        width: root.isStacked ? root.width : root.width - controlHost.width - Theme.spacingXl
         spacing: Theme.spacingXs
 
         Text {
@@ -66,10 +71,10 @@ Item {
 
     Item {
         id: controlHost
-        x: root.stacked ? 0 : root.width - width
-        y: root.stacked ? textColumn.y + textColumn.height + Theme.spacingMd
+        x: root.isStacked ? 0 : root.width - width
+        y: root.isStacked ? textColumn.y + textColumn.height + Theme.spacingMd
                         : Theme.spacingLg + (root.contentHeight - height) / 2
-        width: root.stacked ? root.width : childrenRect.width
+        width: root.isStacked ? root.width : childrenRect.width
         height: childrenRect.height
     }
 

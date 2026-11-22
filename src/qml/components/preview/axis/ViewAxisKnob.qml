@@ -9,15 +9,16 @@ Rectangle {
     required property real tipX
     required property real tipY
     required property color ink
+    required property color negativeInk
     required property string letter
     required property string viewName
 
     width: knob.positive ? 18 : 12
     height: width
-    radius: width / 2
+    radius: Theme.radiusPill
     x: knob.tipX - width / 2
     y: knob.tipY - height / 2
-    color: knob.positive ? knob.ink : Qt.darker(knob.ink, 1.8)
+    color: knob.positive ? knob.ink : knob.negativeInk
     border.width: knobArea.containsMouse ? Theme.c.viewAxisKnob.borderWidthHover : 0
     border.color: Theme.c.viewAxisKnob.border
 

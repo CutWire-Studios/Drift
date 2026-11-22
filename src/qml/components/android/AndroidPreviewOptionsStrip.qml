@@ -10,8 +10,10 @@ Rectangle {
     property bool optionsOpen: false
     property bool viewMoved: false
     property real userZoom: 1
+    property bool view3d: false
 
     signal resetViewRequested()
+    signal view3dToggled()
 
     height: optionsFlow.height + Theme.spacingLg * 2
     color: Theme.c.androidPreviewOptionsStrip.background
@@ -22,12 +24,19 @@ Rectangle {
         NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
     }
 
-    Flow {
-        id: optionsFlow
+    Flickable {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: Theme.spacingLg
+        height: optionsFlow.height
+        contentWidth: optionsFlow.width
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
+
+    Row {
+        id: optionsFlow
         spacing: Theme.spacingMd
 
         // The zoom readout, and the way back to 100% — the same pair
@@ -74,9 +83,15 @@ Rectangle {
             readonly property int currentIndex:
                 Math.max(0, values.indexOf(EditorState.playback.decodeMode))
             visible: modes.length > 1
-            text: modes[currentIndex].label
+            text: values[currentIndex].startsWith("hw:") ? qsTr("Hardware") : modes[currentIndex].label
             onClicked: EditorState.playback.decodeMode =
                        values[(currentIndex + 1) % values.length]
+        }
+
+        ThemedChip {
+            selected: strip.view3d
+            text: qsTr("3D view")
+            onClicked: strip.view3dToggled()
         }
 
         ThemedChip {
@@ -84,5 +99,6 @@ Rectangle {
             text: qsTr("Guides")
             onClicked: EditorState.preview.guidesEnabled = !EditorState.preview.guidesEnabled
         }
+    }
     }
 }

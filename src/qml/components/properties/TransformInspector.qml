@@ -174,21 +174,37 @@ Item {
             }
 
             Text {
+                visible: !Theme.phone
                 width: parent.width
                 wrapMode: Text.WordWrap
-                text: qsTr("Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.")
+                text: Theme.touchInput ? qsTr("Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.")
+                                     : qsTr("Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.")
                 color: Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
             }
-
-            ThemedChip {
-                text: qsTr("Auto keyframes")
-                selected: EditorState.autoKeyEnabled
-                onClicked: EditorState.autoKeyEnabled = !EditorState.autoKeyEnabled
+            Row {
+                width: parent.width
+                spacing: Theme.spacingMd
+                ThemedChip {
+                    id: autoKeyChip
+                    text: qsTr("Auto keyframes")
+                    selected: EditorState.autoKeyEnabled
+                    onClicked: EditorState.autoKeyEnabled = !EditorState.autoKeyEnabled
+                }
+                Item {
+                    visible: Theme.phone
+                    width: parent.width - autoKeyChip.width - infoButton.width - parent.spacing * 2
+                    height: 1
+                }
+                AndroidInfoButton {
+                    id: infoButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    hint: qsTr("Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.")
+                }
             }
-
             Item {
+                visible: !Theme.phone
                 width: parent.width
                 height: posLinkButton.height
                 SearchAnchor {
@@ -201,19 +217,19 @@ Item {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.positionLinked ? qsTr("Position (px, linked)") : qsTr("Position (px)")
-                    color: Theme.c.transformInspector.foregroundMuted
+                    color: Theme.touchInput ? Theme.c.transformInspector.foreground : Theme.c.transformInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.weight: Font.Medium
                 }
 
                 IconButton {
                     id: posResetButton
                     anchors.right: posLinkButton.left
-                    anchors.rightMargin: 4
+                    anchors.rightMargin: Theme.touchInput ? 0 : 4
                     anchors.verticalCenter: parent.verticalCenter
-                    buttonSize: 24
-                    iconSize: 14
+                    buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+                    iconSize: Theme.touchInput ? Theme.iconSizeBase : 14
                     glyph: Theme.icons.reset
                     tooltip: qsTr("Reset position")
                     onClicked: EditorState.resetClipTransformGroup(
@@ -224,8 +240,8 @@ Item {
                     id: posLinkButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    buttonSize: 24
-                    iconSize: 14
+                    buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+                    iconSize: Theme.touchInput ? Theme.iconSizeBase : 14
                     glyph: root.positionLinked ? Theme.icons.linkTwo : Theme.icons.unlink
                     active: root.positionLinked
                     tooltip: root.positionLinked ? qsTr("Separate X and Y keyframes")
@@ -253,12 +269,21 @@ Item {
                 sliderFrom: -root.canvasW
                 sliderTo: root.canvasW * 2
                 unit: "px"
+                IconButton {
+                    glyph: root.positionLinked ? Theme.icons.linkTwo : Theme.icons.unlink
+                    active: root.positionLinked
+                    iconSize: Theme.iconSizeBase
+                    Accessible.name: root.positionLinked ? qsTr("Separate X and Y keyframes")
+                                                         : qsTr("Link X and Y keyframes and motion curves")
+                    onClicked: root.positionLinked = !root.positionLinked
+                }
             }
             PropertyKeyframeRow {
                 width: parent.width
                 propDef: root.propY
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.positionY && root.clipData.keyframes.positionY.points) || []
                 linkedPropKey: root.positionLinked ? "positionX" : ""
+                resetGroup: Theme.phone ? "position" : ""
                 useSlider: true
                 sliderFrom: -root.canvasH
                 sliderTo: root.canvasH * 2
@@ -274,6 +299,7 @@ Item {
             }
 
             Item {
+                visible: !(Theme.phone && root.sizeLinked)
                 width: parent.width
                 height: sizeLinkButton.height
                 SearchAnchor {
@@ -286,19 +312,29 @@ Item {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.sizeLinked ? qsTr("Scale") : qsTr("Size (px)")
-                    color: Theme.c.transformInspector.foregroundMuted
+                    color: Theme.touchInput ? Theme.c.transformInspector.foreground : Theme.c.transformInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.weight: Font.Medium
+                }
+
+                Text {
+                    visible: Theme.touchInput && root.sizeLinked
+                    anchors.right: sizeResetButton.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Math.round((scaleSliderPhone.pressed ? scaleSliderPhone.value : root.scaleAtPlayhead) * 100) + "%"
+                    color: Theme.c.transformInspector.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
                 }
 
                 IconButton {
                     id: sizeResetButton
                     anchors.right: sizeLinkButton.left
-                    anchors.rightMargin: 4
+                    anchors.rightMargin: Theme.touchInput ? 0 : 4
                     anchors.verticalCenter: parent.verticalCenter
-                    buttonSize: 24
-                    iconSize: 14
+                    buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+                    iconSize: Theme.touchInput ? Theme.iconSizeBase : 14
                     glyph: Theme.icons.reset
                     tooltip: qsTr("Reset size")
                     onClicked: EditorState.resetClipTransformGroup(
@@ -309,8 +345,8 @@ Item {
                     id: sizeLinkButton
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    buttonSize: 24
-                    iconSize: 14
+                    buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+                    iconSize: Theme.touchInput ? Theme.iconSizeBase : 14
                     glyph: root.sizeLinked ? Theme.icons.linkTwo : Theme.icons.unlink
                     active: root.sizeLinked
                     tooltip: root.sizeLinked ? qsTr("Edit width and height separately")
@@ -328,7 +364,7 @@ Item {
             }
 
             Row {
-                visible: root.sizeLinked
+                visible: root.sizeLinked && !Theme.touchInput
                 width: parent.width
                 spacing: 4
 
@@ -421,6 +457,133 @@ Item {
                 }
             }
 
+            Row {
+                visible: root.sizeLinked && Theme.touchInput
+                width: parent.width
+                spacing: 0
+
+                IconButton {
+                    visible: root.scaleKeyTimes.length > 0
+                    buttonSize: Theme.androidMinTouchTarget - Theme.spacingMd
+                    iconSize: Theme.iconSizeBase
+                    anchors.verticalCenter: parent.verticalCenter
+                    glyph: Theme.icons.chevronLeft
+                    enabled: root.hasPreviousScaleKey
+                    onClicked: root.moveToScaleKey(true)
+                    Accessible.name: qsTr("Previous scale keyframe")
+                }
+
+                IconButton {
+                    buttonSize: Theme.androidMinTouchTarget
+                    iconSize: Theme.iconSizeLg
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: root.widthKeyed !== root.heightKeyed ? 0.5 : 1
+                    glyph: root.widthKeyed && root.heightKeyed ? Theme.icons.diamondMinus : Theme.icons.diamondPlus
+                    active: root.widthKeyed && root.heightKeyed
+                    Accessible.name: active ? qsTr("Remove scale keyframe") : qsTr("Add scale keyframe")
+                    onClicked: {
+                        if (active)
+                            EditorState.keyframes.removeKeysAt(EditorState.selectedTrack, EditorState.selectedClip,
+                                                               ["scaleX", "scaleY"], EditorState.inspectorPlayheadSeconds)
+                        else
+                            EditorState.keyframes.addKeysAt(EditorState.selectedTrack, EditorState.selectedClip,
+                                                            ["scaleX", "scaleY"], EditorState.inspectorPlayheadSeconds)
+                    }
+                }
+
+                IconButton {
+                    visible: root.scaleKeyTimes.length > 0
+                    buttonSize: Theme.androidMinTouchTarget - Theme.spacingMd
+                    iconSize: Theme.iconSizeBase
+                    anchors.verticalCenter: parent.verticalCenter
+                    glyph: Theme.icons.chevronRight
+                    enabled: root.hasNextScaleKey
+                    onClicked: root.moveToScaleKey(false)
+                    Accessible.name: qsTr("Next scale keyframe")
+                }
+
+                Text {
+                    visible: Theme.phone
+                    width: visible ? Theme.phoneLabelWidth + 12 : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    leftPadding: 6
+                    text: qsTr("Scale")
+                    color: Theme.c.transformInspector.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                }
+                ThemedSlider {
+                    id: scaleSliderPhone
+                    lockWhilePlaying: true
+                    label: qsTr("Scale")
+                    width: parent.width - x - (clearScaleKeys.visible ? clearScaleKeys.width : 0)
+                           - (Theme.phone ? phoneScaleTail.width : 0)
+                    height: Theme.phone ? Theme.androidControlHeight : Theme.androidRowHeight
+                    anchors.verticalCenter: parent.verticalCenter
+                    from: 0.05
+                    to: 4
+                    valueFormatter: function (v) { return Math.round(v * 100) + "%" }
+                    Binding on value {
+                        when: !scaleSliderPhone.pressed
+                        value: root.scaleAtPlayhead
+                    }
+                    onPressedChanged: {
+                        if (pressed) {
+                            root.beginScaleDrag()
+                            EditorState.beginPreviewDrag(qsTr("Scale clip"))
+                        } else {
+                            EditorState.commitPreviewDrag()
+                        }
+                    }
+                    onMoved: root.applyScale(value)
+                }
+
+                Row {
+                    id: phoneScaleTail
+                    visible: Theme.phone
+                    width: visible ? implicitWidth : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 48
+                        horizontalAlignment: Text.AlignRight
+                        rightPadding: Theme.spacingSm
+                        text: Math.round((scaleSliderPhone.pressed ? scaleSliderPhone.value : root.scaleAtPlayhead) * 100) + "%"
+                        color: Theme.c.transformInspector.foreground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeSm
+                    }
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: Theme.icons.reset
+                        iconSize: Theme.iconSizeBase
+                        Accessible.name: qsTr("Reset size")
+                        onClicked: EditorState.resetClipTransformGroup(
+                                       EditorState.selectedTrack, EditorState.selectedClip, "size")
+                    }
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: Theme.icons.linkTwo
+                        active: true
+                        iconSize: Theme.iconSizeBase
+                        Accessible.name: qsTr("Edit width and height separately")
+                        onClicked: EditorState.sizeLinked = false
+                    }
+                }
+                IconButton {
+                    id: clearScaleKeys
+                    visible: root.scaleKeyTimes.length > 0
+                    buttonSize: Theme.androidMinTouchTarget - Theme.spacingMd
+                    iconSize: Theme.iconSizeBase
+                    anchors.verticalCenter: parent.verticalCenter
+                    glyph: Theme.icons.trash
+                    Accessible.name: qsTr("Clear all scale keyframes, keeping the current scale")
+                    onClicked: EditorState.keyframes.clearProperties(
+                                   EditorState.selectedTrack, EditorState.selectedClip,
+                                   ["scaleX", "scaleY"])
+                }
+            }
+
             PropertyKeyframeRow {
                 visible: !root.sizeLinked
                 width: parent.width
@@ -445,6 +608,7 @@ Item {
             }
 
             Item {
+                visible: !Theme.touchInput
                 width: parent.width
                 height: rotationResetButton.height
 
@@ -452,19 +616,19 @@ Item {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Opacity & rotation")
-                    color: Theme.c.transformInspector.foregroundMuted
+                    color: Theme.touchInput ? Theme.c.transformInspector.foreground : Theme.c.transformInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                     font.weight: Font.Medium
                 }
 
                 IconButton {
                     id: opacityResetButton
                     anchors.right: rotationResetButton.left
-                    anchors.rightMargin: 4
+                    anchors.rightMargin: Theme.touchInput ? 0 : 4
                     anchors.verticalCenter: parent.verticalCenter
-                    buttonSize: 24
-                    iconSize: 14
+                    buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+                    iconSize: Theme.touchInput ? Theme.iconSizeBase : 14
                     glyph: Theme.icons.reset
                     tooltip: qsTr("Reset opacity")
                     onClicked: EditorState.resetClipTransformGroup(
@@ -474,10 +638,10 @@ Item {
                 IconButton {
                     id: rotationResetButton
                     anchors.right: parent.right
-                    anchors.rightMargin: 4
+                    anchors.rightMargin: Theme.touchInput ? 0 : 4
                     anchors.verticalCenter: parent.verticalCenter
-                    buttonSize: 24
-                    iconSize: 14
+                    buttonSize: Theme.touchInput ? Theme.androidMinTouchTarget : 24
+                    iconSize: Theme.touchInput ? Theme.iconSizeBase : 14
                     glyph: Theme.icons.reset
                     tooltip: qsTr("Reset rotation")
                     onClicked: EditorState.resetClipTransformGroup(
@@ -495,6 +659,7 @@ Item {
                 id: transformOpacityRow
                 width: parent.width
                 propDef: root.propOpacity
+                resetGroup: "opacity"
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.opacity && root.clipData.keyframes.opacity.points) || []
                 useSlider: true
                 sliderFrom: 0
@@ -512,6 +677,7 @@ Item {
                 id: transformRotationRow
                 width: parent.width
                 propDef: root.propRotation
+                resetGroup: "rotation"
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotation && root.clipData.keyframes.rotation.points) || []
                 useSlider: true
                 sliderFrom: -180
@@ -521,9 +687,9 @@ Item {
 
             Text {
                 text: qsTr("Rotate 90°")
-                color: Theme.c.transformInspector.foregroundMuted
+                color: Theme.touchInput ? Theme.c.transformInspector.foreground : Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.weight: Font.Medium
             }
 
@@ -579,9 +745,9 @@ Item {
                     title: qsTr("Fix orientation")
                     keywords: "rotate sideways"
                 }
-                color: Theme.c.transformInspector.foregroundMuted
+                color: Theme.touchInput ? Theme.c.transformInspector.foreground : Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.weight: Font.Medium
             }
 
@@ -622,9 +788,9 @@ Item {
                     title: qsTr("Flip")
                     keywords: "mirror horizontal vertical"
                 }
-                color: Theme.c.transformInspector.foregroundMuted
+                color: Theme.touchInput ? Theme.c.transformInspector.foreground : Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: Theme.touchInput ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.weight: Font.Medium
             }
 

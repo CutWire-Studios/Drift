@@ -257,16 +257,56 @@ QVariantMap vectorSourceToMap(const drift::VectorSource &v, drift::TimeUs timeli
 namespace drift::appdetail {
 
 
+QVariantMap maskVertexToMap(const drift::ShapeVertex &v)
+{
+    return {{QStringLiteral("x"), v.p.x()},       {QStringLiteral("y"), v.p.y()},
+            {QStringLiteral("inX"), v.in.x()},    {QStringLiteral("inY"), v.in.y()},
+            {QStringLiteral("outX"), v.out.x()},  {QStringLiteral("outY"), v.out.y()},
+            {QStringLiteral("mode"), drift::tangentModeToString(v.mode)}};
+}
+
+drift::ShapeVertex maskVertexFromVariant(const QVariant &value)
+{
+    drift::ShapeVertex v;
+    if (value.typeId() == QMetaType::QVariantList || value.typeId() == QMetaType::QStringList) {
+        const QVariantList pair = value.toList();
+        if (pair.size() >= 2)
+            v.p = QPointF(pair.at(0).toDouble(), pair.at(1).toDouble());
+        return v;
+    }
+    const QVariantMap map = value.toMap();
+    const auto num = [&map](const char *key) { return map.value(QLatin1String(key)).toDouble(); };
+    v.p = QPointF(num("x"), num("y"));
+    v.in = QPointF(num("inX"), num("inY"));
+    v.out = QPointF(num("outX"), num("outY"));
+    v.mode = drift::tangentModeFromString(map.value(QStringLiteral("mode")).toString());
+    return v;
+}
+
+QVariantList maskVerticesToVariant(const QVector<drift::ShapeVertex> &vertices)
+{
+    QVariantList out;
+    out.reserve(vertices.size());
+    for (const drift::ShapeVertex &v : vertices)
+        out.append(maskVertexToMap(v));
+    return out;
+}
+
+QVector<drift::ShapeVertex> maskVerticesFromVariant(const QVariantList &list)
+{
+    QVector<drift::ShapeVertex> out;
+    out.reserve(list.size());
+    for (const QVariant &value : list)
+        out.append(maskVertexFromVariant(value));
+    return out;
+}
+
 QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart)
 {
     // {x, y} objects rather than [x, y] pairs: a Repeater delegate's `modelData` does not index
     // a nested array reliably, so a freeform's vertices came through as undefined and piled up in
     // the corner. Named fields are also what every other point-ish map in this file uses.
-    QVariantList points;
-    for (const QPointF &pt : m.points) {
-        points.append(QVariantMap{{QStringLiteral("x"), pt.x()},
-                                  {QStringLiteral("y"), pt.y()}});
-    }
+    const QVariantList points = maskVerticesToVariant(m.vertices);
 
     QVariantMap maskKeyframes;
     for (auto it = m.keyframes.constBegin(); it != m.keyframes.constEnd(); ++it) {

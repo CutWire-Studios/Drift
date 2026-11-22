@@ -66,6 +66,10 @@
 #include "ui/keyframes/KeyframeLanesItem.h"
 #include "ui/preview/BrushStrokeItem.h"
 #include "ui/preview/ToolCursor.h"
+#include "ui/manip/CurveGraphModel.h"
+#include "ui/manip/DragSession.h"
+#include "ui/manip/ManipQml.h"
+#include "ui/manip/StrokeSmoother.h"
 #include "ui/preview/ConfidenceStripItem.h"
 #include "ui/preview/TrackerOverlayItem.h"
 #include "ui/preview/PreviewItem.h"
@@ -74,6 +78,7 @@
 #include "ui/timeline/TimelineTrackItem.h"
 #include "ui/timeline/TimelineViewState.h"
 #include "app/editor/sessions/KeyframeCurvesModel.h"
+#include "app/editor/sessions/KeyframeInteraction.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/PolylineDraft.h"
@@ -932,8 +937,18 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeTimeView>("Drift", 1, 0, "KeyframeTimeView");
     qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
     qmlRegisterType<KeyframeCurvesModel>("Drift", 1, 0, "KeyframeCurvesModel");
+    qmlRegisterType<KeyframeInteraction>("Drift", 1, 0, "KeyframeInteraction");
     qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
     qmlRegisterType<ToolCursor>("Drift", 1, 0, "ToolCursor");
+    qmlRegisterType<drift::manip::ClipFrameMapperItem>("Drift", 1, 0, "ClipFrameMapper");
+    qmlRegisterType<drift::manip::StrokeSmoother>("Drift", 1, 0, "StrokeSmoother");
+    qmlRegisterType<drift::manip::CurveGraphModel>("Drift", 1, 0, "CurveGraphModel");
+    qmlRegisterUncreatableMetaObject(drift::manip::ManipModifiers::staticMetaObject, "Drift", 1, 0,
+                                     "ManipModifiers", QStringLiteral("Obtained from Manip.fromQtFlags"));
+    qmlRegisterUncreatableType<drift::manip::DragSession>("Drift", 1, 0, "DragSession",
+                                                          QStringLiteral("Use EditorState.drag"));
+    qmlRegisterSingletonType<drift::manip::ManipService>(
+        "Drift", 1, 0, "Manip", [](QQmlEngine *, QJSEngine *) { return new drift::manip::ManipService; });
     qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
     qmlRegisterType<ColorWheelPad>("Drift", 1, 0, "ColorWheelPad");
     qmlRegisterType<ProceduralHighlighter>("Drift", 1, 0, "ProceduralHighlighter");

@@ -7,5 +7,5 @@ Rectangle {
     color: "transparent"
     border.width: Theme.c.maskOverlayClipBounds.borderWidth
     border.color: Theme.c.maskOverlayClipBounds.border
-    opacity: 0.35
+    opacity: Theme.c.maskOverlayClipBounds.borderOpacity
 }

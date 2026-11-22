@@ -10,10 +10,9 @@ Rectangle {
     required property var owner
     property int edge: -1
 
-    readonly property bool areaContainsMouse: trimMouse.containsMouse
-    readonly property bool areaPressed: trimMouse.pressed
-    readonly property bool areaHovered: trimHover.hovered
-    readonly property bool hot: areaContainsMouse || areaHovered || areaPressed
+    readonly property bool areaContainsMouse: trimMouse.hovered
+    readonly property bool areaPressed: trimMouse.active
+    readonly property bool hot: areaContainsMouse || areaPressed
     // A looping clip's edges add or remove repeats instead of trimming, so they look different.
     readonly property bool looping: !!owner.clipData.loop
 
@@ -23,7 +22,7 @@ Rectangle {
     radius: looping ? width / 2 : owner.touchMode ? Theme.c.timelineTrimHandle.radius : 0
     color: !owner.showTrimHandles ? "transparent"
            : looping ? Theme.c.timelineTrimHandle.loopBackground
-           : owner.touchMode ? Qt.alpha(Theme.c.timelineTrimHandle.background, 0.55)
+           : owner.touchMode ? Qt.alpha(Theme.c.timelineTrimHandle.background, Theme.c.timelineTrimHandle.backgroundOpacity)
                              : "transparent"
 
     readonly property color accent: Theme.c.timelineTrimHandle.background
@@ -114,35 +113,38 @@ Rectangle {
                       : handle.edge < 0 ? qsTr("Drag to trim the start")
                                         : qsTr("Drag to trim the end")
                 visible: owner.showTrimHandles
-                         && (handle.areaContainsMouse || handle.areaHovered)
+                         && handle.areaContainsMouse
                          && !handle.areaPressed
             }
         }
     }
 
-    MouseArea {
+    HandleKnob {
         id: trimMouse
-        anchors.fill: parent
-        anchors.leftMargin: handle.edge < 0 ? -owner.trimHotspotExtra : -4
-        anchors.rightMargin: handle.edge > 0 ? -owner.trimHotspotExtra : -4
-        anchors.bottomMargin: -6
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
+        // The clip's edge strip, not a grip: it keeps its geometry and takes the press per device.
+        readonly property real outward: handle.edge < 0 ? owner.trimHotspotExtra : 4
+        readonly property real inward: handle.edge < 0 ? 4 : owner.trimHotspotExtra
+        x: handle.edge < 0 ? -owner.trimHotspotExtra : -4
+        y: 0
+        width: handle.width + outward + inward
+        height: handle.height + 6
+        mouseHitSize: width
+        touchHitSize: width
+        mouseHitHeight: height
+        touchHitHeight: height
+        shape: "none"
+        space: null
+        cursor: Qt.BlankCursor
         // Same reason as the move drag: these are ~38px strips at both edges of
         // every clip and they hold the grab, so on touch they turned each clip
         // boundary into another place the timeline could not be panned. Only the
         // selected clip — the one actually showing trim handles — arms them.
         // A clip too narrow to show handles has no trim; mid-gesture the shrinking clip must not
         // pull the area out from under the drag.
-        enabled: (owner.width >= Theme.clipControlsMinWidth || pressed)
+        enabled: (owner.width >= Theme.clipControlsMinWidth || active)
                  && (!owner.touchMode || owner.showTrimHandles)
-        preventStealing: true
-        hoverEnabled: true
-        cursorShape: Qt.BlankCursor
-
-        HoverHandler {
-            id: trimHover
-            enabled: trimMouse.enabled
-            cursorShape: Qt.BlankCursor
-        }
 
         // Last position this edge was actually committed at, in whole pixels. A high-polling
         // mouse delivers several positionChanged per frame, and each one used to mutate the
@@ -158,12 +160,17 @@ Rectangle {
         // outside the edge, so without it the edge would snap under the finger on the first move.
         property real grabOffset: 0
         property real fingerSceneX: 0
+        // Ctrl/Cmd held on the latest press or move: the edge goes where the pointer is.
+        property bool noSnap: false
         property real fingerSceneY: 0
 
         function endTrimLock() {
             if (typeof owner.panel.setScrollLocked === "function")
                 owner.panel.setScrollLocked(false)
         }
+
+        // Edge position at the press, for the HUD's delta.
+        property real pressEdgeSeconds: 0
 
         function applyTrim() {
             const start = owner.clipData.start || 0
@@ -183,12 +190,12 @@ Rectangle {
             // and every limit that can stop this edge live inside it, and the one the user
             // needs told, the source running out, has no cue on screen at all.
             const p = handle.edge < 0
-                    ? EditorState.previewTrimLeft(owner.trackIndex, owner.clipIndex, target)
-                    : EditorState.previewTrimRight(owner.trackIndex, owner.clipIndex, target)
+                    ? EditorState.previewTrimLeft(owner.trackIndex, owner.clipIndex, target, !noSnap)
+                    : EditorState.previewTrimRight(owner.trackIndex, owner.clipIndex, target, !noSnap)
             // The engine applies the same snap target to audio and video edges. Show the
             // vertical ruler across every track while this edge is magnetically aligned.
             const edgeSeconds = handle.edge < 0 ? p.start : p.start + p.duration
-            owner.panel.snapGuideSeconds = p.ok && EditorState.snapEnabled
+            owner.panel.snapGuideSeconds = p.ok && EditorState.snapEnabled && !noSnap
                     && p.outcome === 2 && Math.abs(edgeSeconds - target) > 0.0005
                     ? edgeSeconds : -1
             if (p.ok && p.changed) {
@@ -202,6 +209,10 @@ Rectangle {
                                          p.rippleIds, p.rippleDelta)
             }
             Haptics.trimStep(p.ok ? p.outcome : 0)
+            const shown = p.ok ? edgeSeconds : target
+            EditorState.drag.update(owner.panel.formatDelta(shown - pressEdgeSeconds) + qsTr("  →  ")
+                                    + owner.panel.formatTimecode(shown, true))
+            owner.panel.setDragPointer(fingerSceneX, fingerSceneY)
         }
 
         // Same edge autoscroll as a lifted clip: the pane is a few seconds wide, so an edge could
@@ -232,11 +243,12 @@ Rectangle {
             }
         }
 
-        onPressed: (mouse) => {
+        onPressed: (point, modifiers, device) => {
             Qt.callLater(function() { owner.forceActiveFocus() })
             const wasSelected = owner.selected
             Haptics.reset()
-            owner.beginEdgeGesture(trimMouse, mouse)
+            noSnap = Manip.fromQtFlags(modifiers).noSnap
+            owner.beginEdgeGesture(trimMouse, point, device)
             if (!owner.selected)
                 EditorState.selectClip(owner.trackIndex, owner.clipIndex)
             if (!wasSelected)
@@ -245,7 +257,7 @@ Rectangle {
             // invisible to both: it never moved the undo stack index, and the dirty flag is
             // only ever set from that index changing — so trimming, closing, and being asked
             // nothing about saving lost the work outright.
-            EditorState.beginPreviewDrag(qsTr("Trim clip"))
+            EditorState.drag.begin(handle.edge < 0 ? "trimStart" : "trimEnd", device, qsTr("Trim clip"))
             EditorState.beginTrimGesture(owner.trackIndex, owner.clipIndex, handle.edge)
             lastTrimPx = -2147483647
             lastTrimSeconds = -1
@@ -254,8 +266,9 @@ Rectangle {
             const cs = owner.clipData.start || 0
             const edgeX = (handle.edge < 0 ? cs : cs + (owner.clipData.duration || 0))
                           * owner.panel.pxPerSecond
-            grabOffset = edgeX - mapToItem(owner.trackRow, mouse.x, mouse.y).x
-            const scene = mapToItem(null, mouse.x, mouse.y)
+            grabOffset = edgeX - mapToItem(owner.trackRow, point.x, point.y).x
+            pressEdgeSeconds = handle.edge < 0 ? cs : cs + (owner.clipData.duration || 0)
+            const scene = mapToItem(null, point.x, point.y)
             fingerSceneX = scene.x
             fingerSceneY = scene.y
             if (EditorState.playing)
@@ -263,16 +276,21 @@ Rectangle {
             if (typeof owner.panel.setScrollLocked === "function")
                 owner.panel.setScrollLocked(true)
         }
-        onPositionChanged: (mouse) => {
-            if (!pressed)
+        onMoved: (point, modifiers, device) => {
+            if (!trimming)
                 return
             // A vertical drag on this strip is someone reaching for another layer, not for
             // this clip's edge.
-            if (owner.edgeGestureScrolled(trimMouse, mouse))
+            if (owner.edgeGestureScrolled(trimMouse, point))
                 return
-            const scene = mapToItem(null, mouse.x, mouse.y)
+            const scene = mapToItem(null, point.x, point.y)
             fingerSceneX = scene.x
             fingerSceneY = scene.y
+            const ns = Manip.fromQtFlags(modifiers).noSnap
+            if (ns !== noSnap) {
+                noSnap = ns
+                lastTrimPx = -2147483647
+            }
             applyTrim()
         }
         onReleased: {
@@ -288,19 +306,22 @@ Rectangle {
                 // One call, so the edit, the undo push and finishEdit announce the timeline
                 // once between them rather than three times.
                 EditorState.commitTrim(owner.trackIndex, owner.clipIndex,
-                                       handle.edge, lastTrimSeconds)
+                                       handle.edge, lastTrimSeconds, !noSnap)
             }
+            EditorState.drag.commit()
         }
-        onCanceled: {
-            endTrimLock()
-            Haptics.reset()
-            owner.panel.snapGuideSeconds = -1
-            if (trimming) {
-                trimming = false
+
+
+        Connections {
+            target: EditorState.drag
+            function onCancelled() {
+                if (!trimMouse.trimming)
+                    return
+                trimMouse.trimming = false
                 owner.trimPreviewActive = false
                 owner.panel.clearTrimFollow()
+                owner.panel.snapGuideSeconds = -1
                 EditorState.endTrimGesture()
-                EditorState.cancelPreviewDrag()
             }
         }
     }

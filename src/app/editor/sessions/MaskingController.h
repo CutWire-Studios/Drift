@@ -2,6 +2,7 @@
 
 #include "app/editor/sessions/MaskEditSession.h"
 #include "app/editor/sessions/MaskSelection.h"
+#include "app/editor/sessions/PathEditSession.h"
 #include "core/base/Time.h"
 
 #include <QImage>
@@ -62,6 +63,10 @@ class MaskingController : public QObject
     Q_PROPERTY(double brushOpacity READ brushOpacity WRITE setBrushOpacity NOTIFY brushSettingsChanged)
     Q_PROPERTY(bool brushErase READ brushErase WRITE setBrushErase NOTIFY brushSettingsChanged)
     // Whether a pen's pressure scales the dab radius (0.3..1 of the brush size).
+    // Lazy-string stabiliser strength, 0..1 (0 off); applied by the overlay (StrokeSmoother).
+    Q_PROPERTY(double brushSmoothing READ brushSmoothing WRITE setBrushSmoothing NOTIFY brushSettingsChanged)
+    // Id of the preset matching the current size and hardness, empty when they match none.
+    Q_PROPERTY(QString brushPreset READ brushPreset NOTIFY brushSettingsChanged)
     Q_PROPERTY(bool brushPressureSize READ brushPressureSize WRITE setBrushPressureSize NOTIFY brushSettingsChanged)
     // Whether a stroke that closes on itself also fills what it encloses.
     Q_PROPERTY(bool brushFillLoops READ brushFillLoops WRITE setBrushFillLoops NOTIFY selectionSettingsChanged)
@@ -75,6 +80,7 @@ class MaskingController : public QObject
     Q_PROPERTY(bool brushSaving READ brushSaving NOTIFY brushSavingChanged)
     // Live state of a handle drag in the mask overlay.
     Q_PROPERTY(MaskEditSession *editSession READ editSession CONSTANT)
+    Q_PROPERTY(PathEditSession *pathEdit READ pathEdit CONSTANT)
     Q_PROPERTY(MaskStackModel *stackModel READ stackModel CONSTANT)
 
 public:
@@ -89,6 +95,12 @@ public:
     void setBrushOpacity(double opacity);
     bool brushErase() const { return m_brushErase; }
     void setBrushErase(bool erase);
+    double brushSmoothing() const { return m_brushSmoothing; }
+    void setBrushSmoothing(double smoothing);
+    QString brushPreset() const;
+    // {id, name, size, hardness} for Hard, Soft and Detail.
+    Q_INVOKABLE QVariantList brushPresets() const;
+    Q_INVOKABLE void applyBrushPreset(const QString &id);
     bool brushPressureSize() const { return m_brushPressureSize; }
     void setBrushPressureSize(bool on);
     bool brushFillLoops() const { return m_brushFillLoops; }
@@ -103,6 +115,7 @@ public:
     const BrushPreviewStroke *previewStroke(int index) const;
     bool brushSaving() const { return m_brushSavesInFlight > 0; }
     MaskEditSession *editSession() const { return m_editSession; }
+    PathEditSession *pathEdit() const { return m_pathEdit; }
     MaskStackModel *stackModel() const { return m_stackModel; }
 
     // Largest useful feather in px for a clip: half its frame's longer side (the canvas for an
@@ -166,6 +179,7 @@ public:
     // Creates a Freeform mask from >= 3 normalized vertices (QVariantList of {x, y} maps) on the
     // target, exactly like addShapeMask does for kinds "clip" / "adjustment" (clip: addLinkedMask +
     // select new adjustment; adjustment: assign its mask directly). Undo text tr("Draw polygon mask").
+    // `points` are {x, y} maps (a polygon of corners) or full vertex maps, see setMaskPathKey.
     Q_INVOKABLE void addPolygonMask(int trackIndex, int clipIndex, const QVariantList &points);
 
     // Paints one stroke (normalized {x,y} points in the target clip's frame) into the target's brush
@@ -240,8 +254,9 @@ public:
 
     // Writes the vertex list as a key at timeline time `atSeconds` (converted to mask time =
     // secondsToUs(atSeconds) - adjustment.timelineStart). If an existing key lies within half a frame,
-    // that key is replaced instead of adding a new one. Also sets mask.points to the same list when the
-    // mask has only that one key (so the static shape and the single key agree).
+    // that key is replaced instead of adding a new one. Also sets mask.vertices to the same list when the
+    // mask has only that one key (so the static shape and the single key agree). `points` are
+    // {x, y, inX, inY, outX, outY, mode} maps; handles and mode are optional, so {x, y} is a corner.
     Q_INVOKABLE void setMaskPathKey(int trackIndex, int clipIndex, double atSeconds, const QVariantList &points);
     // Same, as a live drag: preview edit pattern, committed by EditorState.commitPreviewDrag().
     Q_INVOKABLE void previewSetMaskPathKey(int trackIndex, int clipIndex, double atSeconds,
@@ -345,12 +360,14 @@ private:
 
     AppController *m_app = nullptr;
     MaskEditSession *m_editSession = nullptr;
+    PathEditSession *m_pathEdit = nullptr;
     MaskStackModel *m_stackModel = nullptr;
 
     double m_brushSize = 0.05;
     double m_brushHardness = 0.7;
     double m_brushOpacity = 1.0;
     bool m_brushErase = false;
+    double m_brushSmoothing = 0.0;
     bool m_brushPressureSize = true;
     bool m_brushFillLoops = true;
     double m_wandTolerance = 25.0;

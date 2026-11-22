@@ -79,6 +79,7 @@ struct TransformParent;
 
 #include "playback/PlaybackEngine.h"
 #include "engine/audio/AudioRecorder.h"
+#include "ui/manip/DragSession.h"
 
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
@@ -157,6 +158,8 @@ class AppController : public QObject
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
     // The preview area's editor state, tools and overlay maths.
     Q_PROPERTY(PreviewController *preview READ preview CONSTANT)
+    // The one drag/undo/cancel session for on-canvas manipulators. QML: EditorState.drag.
+    Q_PROPERTY(drift::manip::DragSession *drag READ drag CONSTANT)
     // App-wide preferences and persisted UI layout. QML: EditorState.preferences.
     Q_PROPERTY(PreferencesController *preferences READ preferences CONSTANT)
     // Project file lifecycle and project setup. QML: EditorState.projectFile.
@@ -399,6 +402,7 @@ public:
     SourceLabController *sourceLab() const { return m_sourceLab; }
     PlaybackEngine *playback() { return &m_playback; }
     PreviewController *preview() const { return m_preview; }
+    drift::manip::DragSession *drag() const { return m_drag; }
     PreferencesController *preferences() const { return m_preferences; }
     ProjectFileController *projectFile() const { return m_projectFile; }
     AssetPreviewController *assetPreview() const { return m_assetPreview; }
@@ -873,6 +877,10 @@ public:
     Q_INVOKABLE void previewSetTextRect(int trackIndex, int clipIndex, double posX, double posY,
                                         double frameW, double frameH);
     Q_INVOKABLE void previewSetClipRotation(int trackIndex, int clipIndex, double degrees);
+    // Moves the pivot: anchorX/anchorY are frame px from the frame's top-left, and posX/posY the
+    // new place of the anchor on the canvas, which the caller solves so the picture stays put.
+    Q_INVOKABLE void previewSetClipAnchor(int trackIndex, int clipIndex, double anchorX, double anchorY,
+                                          double posX, double posY);
     Q_INVOKABLE void previewSetClipKeyframe(int trackIndex, int clipIndex, const QString &prop,
                                             double atSeconds, double value);
     Q_INVOKABLE void previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
@@ -1009,8 +1017,8 @@ public:
     //
     // Returns { ok, changed, outcome, start, duration, inPoint, outPoint } in seconds, or
     // { ok: false } for an out-of-range clip.
-    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart) const;
-    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd) const;
+    Q_INVOKABLE QVariantMap previewTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
+    Q_INVOKABLE QVariantMap previewTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
 
     // Opens and closes a trim drag. Scoping the gesture lets a repeated pointer position be
     // rejected before any work is done, and lets the caller find out whether the edge ever
@@ -1022,7 +1030,7 @@ public:
     // edit, one for the undo push, one from finishEdit -- and each rebuilt the entire timeline
     // model. `side` < 0 is the left edge. `seconds` < 0 means the gesture never moved the edge,
     // so there is nothing to commit.
-    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds);
+    Q_INVOKABLE void commitTrim(int trackIndex, int clipIndex, int side, double seconds, bool snap = true);
     Q_INVOKABLE bool trimGestureChangedProject() const { return m_trimGestureChanged; }
     // Moves one edge by whole project frames as its own undo step. Unlike a drag it never snaps,
     // which would swallow a one-frame move. Returns the TrimOutcome; TrimBlocked or TrimNone mean
@@ -1033,8 +1041,8 @@ public:
     // snapping and every limit that can stop this edge live inside these, and the one the user
     // most needs told — the source running out — has no cue on screen at all. Haptics::trimStep
     // has always been handed this return value; until the enum existed it was reading undefined.
-    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart);
-    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd);
+    Q_INVOKABLE int trimClipLeft(int trackIndex, int clipIndex, double newStart, bool snap = true);
+    Q_INVOKABLE int trimClipRight(int trackIndex, int clipIndex, double newEnd, bool snap = true);
     // With `ripple`, the clip's linked partners take the same trim, and the clips after its old end
     // (on its track and the tracks holding linked partners of those clips) move by the change in
     // length, whatever the project's ripple setting. Returns the ids of the clips that moved.
@@ -2019,6 +2027,9 @@ public:
     Q_INVOKABLE QVariantList exportAudioCodecs() const;
     Q_INVOKABLE bool exportGifAvailable() const;
     Q_INVOKABLE QVariantMap exportDefaultSettings() const;
+    // {bytes, approximate} forecast for the dialog's current settings map (same keys as
+    // exportWithSettings). bytes is 0 when there is nothing to forecast, e.g. GIF.
+    Q_INVOKABLE QVariantMap estimateExportSize(const QVariantMap &settings) const;
     // Last dialog choices (scale + encode). Empty until the user has exported once.
     Q_INVOKABLE QVariantMap lastExportSettings() const;
     // Directory of the last successful save-picker choice; empty if never set or gone.
@@ -2732,6 +2743,7 @@ protected:
     int m_timelineCursorOwner = 0;
     int m_trimCursorTokenSeq = 0;
     PreviewController *m_preview = nullptr;
+    drift::manip::DragSession *m_drag = nullptr;
     PreferencesController *m_preferences = nullptr;
     ProjectFileController *m_projectFile = nullptr;
     AssetPreviewController *m_assetPreview = nullptr;

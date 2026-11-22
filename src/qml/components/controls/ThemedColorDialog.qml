@@ -125,7 +125,7 @@ ThemedDialog {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width
                 height: 12
-                radius: height / 2
+                radius: Theme.radiusPill
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
                     GradientStop { position: 0 / 6; color: Theme.c.themedColorDialog.hueRed }

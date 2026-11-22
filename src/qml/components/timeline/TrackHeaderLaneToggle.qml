@@ -25,7 +25,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.max(height, badgeText.implicitWidth + 6)
         height: 12
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.trackHeaderLaneToggle.badgeBackground
 
         Text {

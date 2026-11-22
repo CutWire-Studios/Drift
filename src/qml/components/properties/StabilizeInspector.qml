@@ -34,6 +34,9 @@ Item {
         return qsTr("Stabilize video")
     }
 
+    readonly property bool phone: Theme.touchInput && Theme.compact
+    readonly property real hintSize: phone ? Theme.fontSizeSm : Theme.fontSizeXs
+
     height: contentCol.height
     implicitHeight: contentCol.height
 
@@ -49,17 +52,21 @@ Item {
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: root.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
+            visible: !root.phone
             width: parent.width
             wrapMode: Text.WordWrap
-            text: root.keyframeMode
+            text: root.phone
+                  ? (root.keyframeMode ? qsTr("Smooths camera shake with position keyframes. Apply to update the preview.")
+                                       : qsTr("Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview."))
+                  : root.keyframeMode
                   ? qsTr("Smooths camera shake by writing position keyframes. Linear pans stay as two keys far apart; only direction changes get extra keys. Changing smoothness or tripod does not update the preview until you apply.")
                   : qsTr("Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.")
             color: Theme.c.stabilizeInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: root.hintSize
             SearchAnchor {
                 searchId: "stabilize-stabilize"
                 title: qsTr("Stabilize")
@@ -67,20 +74,21 @@ Item {
             }
         }
 
-        Column {
+        Flow {
             width: parent.width
             spacing: Theme.spacingSm
 
             Text {
+                visible: !root.phone
                 text: qsTr("Mode")
                 color: Theme.c.stabilizeInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.hintSize
                 font.weight: Font.Medium
             }
 
             ThemedComboBox {
-                width: parent.width
+                width: root.phone ? parent.width - modeInfo.width - parent.spacing : parent.width
                 model: root.modeLabels
                 enabled: !root.stabilizing
                 currentIndex: Math.max(0, root.modeIds.indexOf(root.stabilizeMode))
@@ -91,6 +99,14 @@ Item {
                                 root.modeIds[index])
                 }
             }
+
+            AndroidInfoButton {
+                id: modeInfo
+                hint: (root.keyframeMode ? qsTr("Smooths camera shake with position keyframes. Apply to update the preview.")
+                                         : qsTr("Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview."))
+                      + " " + qsTr("Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.")
+                      + " " + qsTr("Tripod mode locks the framing and crops more aggressively.")
+            }
         }
 
         Column {
@@ -98,6 +114,7 @@ Item {
             spacing: Theme.spacingSm
 
             Text {
+                visible: !root.phone
                 text: qsTr("Smoothing")
                 SearchAnchor {
                     searchId: "stabilize-smoothing"
@@ -106,11 +123,30 @@ Item {
                 }
                 color: Theme.c.stabilizeInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.hintSize
                 font.weight: Font.Medium
             }
 
+            AndroidSliderRow {
+                visible: root.phone
+                label: qsTr("Smoothing")
+                from: 2
+                to: 60
+                stepSize: 1
+                enabled: !root.stabilizing
+                valueFormatter: function (v) { return String(Math.round(v)) }
+                value: (root.clipData && root.clipData.stabilizeSmoothing !== undefined)
+                       ? root.clipData.stabilizeSmoothing : 15
+                onDragEnded: {
+                    if (root.clipData) {
+                        EditorState.stabilize.setSmoothing(
+                             EditorState.selectedTrack, EditorState.selectedClip, liveValue)
+                    }
+                }
+            }
+
             ThemedSlider {
+                visible: !root.phone
                 id: stabilizeSmoothingSlider
                 label: qsTr("Smoothing")
                 width: parent.width
@@ -133,12 +169,13 @@ Item {
             }
 
             Text {
+                visible: !root.phone
                 width: parent.width
                 wrapMode: Text.WordWrap
                 text: qsTr("How many frames the smoother looks ahead and behind. Higher values hide more shake but crop the picture more.")
                 color: Theme.c.stabilizeInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.hintSize
             }
         }
 
@@ -162,12 +199,13 @@ Item {
             }
 
             Text {
+                visible: !root.phone
                 width: parent.width
                 wrapMode: Text.WordWrap
                 text: qsTr("Locks the framing as if the camera were on a tripod. Crops more aggressively than smoothing alone.")
                 color: Theme.c.stabilizeInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.hintSize
             }
         }
 
@@ -191,7 +229,7 @@ Item {
                       : qsTr("Preview still uses the last run. Update to apply these settings.")
                 color: Theme.c.stabilizeInspector.warning
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.hintSize
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -202,6 +240,7 @@ Item {
             visible: !root.stabilizing
 
             ThemedButton {
+                width: root.phone && !root.appliedAsKeyframes ? parent.width : implicitWidth
                 text: root.actionLabel
                 variant: (root.stabilized && !root.stale) ? "secondary" : "primary"
                 onClicked: EditorState.stabilize.run(
@@ -227,7 +266,7 @@ Item {
                   : qsTr("Stabilizing…")
             color: Theme.c.stabilizeInspector.foregroundMuted
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: root.hintSize
         }
 
         ThemedProgressBar {

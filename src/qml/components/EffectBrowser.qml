@@ -7,6 +7,7 @@ import Drift
 Column {
     id: root
     spacing: 0
+    readonly property bool phone: Theme.touchInput && Theme.compact
 
     // Bumped when an addon changes the effects on disk (an imported .driftfx, a pack install).
     property int catalogTick: 0
@@ -15,6 +16,10 @@ Column {
     // The section at the top of the grid; showCategory() scrolls to one.
     readonly property string activeCategory: presetGrid.currentSectionId
     function showCategory(id) { presetGrid.scrollToSection(id) }
+    // Phone: the page's Applied / Browse tabs ride in the search bar's row.
+    property var headerTabs: []
+    property string headerTabId: ""
+    signal headerTabSelected(string tabId)
     property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
     function applyPreset(effectId) {
@@ -51,8 +56,35 @@ Column {
             id: search
             placeholderText: qsTr("Search effects")
             historyKey: "effects"
+            tabs: root.headerTabs
+            currentTabId: root.headerTabId
+            onTabSelected: tabId => root.headerTabSelected(tabId)
 
             IconButton {
+                visible: root.phone
+                glyph: Theme.icons.ellipsis
+                variant: "text"
+                tooltip: qsTr("More")
+                onClicked: effectsMenu.popup(0, height)
+
+                ThemedContextMenu {
+                    id: effectsMenu
+
+                    ThemedMenuItem {
+                        text: qsTr("Add adjustment layer")
+                        icon.name: Theme.icons.wand
+                        onTriggered: EditorState.addAdjustmentClip(-1, -1)
+                    }
+                    ThemedMenuItem {
+                        text: qsTr("Import effect…")
+                        icon.name: Theme.icons.download
+                        onTriggered: ShellBridge.main.importUserPackage("")
+                    }
+                }
+            }
+
+            IconButton {
+                visible: !root.phone
                 glyph: Theme.icons.wand
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
@@ -72,6 +104,7 @@ Column {
             }
 
             IconButton {
+                visible: !root.phone
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
@@ -80,7 +113,7 @@ Column {
             }
 
             IconButton {
-                visible: !ShellBridge.phoneShell
+                visible: !ShellBridge.phoneShell && !root.phone
                 glyph: Theme.icons.sparkles
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
@@ -90,12 +123,14 @@ Column {
         }
 
         Item {
+            id: chipsGap
             width: 1
-            height: Theme.spacingSm
+            height: root.phone ? 0 : Theme.spacingSm
         }
 
         AssetCategoryChips {
             id: categoryChips
+            flickable: presetGrid
             width: parent.width
             sections: presetGrid.visibleSections
             activeCategory: root.activeCategory
@@ -105,8 +140,7 @@ Column {
 
         Item {
             width: parent.width
-            height: Math.max(0, parent.height - search.height - Theme.spacingSm
-                             - categoryChips.height)
+            height: Math.max(0, parent.height - search.height - chipsGap.height - categoryChips.height)
 
             Text {
                 id: emptySearchHint

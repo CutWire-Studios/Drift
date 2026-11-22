@@ -501,12 +501,13 @@ QMatrix4x4 modelMatrixFor(const GpuLayer &layer, const QSize &canvas)
 
 QString maskCacheKey(const drift::Mask &mask)
 {
-    // The point coordinates have to be in the key, not just the count: dragging a freeform vertex
+    // The vertex coordinates and handles have to be in the key, not just the count: dragging a freeform vertex
     // leaves the count alone and would otherwise keep hitting the stale texture.
-    const size_t pointsHash =
-        mask.points.isEmpty()
-            ? 0
-            : qHashBits(mask.points.constData(), size_t(mask.points.size()) * sizeof(QPointF));
+    size_t pointsHash = 0;
+    for (const drift::ShapeVertex &v : mask.vertices) {
+        const double fields[6] = {v.p.x(), v.p.y(), v.in.x(), v.in.y(), v.out.x(), v.out.y()};
+        pointsHash = qHashBits(fields, sizeof(fields), pointsHash);
+    }
 
     return QStringLiteral("%1:%2:%3:%4:%5:%6:%7:%8:%9:%10:%11:%12")
         .arg(int(mask.shape))
@@ -519,7 +520,7 @@ QString maskCacheKey(const drift::Mask &mask)
         .arg(mask.feather)
         .arg(mask.roundness)
         .arg(mask.invert ? 1 : 0)
-        .arg(mask.points.size())
+        .arg(mask.vertices.size())
         .arg(quint64(pointsHash));
 }
 

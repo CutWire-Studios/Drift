@@ -9,6 +9,11 @@ Item {
 
     // A clip landed on the timeline. The phone shell closes the sheet on this —
     // the thing you came for is behind it.
+    property bool pickerMode: false
+    property var headerTabs: []
+    property string headerTabId: ""
+    signal headerTabSelected(string tabId)
+    readonly property bool tabbed: Theme.phone && headerTabs.length > 0
     signal added()
 
     property string section: "builtin"
@@ -48,11 +53,35 @@ Item {
     Item {
         id: toolbar
         width: parent.width
-        height: Theme.pagePadding + Theme.controlHeight
+        height: Theme.phone ? Theme.androidRowHeight : Theme.pagePadding + Theme.controlHeight
+        readonly property real rowY: Theme.phone ? (height - Theme.controlHeight) / 2 : Theme.pagePadding
+
+        AndroidTabStrip {
+            visible: root.tabbed
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingSm
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(naturalWidth, parent.width - 2 * Theme.androidMinTouchTarget - Theme.pagePadding)
+            tabs: root.headerTabs
+            currentId: root.headerTabId
+            onTabSelected: tabId => root.headerTabSelected(tabId)
+        }
+
+        IconButton {
+            visible: root.tabbed
+            anchors.right: importButton.left
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.bookmark
+            variant: "text"
+            active: root.section === "mine"
+            tooltip: root.section === "mine" ? qsTr("Show built-in styles") : qsTr("Show my styles")
+            onClicked: root.section = root.section === "mine" ? "builtin" : "mine"
+        }
 
         Row {
+            visible: !root.tabbed
             x: Theme.pagePadding
-            y: Theme.pagePadding
+            y: toolbar.rowY
             height: Theme.controlHeight
             spacing: Theme.spacingSm
 
@@ -75,9 +104,10 @@ Item {
         }
 
         IconButton {
+            id: importButton
             anchors.right: parent.right
-            anchors.rightMargin: Theme.pagePadding
-            y: Theme.pagePadding
+            anchors.rightMargin: Theme.phone ? Theme.spacingSm : Theme.pagePadding
+            y: toolbar.rowY
             buttonSize: Theme.controlHeight
             glyph: Theme.icons.folderInput
             variant: "ghost"
@@ -117,6 +147,7 @@ Item {
 
         delegate: TextStylePackCard {
             cardSize: packGrid.cardSize
+            pickerMode: root.pickerMode
             onAdded: root.added()
         }
     }

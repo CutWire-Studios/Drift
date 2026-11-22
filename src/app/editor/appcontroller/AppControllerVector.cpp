@@ -10,6 +10,7 @@
 #include "engine/render3d/models/ModelClipRenderer.h"
 
 #include "engine/render2d/pdf/PdfClipRenderer.h"
+#include "core/geom/BezierPath.h"
 #include "core/shapes/ShapePath.h"
 #include "engine/compositor/layers/TransformLayer.h"
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
@@ -294,14 +295,14 @@ QString parseVectorSlotValue(drift::VectorSlotValue::Type type, const QVariant &
 // you something to drag instead of a hole.
 void seedFreeformMask(drift::Mask &mask)
 {
-    if (mask.shape != drift::MaskShape::Freeform || !mask.points.isEmpty())
+    if (mask.shape != drift::MaskShape::Freeform || !mask.vertices.isEmpty())
         return;
     const double left = mask.x - mask.w / 2.0;
     const double right = mask.x + mask.w / 2.0;
     const double top = mask.y - mask.h / 2.0;
     const double bottom = mask.y + mask.h / 2.0;
-    mask.points = {QPointF(left, top), QPointF(right, top), QPointF(right, bottom),
-                   QPointF(left, bottom)};
+    mask.vertices = drift::cornerVertices({QPointF(left, top), QPointF(right, top), QPointF(right, bottom),
+                                           QPointF(left, bottom)});
 }
 
 } // namespace
@@ -1115,10 +1116,12 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
                 seeded.keyframes.remove(QString::fromLatin1(key));
         }
 
-        bool samePoints = seeded.points.size() == existing->points.size();
-        for (qsizetype i = 0; samePoints && i < seeded.points.size(); ++i) {
-            samePoints = same(seeded.points.at(i).x(), existing->points.at(i).x())
-                         && same(seeded.points.at(i).y(), existing->points.at(i).y());
+        bool samePoints = seeded.vertices.size() == existing->vertices.size();
+        for (qsizetype i = 0; samePoints && i < seeded.vertices.size(); ++i) {
+            const drift::ShapeVertex &a = seeded.vertices.at(i);
+            const drift::ShapeVertex &b = existing->vertices.at(i);
+            samePoints = same(a.p.x(), b.p.x()) && same(a.p.y(), b.p.y()) && same(a.in.x(), b.in.x())
+                         && same(a.in.y(), b.in.y()) && same(a.out.x(), b.out.x()) && same(a.out.y(), b.out.y());
         }
         if (existing->shape == seeded.shape && samePoints)
             seeded.pathKeys = existing->pathKeys;
@@ -1184,7 +1187,7 @@ QString AppController::maskShapeSvgPath(const QString &shape) const
     if (mask.shape != drift::MaskShape::Bars) {
         mask.w = 0.94;
         mask.h = 0.94;
-        mask.points.clear();
+        mask.vertices.clear();
         seedFreeformMask(mask);
     }
     QPainterPath path = drift::maskPath(mask, 100, 100);
@@ -1272,19 +1275,34 @@ void AppController::insertMaskPoint(int trackIndex, int clipIndex, int pointInde
         return;
 
     drift::Mask mask = host->mask;
-    const int index = qBound(0, pointIndex, mask.points.size());
-    // Each shape key gains the vertex at the same slot, placed on that key's own edge, so the
-    // animation keeps its shape. The count check has to run before the static insert below.
-    for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it) {
-        QVector<QPointF> &vertices = it.value();
-        const int n = vertices.size();
-        if (n != mask.points.size() || n == 0)
-            continue;
-        const QPointF prev = vertices.at((index - 1 + n) % n);
-        const QPointF next = vertices.at(index % n);
-        vertices.insert(index, (prev + next) / 2.0);
+    const int count = mask.vertices.size();
+    if (count < 2)
+        return;
+    // pointIndex is the slot the new vertex takes, so it splits the edge from the vertex before it.
+    const int seg = (qBound(0, pointIndex, count) - 1 + count) % count;
+    const drift::ShapeVertex &a = mask.vertices.at(seg);
+    const drift::ShapeVertex &b = mask.vertices.at((seg + 1) % count);
+    double t;
+    if (a.out.isNull() && b.in.isNull()) {
+        const QPointF d = b.p - a.p;
+        const double len2 = QPointF::dotProduct(d, d);
+        t = len2 > 0.0 ? qBound(0.0, QPointF::dotProduct(QPointF(x, y) - a.p, d) / len2, 1.0) : 0.5;
+    } else {
+        t = drift::geom::nearestPoint(drift::ShapeContour{{a, b}, false}, QPointF(x, y)).t;
     }
-    mask.points.insert(index, QPointF(x, y));
+
+    // Each shape key gains the vertex at the same slot, split off that key's own edge at the same t,
+    // so the animation keeps its shape. The count check has to run before the static split below.
+    for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it) {
+        if (it.value().size() != count)
+            continue;
+        drift::ShapeContour key{it.value(), true};
+        drift::geom::splitSegment(key, seg, t);
+        it.value() = key.vertices;
+    }
+    drift::ShapeContour outline{mask.vertices, true};
+    drift::geom::splitSegment(outline, seg, t);
+    mask.vertices = outline.vertices;
 
     const drift::Project before = m_project;
     writeClipMask(trackIndex, clipIndex, mask);
@@ -1300,13 +1318,13 @@ void AppController::removeMaskPoint(int trackIndex, int clipIndex, int pointInde
         return;
     // A polygon needs three vertices to enclose anything; removing past that would silently
     // blank the clip with no way back except deleting the mask.
-    if (host->mask.points.size() <= 3 || pointIndex < 0 || pointIndex >= host->mask.points.size())
+    if (host->mask.vertices.size() <= 3 || pointIndex < 0 || pointIndex >= host->mask.vertices.size())
         return;
 
     drift::Mask mask = host->mask;
-    mask.points.remove(pointIndex);
+    mask.vertices.remove(pointIndex);
     // The shape keys are vertex lists of their own, so they have to lose the same slot or the
-    // counts stop matching and pointsAt() falls back to holding the earlier key.
+    // counts stop matching and verticesAt() falls back to holding the earlier key.
     for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it) {
         if (pointIndex < it.value().size())
             it.value().remove(pointIndex);

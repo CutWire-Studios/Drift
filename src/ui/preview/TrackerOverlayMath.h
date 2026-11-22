@@ -5,6 +5,7 @@
 #include <QVector>
 
 #include <algorithm>
+#include <cmath>
 
 namespace drift::trackerview {
 
@@ -62,11 +63,39 @@ inline bool pointHit(QPointF at, QPointF centre, double patternW, double pattern
     return QRectF(centre.x() - w / 2, centre.y() - h / 2, w, h).contains(at);
 }
 
-// A corner handle is a square of `side`, grabbable `margin` beyond it.
-inline bool cornerHit(QPointF at, QPointF centre, double side, double margin)
+// The size of a pattern or search box dragged to `x`: a width, normalized to the item, that grows
+// symmetrically about the box centre.
+inline double boxWidthFor(double centreX, double x, double itemWidth, double minWidth = 0.01, double maxWidth = 0.9)
 {
-    const double half = side / 2 + margin;
-    return QRectF(centre.x() - half, centre.y() - half, half * 2, half * 2).contains(at);
+    return std::clamp(2.0 * std::abs(x - centreX) / std::max(1.0, itemWidth), minWidth, maxWidth);
+}
+
+// Shift while dragging a marker: the drag keeps to the axis it has moved furthest along.
+inline QPointF constrainedDelta(QPointF delta)
+{
+    return std::abs(delta.x()) >= std::abs(delta.y()) ? QPointF(delta.x(), 0) : QPointF(0, delta.y());
+}
+
+// A normalized position moved by a pixel delta in an item of `size` pixels, kept inside the frame.
+inline QPointF movedNorm(QPointF norm, QPointF deltaPx, double width, double height)
+{
+    return {std::clamp(norm.x() + deltaPx.x() / std::max(1.0, width), 0.0, 1.0),
+            std::clamp(norm.y() + deltaPx.y() / std::max(1.0, height), 0.0, 1.0)};
+}
+
+// How bright a path dot is: the current frame is solid, the rest fade out toward the ends of the span.
+inline double pathDotAlpha(int offset, int range)
+{
+    if (offset == 0)
+        return 1.0;
+    const double t = std::min(1.0, std::abs(offset) / double(std::max(1, range)));
+    return 0.65 - 0.4 * t;
+}
+
+inline QRectF marqueeRect(QPointF a, QPointF b)
+{
+    return QRectF(QPointF(std::min(a.x(), b.x()), std::min(a.y(), b.y())),
+                  QPointF(std::max(a.x(), b.x()), std::max(a.y(), b.y())));
 }
 
 inline double signedArea(const QVector<QPointF> &poly)

@@ -35,7 +35,7 @@ Rectangle {
                                  : (end - start) * lane.pxPerSecond)
     radius: Theme.c.subtitleCueBlock.radius
     color: isSelected ? Theme.c.subtitleCueBlock.backgroundSelected
-                      : (isActive ? Qt.lighter(Theme.c.subtitleCueBlock.background, 1.15) : Theme.c.subtitleCueBlock.background)
+                      : (isActive ? Theme.c.subtitleCueBlock.backgroundActive : Theme.c.subtitleCueBlock.background)
     opacity: isSelected ? 1.0 : (isActive ? 0.85 : 0.5)
     border.width: isSelected ? Theme.c.subtitleCueBlock.borderWidth : 0
     border.color: Theme.c.subtitleCueBlock.border

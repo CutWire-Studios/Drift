@@ -35,9 +35,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Theme.c.androidTimelineNewTrackGhost.radius
-        color: Qt.rgba(Theme.c.androidTimelineNewTrackGhost.background.r,
-                       Theme.c.androidTimelineNewTrackGhost.background.g,
-                       Theme.c.androidTimelineNewTrackGhost.background.b, 0.92)
+        color: Qt.alpha(Theme.c.androidTimelineNewTrackGhost.background, Theme.c.androidTimelineNewTrackGhost.backgroundOpacity)
         border.width: Theme.c.androidTimelineNewTrackGhost.borderWidth
         border.color: Theme.c.androidTimelineNewTrackGhost.border
     }
@@ -59,9 +57,7 @@ Item {
         width: newTrackIndicator.panel.dropDurationSeconds * newTrackIndicator.panel.pxPerSecond
         height: parent.height
         radius: Theme.c.androidTimelineNewTrackGhost.radius
-        color: Qt.rgba(Theme.c.androidTimelineNewTrackGhost.dropBackground.r,
-                       Theme.c.androidTimelineNewTrackGhost.dropBackground.g,
-                       Theme.c.androidTimelineNewTrackGhost.dropBackground.b, 0.18)
+        color: Qt.alpha(Theme.c.androidTimelineNewTrackGhost.dropBackground, Theme.c.androidTimelineNewTrackGhost.dropBackgroundOpacity)
         border.width: Theme.c.androidTimelineNewTrackGhost.dropBorderWidth
         border.color: Theme.c.androidTimelineNewTrackGhost.dropBorder
     }

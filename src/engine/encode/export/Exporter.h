@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QList>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -87,6 +88,14 @@ void resolveExportRange(const drift::Project &project, const ExportSettings &set
 // the range can't be resolved.
 drift::TimeUs renderedDurationUs(const drift::Project &project, const ExportSettings &settings);
 
+// A file-size forecast for the export dialog. `approximate` is set when the number rests on a
+// bits-per-pixel heuristic (constant-quality mode) rather than a target bitrate.
+struct ExportSizeEstimate
+{
+    qint64 bytes = 0;
+    bool approximate = false;
+};
+
 // WYSIWYG exporter: encodes frames straight from FrameCompositor and audio from
 // AudioMixer, so the exported file matches the preview exactly (single compositor).
 class Exporter
@@ -121,6 +130,16 @@ public:
 
     // Frame rate choices for the export dialog; the first entry follows `projectFps`.
     static QVariantList frameRateOptions(int projectFps);
+
+    // Output picture size for a target height (0: project height), as the encoder will see it.
+    static QSize scaledSize(int projectWidth, int projectHeight, int targetHeight);
+
+    // Forecast of the file size for `seconds` of output at outW x outH and `fps`. Bitrate mode is
+    // bitrate x time; constant-quality mode multiplies a per-codec bits-per-pixel guess by the
+    // pixel rate, so it is only as good as "typical" footage. Zero bytes for GIF, whose palette
+    // coding has no usable model.
+    static ExportSizeEstimate estimateSize(const ExportSettings &settings, int outW, int outH, double fps,
+                                           double seconds);
 
     static bool gifAvailable();
 

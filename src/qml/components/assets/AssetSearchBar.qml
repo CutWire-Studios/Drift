@@ -16,6 +16,22 @@ Item {
     property var history: []
     default property alias actions: actionRow.data
 
+    // Phone only. With tabs the bar is the page's one header row: tabs on the left, a search
+    // icon and the actions on the right, and the field replaces the tabs while searching.
+    // Without tabs the field is always out. Desktop ignores all of this.
+    readonly property bool phone: Theme.phone
+    property var tabs: []
+    property string currentTabId: ""
+    property bool searchEnabled: true
+    property bool searchOpen: false
+    readonly property bool fieldShown: !phone || tabs.length === 0 || searchOpen || field.text.length > 0
+    signal tabSelected(string tabId)
+    function closeSearch() {
+        field.text = ""
+        root.searchOpen = false
+        field.focus = false
+    }
+
     function commitHistory() {
         const query = field.text.trim()
         if (query.length === 0 || root.historyKey.length === 0)
@@ -46,15 +62,18 @@ Item {
     Component.onCompleted: loadHistory()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.pagePadding + Theme.controlHeight
+    readonly property real topInset: phone ? 0 : Theme.pagePadding
+    implicitHeight: phone ? Theme.androidRowHeight : Theme.pagePadding + Theme.controlHeight
     height: implicitHeight
 
     ThemedTextField {
         id: field
         x: Theme.pagePadding
-        y: Theme.pagePadding
+        y: root.phone ? (root.height - height) / 2 : Theme.pagePadding
+        visible: root.fieldShown
         width: root.width - Theme.pagePadding * 2
-               - (actionRow.width > 0 ? actionRow.width + Theme.spacingSm : 0)
+               - (actionRow.visible && actionRow.width > 0 ? actionRow.width + Theme.spacingSm : 0)
+               - (closeButton.visible ? closeButton.width + Theme.spacingSm : 0)
         font.family: Theme.fontFamily
         rightPadding: clear.visible ? clear.width + Theme.spacingSm * 2 : Theme.spacingLg
 
@@ -170,11 +189,50 @@ Item {
         }
     }
 
+    AndroidTabStrip {
+        id: tabStrip
+        visible: root.phone && root.tabs.length > 0 && !root.fieldShown
+        anchors.left: parent.left
+        anchors.leftMargin: Theme.spacingSm
+        anchors.verticalCenter: parent.verticalCenter
+        width: Math.min(naturalWidth, root.width - Theme.pagePadding - searchToggle.width - actionRow.width)
+        tabs: root.tabs
+        currentId: root.currentTabId
+        onTabSelected: tabId => root.tabSelected(tabId)
+    }
+
+    IconButton {
+        id: searchToggle
+        visible: root.phone && root.tabs.length > 0 && root.searchEnabled && !root.fieldShown
+        anchors.right: actionRow.left
+        anchors.verticalCenter: parent.verticalCenter
+        glyph: Theme.icons.search
+        variant: "text"
+        tooltip: qsTr("Search")
+        onClicked: {
+            root.searchOpen = true
+            field.forceActiveFocus()
+        }
+    }
+
+    IconButton {
+        id: closeButton
+        visible: root.phone && root.tabs.length > 0 && root.fieldShown
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingSm
+        anchors.verticalCenter: parent.verticalCenter
+        glyph: Theme.icons.x
+        variant: "text"
+        tooltip: qsTr("Close search")
+        onClicked: root.closeSearch()
+    }
+
     Row {
         id: actionRow
+        visible: !(root.phone && root.tabs.length > 0 && root.fieldShown)
         anchors.right: parent.right
-        anchors.rightMargin: Theme.pagePadding
-        y: Theme.pagePadding
+        anchors.rightMargin: root.phone ? Theme.spacingSm : Theme.pagePadding
+        y: root.phone ? (root.height - height) / 2 : Theme.pagePadding
         height: Theme.controlHeight
         spacing: Theme.spacingXs
     }

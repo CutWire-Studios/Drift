@@ -35,9 +35,9 @@ Item {
         anchors.centerIn: parent
         width: root.hovered && root.compatible ? 14 : (root.compatible ? 12 : parent.width)
         height: width
-        radius: width / 2
+        radius: Theme.radiusPill
         color: "transparent"
-        border.width: 2
+        border.width: Theme.c.portItem.ringBorderWidth
         border.color: root.hue
         opacity: root.compatible ? 0.8 : 0
         Behavior on width { NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing } }
@@ -45,64 +45,56 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Theme.radiusPill
         color: root.connected || root.hovered || root.isSource ? root.hue : Theme.c.portItem.fill
-        border.width: 1.5
+        border.width: Theme.c.portItem.borderWidth
         border.color: root.hue
         opacity: root.incompatible ? 0.3 : 1
         Behavior on opacity { NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing } }
     }
 
-    MouseArea {
-        id: area
+    HandleKnob {
+        id: knob
         anchors.centerIn: parent
-        width: Theme.touchInput ? 32 : 20
-        height: width
-        hoverEnabled: true
-        acceptedButtons: Qt.LeftButton
-        cursorShape: Qt.CrossCursor
-        preventStealing: true
+        shape: "none"
+        cursor: Qt.CrossCursor
+        space: root.canvas.world
 
-        property bool moved: false
+        property bool travelled: false
         property point pressWorld: Qt.point(0, 0)
+        releaseOnCancel: false
 
-        function worldPos(m) {
-            return mapToItem(root.canvas.world, m.x, m.y)
+        onCanceled: {
+            if (travelled)
+                root.canvas.cancelPending()
+            travelled = false
         }
 
-        onPressed: (m) => {
+        onPressed: (p) => {
             root.canvas.forceActiveFocus()
-            moved = false
-            pressWorld = worldPos(m)
+            travelled = false
+            pressWorld = p
         }
-        onPositionChanged: (m) => {
-            if (!pressed)
-                return
-            const w = worldPos(m)
-            if (!moved) {
-                if (Math.hypot(w.x - pressWorld.x, w.y - pressWorld.y) * root.canvas.zoom < 6)
+        onMoved: (p) => {
+            if (!travelled) {
+                if (Math.hypot(p.x - pressWorld.x, p.y - pressWorld.y) * root.canvas.zoom < 6)
                     return
-                moved = true
+                travelled = true
                 root.canvas.portDragBegan(root.node.nodeId, root.isOutput, root.portId, root.portType, pressWorld)
             }
-            root.canvas.portDragMoved(w)
+            root.canvas.portDragMoved(p)
         }
-        onReleased: (m) => {
-            if (moved)
-                root.canvas.portDragEnded(worldPos(m))
+        onReleased: (p) => {
+            if (travelled)
+                root.canvas.portDragEnded(p)
             else
                 root.canvas.portTapped(root.node.nodeId, root.isOutput, root.portId, root.portType)
-            moved = false
+            travelled = false
         }
-        onCanceled: {
-            if (moved)
-                root.canvas.cancelPending()
-            moved = false
-        }
+    }
 
-        ThemedToolTip {
-            visible: area.containsMouse && !area.pressed && !root.pending && !Theme.touchInput
-            text: (root.label.length > 0 ? root.label + " - " : "") + root.portType
-        }
+    ThemedToolTip {
+        visible: knob.hovered && !knob.active && !root.pending && !Theme.touchInput
+        text: (root.label.length > 0 ? root.label + " - " : "") + root.portType
     }
 }

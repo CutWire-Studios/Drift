@@ -97,10 +97,7 @@ Item {
         case "audio":
             return [volume, tool("animation", qsTr("Fade"), Theme.icons.blend), speed, { id: "sounds", kind: "tab", label: qsTr("Audio FX"), icon: Theme.icons.audioLines }, details]
         case "text":
-            return [{ id: "editText", kind: "text", label: qsTr("Edit text"), icon: Theme.icons.pencil },
-                    tool("textStyle", qsTr("Text style"), Theme.icons.brush),
-                    tool("textSettings", qsTr("Text settings"), Theme.icons.settings),
-                    tool("textAnim", qsTr("Text animation"), Theme.icons.sparkles),
+            return [tool("textEdit", qsTr("Edit text"), Theme.icons.type),
                     transform, animation, effects, mask, blending, details]
         case "subtitle":
             return [tool("subtitles", qsTr("Subtitles"), Theme.icons.captions),

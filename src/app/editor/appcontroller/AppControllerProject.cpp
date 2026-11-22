@@ -406,6 +406,16 @@ bool AppController::exportGifAvailable() const
     return Exporter::gifAvailable();
 }
 
+QVariantMap AppController::estimateExportSize(const QVariantMap &settings) const
+{
+    const ExportSettings s = Exporter::settingsFromMap(settings);
+    const QSize size = Exporter::scaledSize(m_project.width(), m_project.height(), s.targetHeight);
+    const double fps = s.fpsNum > 0 && s.fpsDen > 0 ? static_cast<double>(s.fpsNum) / s.fpsDen : m_project.fps();
+    const double seconds = static_cast<double>(renderedDurationUs(m_project, s)) / 1e6;
+    const ExportSizeEstimate e = Exporter::estimateSize(s, size.width(), size.height(), fps, seconds);
+    return QVariantMap{{QStringLiteral("bytes"), e.bytes}, {QStringLiteral("approximate"), e.approximate}};
+}
+
 QVariantMap AppController::exportDefaultSettings() const
 {
     const ExportSettings s = Exporter::defaultSettings();
