@@ -230,6 +230,8 @@ Item {
             }
             HandleKnob {
                 id: grip
+                releaseOnCancel: false
+                onCanceled: EditorState.drag.cancel()
                 anchors.centerIn: earItem
                 shape: "none"
                 cursor: Qt.ArrowCursor

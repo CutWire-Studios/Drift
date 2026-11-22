@@ -5,6 +5,8 @@ import Drift
 // context menu's height items. Shift scales every track by the same factor.
 HandleKnob {
     id: handle
+    releaseOnCancel: false
+    onCanceled: EditorState.drag.cancel()
 
     property var column
     property int trackIndex: -1

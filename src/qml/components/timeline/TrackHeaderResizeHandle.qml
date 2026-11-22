@@ -27,6 +27,8 @@ Item {
 
     HandleKnob {
         id: mouseStrip
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
         x: widthHandle.width - 3 - width / 2
         y: 0
         width: touchHitSize

@@ -76,6 +76,8 @@ Item {
 
     HandleKnob {
         id: fadeMouse
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
         anchors.centerIn: parent
         shape: "none"
         cursor: Qt.ArrowCursor

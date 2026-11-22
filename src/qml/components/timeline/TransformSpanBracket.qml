@@ -102,6 +102,8 @@ Item {
 
     HandleKnob {
         id: dragArea
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
         x: root.lineX - width / 2 + 1
         y: root.bottomY - height / 2
         shape: "none"

@@ -36,6 +36,10 @@ Item {
     signal moved(point point, int modifiers, int device)
     signal released(point point, int modifiers, int device)
     signal clicked(point point, int modifiers, int device)
+    // The grab was taken away (a pinch, a popup, the window losing it) before a release.
+    signal canceled(int device)
+    // Hosts whose release commits should turn this off and revert on canceled() instead.
+    property bool releaseOnCancel: true
 
     width: touchHitSize
     height: touchHitHeight
@@ -191,7 +195,16 @@ Item {
         }
 
         onReleased: (mouse) => finish(mouse)
-        onCanceled: finish(null)
+        onCanceled: {
+            if (!dragging)
+                return
+            if (knob.releaseOnCancel) {
+                finish(null)
+            } else {
+                dragging = false
+            }
+            knob.canceled(device())
+        }
         onExited: near = false
 
         // A MouseArea accepts wheel events even with no handler, which would stop a zoom over a grip.

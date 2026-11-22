@@ -121,6 +121,8 @@ Rectangle {
 
     HandleKnob {
         id: trimMouse
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
         // The clip's edge strip, not a grip: it keeps its geometry and takes the press per device.
         readonly property real outward: handle.edge < 0 ? owner.trimHotspotExtra : 4
         readonly property real inward: handle.edge < 0 ? 4 : owner.trimHotspotExtra

@@ -23,6 +23,8 @@ Item {
 
     HandleKnob {
         id: edgeKnob
+        releaseOnCancel: false
+        onCanceled: EditorState.drag.cancel()
         readonly property real zoneX: grip.edge < 0
            ? ((Theme.touchInput && !grip.cue.narrowTouch) ? -grip.cue.edgeHitW / 2 : 0)
            : grip.width - ((Theme.touchInput && !grip.cue.narrowTouch) ? grip.cue.edgeHitW / 2 : grip.cue.edgeHitW)
