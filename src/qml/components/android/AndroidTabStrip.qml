@@ -20,7 +20,7 @@ Item {
     }
     readonly property real extraPerTab: tabs.length > 0 ? Math.max(0, (width - naturalWidth) / tabs.length) : 0
 
-    implicitHeight: Theme.androidMinTouchTarget
+    implicitHeight: Theme.controlHeight + Theme.spacingXs
     height: implicitHeight
 
     Repeater {

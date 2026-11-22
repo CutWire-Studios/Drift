@@ -11,6 +11,9 @@ Item {
     signal added()
     // Set by the phone's add page: tap adds, hold opens the card menu, and the last pick is marked.
     property bool pickerMode: false
+    property var headerTabs: []
+    property string headerTabId: ""
+    signal headerTabSelected(string tabId)
     property string pickedId: ""
 
     readonly property var categories: EditorState.builtinShapeCategories()
@@ -40,19 +43,32 @@ Item {
 
         AssetSearchBar {
             id: search
+            tabs: root.headerTabs
+            currentTabId: root.headerTabId
+            onTabSelected: tabId => root.headerTabSelected(tabId)
             placeholderText: qsTr("Search shapes")
             historyKey: "shapes"
+
+            IconButton {
+                visible: Theme.phone && root.pickerMode
+                glyph: Theme.icons.penTool
+                variant: "text"
+                tooltip: qsTr("Draw a line or custom shape")
+                onClicked: EditorState.preview.shapePathMode = "draw"
+            }
         }
 
         Item {
+            id: chipsGap
             width: 1
-            height: Theme.spacingSm
+            height: Theme.phone ? 0 : Theme.spacingSm
         }
 
         Row {
             id: toolbar
             x: Theme.pagePadding
             width: parent.width - Theme.pagePadding * 2
+            visible: !(Theme.phone && root.pickerMode)
             height: visible ? implicitHeight + Theme.spacingSm : 0
             spacing: Theme.spacingSm
 
@@ -88,6 +104,7 @@ Item {
 
         AssetCategoryChips {
             id: categoryChips
+            flickable: shapeGrid
             width: parent.width
             sections: shapeGrid.visibleSections
             activeCategory: root.activeCategory
@@ -97,7 +114,7 @@ Item {
 
         Item {
             width: parent.width
-            height: Math.max(0, parent.height - search.height - Theme.spacingSm - toolbar.height - userHint.height - categoryChips.height)
+            height: Math.max(0, parent.height - search.height - chipsGap.height - toolbar.height - userHint.height - categoryChips.height)
 
             Text {
                 id: emptySearchHint

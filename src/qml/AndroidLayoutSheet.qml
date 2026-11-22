@@ -142,7 +142,7 @@ AndroidBottomSheet {
                 // page margin carried by the Row's own padding.
                 Flickable {
                     width: parent.width
-                    height: Theme.androidMinTouchTarget
+                    height: Theme.androidRowHeight
                     contentWidth: categoryRow.implicitWidth
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
@@ -255,7 +255,7 @@ AndroidBottomSheet {
 
                 Flickable {
                     width: parent.width
-                    height: Theme.androidMinTouchTarget
+                    height: Theme.androidRowHeight
                     contentWidth: qualityRow.implicitWidth
                     clip: true
                     visible: !root.customSize
@@ -285,7 +285,7 @@ AndroidBottomSheet {
 
                 Flickable {
                     width: parent.width
-                    height: Theme.androidMinTouchTarget
+                    height: Theme.androidRowHeight
                     contentWidth: fpsRow.implicitWidth
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds

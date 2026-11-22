@@ -6,7 +6,7 @@ Rectangle {
     property var inspector
     readonly property bool phone: Theme.touchInput && Theme.compact
     width: parent.width
-    height: phone ? Theme.androidMinTouchTarget : effectHeader.implicitHeight + 8
+    height: phone ? Theme.androidRowHeight : effectHeader.implicitHeight + 8
     radius: Theme.c.effectsEffectHeader.radius
     color: Theme.c.effectsEffectHeader.background
 

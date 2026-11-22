@@ -52,9 +52,10 @@ Item {
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: root.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
+            visible: !root.phone
             width: parent.width
             wrapMode: Text.WordWrap
             text: root.phone
@@ -73,11 +74,12 @@ Item {
             }
         }
 
-        Column {
+        Flow {
             width: parent.width
             spacing: Theme.spacingSm
 
             Text {
+                visible: !root.phone
                 text: qsTr("Mode")
                 color: Theme.c.stabilizeInspector.foregroundMuted
                 font.family: Theme.fontFamily
@@ -86,7 +88,7 @@ Item {
             }
 
             ThemedComboBox {
-                width: parent.width
+                width: root.phone ? parent.width - modeInfo.width - parent.spacing : parent.width
                 model: root.modeLabels
                 enabled: !root.stabilizing
                 currentIndex: Math.max(0, root.modeIds.indexOf(root.stabilizeMode))
@@ -96,6 +98,14 @@ Item {
                                 EditorState.selectedTrack, EditorState.selectedClip,
                                 root.modeIds[index])
                 }
+            }
+
+            AndroidInfoButton {
+                id: modeInfo
+                hint: (root.keyframeMode ? qsTr("Smooths camera shake with position keyframes. Apply to update the preview.")
+                                         : qsTr("Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview."))
+                      + " " + qsTr("Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.")
+                      + " " + qsTr("Tripod mode locks the framing and crops more aggressively.")
             }
         }
 
@@ -159,6 +169,7 @@ Item {
             }
 
             Text {
+                visible: !root.phone
                 width: parent.width
                 wrapMode: Text.WordWrap
                 text: qsTr("How many frames the smoother looks ahead and behind. Higher values hide more shake but crop the picture more.")
@@ -188,6 +199,7 @@ Item {
             }
 
             Text {
+                visible: !root.phone
                 width: parent.width
                 wrapMode: Text.WordWrap
                 text: qsTr("Locks the framing as if the camera were on a tripod. Crops more aggressively than smoothing alone.")

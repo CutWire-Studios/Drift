@@ -498,7 +498,6 @@ ManipOverlay {
             }
 
             ThemedChip {
-                chipHeight: Theme.androidMinTouchTarget
                 text: qsTr("Multi-select")
                 selected: root.addToSelection
                 onClicked: root.addToSelection = !root.addToSelection
@@ -528,7 +527,6 @@ ManipOverlay {
 
                     ThemedChip {
                         required property var modelData
-                        chipHeight: Theme.androidMinTouchTarget
                         text: modelData.label
                         selected: EditorState.preview.gizmoTool === modelData.id
                         onClicked: EditorState.preview.gizmoTool = modelData.id
@@ -536,7 +534,6 @@ ManipOverlay {
                 }
 
                 ThemedChip {
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Local")
                     selected: EditorState.preview.gizmoOrientation === "local"
                     onClicked: EditorState.preview.gizmoOrientation =
@@ -567,7 +564,6 @@ ManipOverlay {
 
                     ThemedChip {
                         required property var modelData
-                        chipHeight: Theme.androidMinTouchTarget
                         text: modelData.label
                         selected: root.touchAxisLock === modelData.id
                         onClicked: root.touchAxisLock = modelData.id

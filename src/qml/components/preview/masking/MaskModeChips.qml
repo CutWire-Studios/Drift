@@ -13,7 +13,6 @@ Row {
 
     ThemedChip {
         anchors.verticalCenter: parent.verticalCenter
-        chipHeight: chips.touch ? Theme.androidMinTouchTarget : Theme.controlHeightSm
         accentColor: Theme.c.maskBrushOverlay.stroke
         text: "+ " + qsTr("Include")
         selected: !EditorState.masking.brushErase
@@ -24,7 +23,6 @@ Row {
 
     ThemedChip {
         anchors.verticalCenter: parent.verticalCenter
-        chipHeight: chips.touch ? Theme.androidMinTouchTarget : Theme.controlHeightSm
         accentColor: Theme.c.maskBrushOverlay.eraseStroke
         text: "− " + qsTr("Exclude")
         selected: EditorState.masking.brushErase

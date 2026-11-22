@@ -5,7 +5,7 @@ Rectangle {
     property var shading
     readonly property bool phone: Theme.touchInput && Theme.compact
     width: parent.width
-    height: phone ? Theme.androidMinTouchTarget : Math.max(Theme.controlHeightSm, header.implicitHeight + 8)
+    height: phone ? Theme.androidRowHeight : Math.max(Theme.controlHeightSm, header.implicitHeight + 8)
     radius: Theme.c.shadingLayerHeader.radius
     color: Theme.c.shadingLayerHeader.background
 

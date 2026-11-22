@@ -78,6 +78,7 @@ Item {
         spacing: Theme.spacingLg
 
         Row {
+            id: modeRow
             spacing: Theme.spacingSm
 
             Repeater {
@@ -104,13 +105,14 @@ Item {
         }
 
         Column {
+            id: colourColumn
             width: parent.width
             spacing: Theme.spacingMd
             visible: root.section === "color"
 
             ScrollStrip {
                 width: parent.width
-                height: Theme.androidMinTouchTarget
+                height: Theme.androidRowHeight
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
@@ -124,7 +126,7 @@ Item {
                             readonly property bool current: root.background.kind === "color"
                                                             && Qt.colorEqual(modelData, root.currentHex)
                             width: Theme.androidMinTouchTarget
-                            height: Theme.androidMinTouchTarget
+                            height: Theme.androidRowHeight
 
                             Rectangle {
                                 anchors.centerIn: parent
@@ -149,6 +151,8 @@ Item {
             }
 
             ColorSwatchField {
+                parent: Theme.phone ? modeRow : colourColumn
+                visible: root.section === "color"
                 hex: root.currentHex
                 onEdited: value => root.setColor(value)
             }

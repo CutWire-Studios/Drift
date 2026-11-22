@@ -801,7 +801,6 @@ ManipOverlay {
 
                 ThemedChip {
                     anchors.verticalCenter: parent.verticalCenter
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Paint")
                     selected: root.paintMode
                     tooltip: qsTr("One finger paints. Two fingers always zoom and pan")
@@ -810,7 +809,6 @@ ManipOverlay {
 
                 ThemedChip {
                     anchors.verticalCenter: parent.verticalCenter
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Navigate")
                     selected: !root.paintMode
                     tooltip: qsTr("One finger pans the preview. A stylus still paints")
@@ -829,7 +827,6 @@ ManipOverlay {
                     ThemedChip {
                         required property var modelData
                         anchors.verticalCenter: parent.verticalCenter
-                        chipHeight: Theme.androidMinTouchTarget
                         text: modelData.name
                         variant: "outline"
                         selected: EditorState.masking.brushPreset === modelData.id

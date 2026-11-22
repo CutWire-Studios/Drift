@@ -32,7 +32,7 @@ Column {
 
     Item {
         width: parent.width
-        height: Math.max(titleText.implicitHeight, phone ? Theme.androidMinTouchTarget : Theme.controlHeightSm)
+        height: Math.max(titleText.implicitHeight, phone ? Theme.androidRowHeight : Theme.controlHeightSm)
 
         Text {
             id: titleText

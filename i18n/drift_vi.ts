@@ -513,6 +513,10 @@
         <translation>Đường cong làm mờ</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Đường cong</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>Hoạt ảnh</translation>
     </message>
@@ -679,14 +683,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>Tạm dừng</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>Phát</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>Tua</translation>
@@ -1003,6 +999,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">Tạo một thư mục mới ở đây</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">Tạo một dòng thời gian trống và mở nó</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1125,6 +1129,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>Chưa có gì ở đây - các dự án bạn lưu sẽ hiển thị trong danh sách này.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6169,6 +6180,14 @@
         <source>Remove from history</source>
         <translation>Xóa khỏi lịch sử</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Tìm kiếm</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10507,6 +10526,18 @@
         <translation>Tìm hiệu ứng</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Thêm</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">Thêm lớp điều chỉnh</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>Lớp điều chỉnh</translation>
     </message>
@@ -10529,10 +10560,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">Nhập</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26702,6 +26729,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Kết xuất một bản sao đã ổn định, hoặc tạo hoạt ảnh cho clip bằng các khóa biến đổi thưa</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>Làm mịn</translation>
     </message>
@@ -28022,6 +28057,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Export text style</source>
         <translation>Xuất kiểu văn bản</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32105,6 +32148,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Type</source>
         <translation>Loại</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

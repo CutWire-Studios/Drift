@@ -9,8 +9,8 @@ Rectangle {
     property bool toggled: false
     property bool pressed: false
 
-    width: Theme.androidMinTouchTarget
-    height: Theme.androidMinTouchTarget
+    width: Theme.phone ? Theme.androidControlHeight + 4 : Theme.androidMinTouchTarget
+    height: width
     radius: Theme.c.androidSheetActionTileFace.radius
     color: face.toggled
            ? Qt.alpha(Theme.c.androidSheetActionTileFace.backgroundToggled, Theme.c.androidSheetActionTileFace.backgroundToggledOpacity)

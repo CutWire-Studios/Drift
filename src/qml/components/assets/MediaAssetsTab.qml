@@ -624,7 +624,7 @@ Item {
 
     // On a phone the field would be left a third of the width by five icon buttons, so they get
     // their own row under it.
-    readonly property bool toolsBelowSearch: Theme.touchInput && Theme.compact
+    readonly property bool toolsBelowSearch: false
 
     Item {
         id: searchBottom

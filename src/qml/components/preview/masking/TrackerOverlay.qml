@@ -826,7 +826,6 @@ ManipOverlay {
 
                 ThemedChip {
                     anchors.verticalCenter: parent.verticalCenter
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Point")
                     selected: root.placeMode === "point"
                     tooltip: qsTr("Tap the feature to follow")
@@ -835,7 +834,6 @@ ManipOverlay {
 
                 ThemedChip {
                     anchors.verticalCenter: parent.verticalCenter
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Planar")
                     selected: root.placeMode === "planar"
                     tooltip: qsTr("Tap the corners of a flat surface")
@@ -845,7 +843,6 @@ ManipOverlay {
                 ThemedChip {
                     visible: root.placeMode === "planar" && planarDraft.count >= 4
                     anchors.verticalCenter: parent.verticalCenter
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Done")
                     onClicked: root.finishPlanar()
                 }

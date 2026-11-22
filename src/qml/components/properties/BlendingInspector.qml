@@ -13,6 +13,12 @@ Item {
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
 
     height: contentCol.height
+
+    AndroidInfoButton {
+        x: root.width - width
+        z: 1
+        hint: qsTr("How this clip's colours combine with the tracks beneath it.")
+    }
     implicitHeight: contentCol.height
 
     function refreshFields() {}
@@ -46,9 +52,10 @@ Item {
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
+            visible: !Theme.phone
             text: qsTr("Blend mode")
             SearchAnchor {
                 searchId: "blending-blend-mode"
@@ -63,6 +70,7 @@ Item {
 
         // The tab was a label plus one combo with no description.
         Text {
+            visible: !Theme.phone
             width: parent.width
             wrapMode: Text.WordWrap
             text: qsTr("How this clip's colours combine with the tracks beneath it.")
@@ -78,7 +86,7 @@ Item {
             delegate: Column {
                 id: group
                 required property var modelData
-                readonly property int columnCount: Math.max(2, Math.round(width / 112))
+                readonly property int columnCount: Theme.phone ? 4 : Math.max(2, Math.round(width / 112))
                 readonly property real cellWidth: Math.floor(width / columnCount)
                 width: contentCol.width
                 spacing: Theme.spacingXs

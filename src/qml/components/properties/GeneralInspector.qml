@@ -230,14 +230,17 @@ Item {
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         // Read-only name plus a rename dialog: an editable field at the top of the panel kept
         // being mistaken for the text clip's content box.
-        Column {
+        Flow {
             width: root.width
             spacing: 4
             Text {
+                height: Theme.phone ? Theme.controlHeightSm : implicitHeight
+                verticalAlignment: Text.AlignVCenter
+                width: Theme.phone ? Theme.phoneLabelWidth : implicitWidth
                 text: qsTr("Clip name")
                 SearchAnchor {
                     searchId: "general-clip-name"
@@ -249,7 +252,7 @@ Item {
                 font.pixelSize: root.labelSize
             }
             Row {
-                width: parent.width
+                width: Theme.phone ? parent.width - (Theme.phoneLabelWidth) - parent.spacing : parent.width
                 spacing: Theme.spacingSm
                 Text {
                     width: parent.width - renameButton.width - parent.spacing
@@ -273,10 +276,13 @@ Item {
         }
 
         // A stable tag that survives renames; splits and duplicates number the copies.
-        Column {
+        Flow {
             width: root.width
             spacing: 4
             Text {
+                height: Theme.phone ? Theme.controlHeightSm : implicitHeight
+                verticalAlignment: Text.AlignVCenter
+                width: Theme.phone ? Theme.phoneLabelWidth : implicitWidth
                 text: qsTr("Label")
                 SearchAnchor {
                     searchId: "general-clip-label"
@@ -288,7 +294,7 @@ Item {
                 font.pixelSize: root.labelSize
             }
             Row {
-                width: parent.width
+                width: Theme.phone ? parent.width - (Theme.phoneLabelWidth) - parent.spacing : parent.width
                 spacing: Theme.spacingSm
                 Text {
                     width: parent.width - labelButton.width - parent.spacing
@@ -310,10 +316,11 @@ Item {
             }
         }
 
-        Column {
+        Flow {
             width: root.width
             spacing: 4
             Text {
+                width: Theme.phone ? Theme.phoneLabelWidth : implicitWidth
                 text: qsTr("Type")
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
@@ -327,7 +334,7 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeSm
                 elide: Text.ElideRight
-                width: parent.width - x
+                width: Theme.phone ? parent.width - (Theme.phoneLabelWidth) - parent.spacing : parent.width - x
             }
         }
 
@@ -527,10 +534,13 @@ Item {
             width: parent.width
             spacing: 8
 
-            Column {
+            Flow {
                 width: (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
+                width: Theme.phone ? 56 : implicitWidth
+                height: Theme.phone ? Theme.controlHeight : implicitHeight
+                verticalAlignment: Text.AlignVCenter
                     text: qsTr("Starts at")
                     color: Theme.c.generalInspector.foregroundMuted
                     font.pixelSize: root.labelSize
@@ -540,7 +550,7 @@ Item {
                     id: startField
                     to: 86400
                     unit: "s"
-                    width: parent.width
+                    width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                     decimals: 2
                     step: 0.1
                     from: 0
@@ -549,10 +559,13 @@ Item {
                 }
             }
 
-            Column {
+            Flow {
                 width: (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
+                width: Theme.phone ? 56 : implicitWidth
+                height: Theme.phone ? Theme.controlHeight : implicitHeight
+                verticalAlignment: Text.AlignVCenter
                     text: qsTr("Duration")
                     SearchAnchor {
                         searchId: "general-duration"
@@ -567,7 +580,7 @@ Item {
                     id: durationField
                     to: 86400
                     unit: "s"
-                    width: parent.width
+                    width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                     decimals: 2
                     step: 0.1
                     from: 1.0 / Math.max(1, EditorState.projectFile.projectFps())
@@ -607,10 +620,13 @@ Item {
                 width: parent.width
                 spacing: 8
 
-                Column {
+                Flow {
                     width: (parent.width - parent.spacing) / 2
                     spacing: 4
                     Text {
+                    width: Theme.phone ? 56 : implicitWidth
+                    height: Theme.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                         text: qsTr("From")
                         HoverHandler { id: tipHover1231 }
                         TapHandler {
@@ -629,7 +645,7 @@ Item {
                         enabled: !root.clipData.loop
                         to: 86400
                         unit: "s"
-                        width: parent.width
+                        width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                         decimals: 2
                         step: 0.1
                         from: 0
@@ -637,10 +653,13 @@ Item {
                     }
                 }
 
-                Column {
+                Flow {
                     width: (parent.width - parent.spacing) / 2
                     spacing: 4
                     Text {
+                    width: Theme.phone ? 56 : implicitWidth
+                    height: Theme.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                         text: qsTr("To")
                         HoverHandler { id: tipHover1252 }
                         TapHandler {
@@ -659,7 +678,7 @@ Item {
                         enabled: !root.clipData.loop
                         to: 86400
                         unit: "s"
-                        width: parent.width
+                        width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                         decimals: 2
                         step: 0.1
                         from: 0

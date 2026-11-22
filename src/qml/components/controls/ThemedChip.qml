@@ -17,7 +17,7 @@ AbstractButton {
 
     property bool selected: false
     property string variant: "primary"
-    property real chipHeight: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+    property real chipHeight: Theme.controlHeightSm
     property string glyph: ""
     property string tooltip: ""
     property string tooltipActionId: ""
@@ -37,8 +37,17 @@ AbstractButton {
     // rather than shadowed. Width falls out of contentItem + padding.
     horizontalPadding: Theme.spacingLg
     leftPadding: glyph !== "" ? Theme.spacingLg + Theme.iconSizeSm + Theme.spacingXs : Theme.spacingLg
-    implicitHeight: chipHeight
-    height: chipHeight
+    readonly property real _drawnHeight: Theme.phone ? Math.min(chipHeight, Theme.androidChipHeight) : chipHeight
+    implicitHeight: _drawnHeight
+    height: _drawnHeight
+    containmentMask: Theme.phone ? chipHit : null
+
+    Item {
+        id: chipHit
+        anchors.fill: parent
+        anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - root.height) / 2)
+        anchors.bottomMargin: anchors.topMargin
+    }
 
     // Press feedback — see the note in ThemedButton.qml.
     scale: root.down ? Theme.pressScale : 1.0

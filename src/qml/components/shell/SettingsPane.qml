@@ -166,7 +166,7 @@ Item {
         x: Theme.pagePadding
         y: searchField.y + searchField.height + Theme.spacingMd
         width: root.width - Theme.pagePadding * 2
-        height: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+        height: Theme.touchInput && Theme.compact ? Theme.androidRowHeight : Theme.controlHeightSm
         clip: true
         spacing: Theme.spacingSm
         orientation: ListView.Horizontal

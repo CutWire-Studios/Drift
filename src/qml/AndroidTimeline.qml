@@ -385,8 +385,10 @@ Item {
     // Ruler, bookmark lane and (when analysis is showing) the beat marker lane. Also
     // the playhead's scrub target and, in its left corner, the add-track button — so it
     // is deliberately taller than the desktop ruler.
+    readonly property real bookmarkRowHeight: EditorState.bookmarks.length > 0 || EditorState.workAreaActive
+                                              ? Theme.timelineBookmarkRowHeight : 0
     readonly property real seekHeaderHeight:
-        Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight + beatLaneHeight
+        Theme.timelineRulerHeight + bookmarkRowHeight + beatLaneHeight
     // Exposed for clip filmstrip viewport culling (Flickable id is local).
     readonly property real timelineViewX: flick.contentX
     readonly property real timelineViewW: flick.width
@@ -1375,7 +1377,7 @@ Item {
                             id: bookmarkRow
                             y: Theme.timelineRulerHeight
                             width: parent.width
-                            height: Theme.timelineBookmarkRowHeight
+                            height: root.bookmarkRowHeight
                             z: 2
 
                             Rectangle {
@@ -1439,7 +1441,7 @@ Item {
                         Canvas {
                             id: beatLane
                             x: flick.contentX
-                            y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
+                            y: Theme.timelineRulerHeight + root.bookmarkRowHeight
                             width: flick.width
                             height: root.beatLaneHeight
                             visible: root.beatLaneVisible

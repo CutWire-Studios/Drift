@@ -65,7 +65,7 @@ ThemedDialog {
 
             ThemedButton {
                 width: (parent.width - parent.spacing) / 2
-                height: Theme.androidMinTouchTarget
+                height: Theme.androidRowHeight
                 variant: "secondary"
                 glyph: Theme.icons.play
                 text: qsTr("Play")
@@ -74,7 +74,7 @@ ThemedDialog {
 
             ThemedButton {
                 width: (parent.width - parent.spacing) / 2
-                height: Theme.androidMinTouchTarget
+                height: Theme.androidRowHeight
                 variant: "primary"
                 glyph: Theme.icons.upload
                 text: qsTr("Share")

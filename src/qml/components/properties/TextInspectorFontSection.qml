@@ -7,11 +7,12 @@ CollapsibleSection {
     width: parent.width
     title: inspector.mode === "settings" ? qsTr("Alignment") : qsTr("Font")
     collapsible: false
+    showHeader: !phone
     visible: inspector.hasTextStyle
     readonly property bool phone: Theme.touchInput && Theme.compact
 
     Text {
-        visible: inspector.mode !== "settings"
+        visible: inspector.mode !== "settings" && !root.phone
         text: qsTr("Font")
         SearchAnchor {
             searchId: "text-font"
@@ -31,12 +32,13 @@ CollapsibleSection {
     }
 
     Row {
+        id: weightRow
         visible: inspector.mode !== "settings"
         width: parent.width
         spacing: 8
 
         Column {
-            width: root.phone ? parent.width : (parent.width - parent.spacing) / 2
+            width: (parent.width - parent.spacing) / 2
             spacing: 4
             Text {
                 text: qsTr("Weight")
@@ -162,11 +164,14 @@ CollapsibleSection {
     }
 
     Row {
-        visible: inspector.mode === "" || inspector.mode === "font"
+        id: caseRow
+        visible: !root.phone && (inspector.mode === "" || inspector.mode === "font")
         width: parent.width
         spacing: 8
 
         Column {
+            parent: root.phone ? weightRow : caseRow
+            visible: inspector.mode === "" || inspector.mode === "font"
             width: (parent.width - parent.spacing) / 2
             spacing: 4
             Text {

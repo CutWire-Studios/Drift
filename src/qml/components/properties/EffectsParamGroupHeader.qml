@@ -10,7 +10,7 @@ Rectangle {
     signal toggled()
 
     width: parent ? parent.width : implicitWidth
-    height: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : groupLabel.implicitHeight + 8
+    height: Theme.touchInput && Theme.compact ? Theme.androidRowHeight : groupLabel.implicitHeight + 8
     radius: Theme.c.effectsParamGroupHeader.radius
     color: groupMouse.containsMouse ? Theme.c.effectsParamGroupHeader.backgroundHover : "transparent"
 

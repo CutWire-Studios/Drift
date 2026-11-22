@@ -19,7 +19,6 @@ TouchContextBar {
 
     ThemedChip {
         visible: bar.graph.canDelete
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Delete")
         onClicked: {
             bar.graph.deleteSelected()
@@ -29,7 +28,6 @@ TouchContextBar {
 
     ThemedChip {
         visible: bar.backendName === "speed" && bar.graph.selectionCount > 0
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Smooth")
         selected: bar.graph.selectedSmooth
         onClicked: bar.graph.setSelectedSmooth(true)
@@ -37,14 +35,12 @@ TouchContextBar {
 
     ThemedChip {
         visible: bar.backendName === "speed" && bar.graph.selectionCount > 0
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Corner")
         selected: !bar.graph.selectedSmooth && bar.graph.selectionCount > 0
         onClicked: bar.graph.setSelectedSmooth(false)
     }
 
     ThemedChip {
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Reset")
         onClicked: {
             bar.graph.resetSelected()
@@ -53,7 +49,6 @@ TouchContextBar {
     }
 
     ThemedChip {
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Done")
         variant: "outline"
         onClicked: bar.dismissed()

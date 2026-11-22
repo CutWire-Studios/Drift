@@ -18,7 +18,15 @@ Switch {
     spacing: Theme.spacingLg
     implicitHeight: Math.max(implicitContentHeight + topPadding + bottomPadding,
                              implicitIndicatorHeight + topPadding + bottomPadding,
-                             Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : 0)
+                             Theme.phone ? Theme.androidControlHeight : 0)
+    containmentMask: Theme.phone ? switchHit : null
+
+    Item {
+        id: switchHit
+        anchors.fill: parent
+        anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - root.height) / 2)
+        anchors.bottomMargin: anchors.topMargin
+    }
 
     Accessible.role: Accessible.CheckBox
     Accessible.name: text.length > 0 ? text : tooltip

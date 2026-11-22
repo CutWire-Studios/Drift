@@ -17,6 +17,7 @@ Item {
     property bool collapsible: true
     property bool expanded: true
     property bool showSeparator: true
+    property bool showHeader: true
 
     property bool showSwitch: false
     property bool switchChecked: false
@@ -39,10 +40,11 @@ Item {
         spacing: 0
 
         CollapsibleSectionRule {
-            shown: root.showSeparator
+            shown: root.showSeparator && root.showHeader
         }
 
         CollapsibleSectionHeader {
+            visible: root.showHeader
             title: root.title
             tooltip: root.tooltip
             collapsible: root.collapsible

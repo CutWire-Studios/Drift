@@ -35,9 +35,10 @@ Item {
     Column {
         id: speedColumn
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
+            visible: !Theme.phone
             text: qsTr("Playback speed")
             SearchAnchor {
                 searchId: "speed-playback"
@@ -57,7 +58,8 @@ Item {
             return !!root.clipData.hasSpeedCurve
         }
 
-        Row {
+        Flow {
+            id: rampRow
             width: parent.width
             spacing: 6
 
@@ -80,7 +82,6 @@ Item {
             ThemedChip {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: speedColumn.hasSpeedCurve
-                chipHeight: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
                 text: qsTr("Speed ramp active — remove")
                 selected: true
                 onClicked: EditorState.clearClipSpeedCurve(
@@ -101,7 +102,6 @@ Item {
                     ]
                     delegate: ThemedChip {
                         required property var modelData
-                        chipHeight: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
                         width: Theme.touchInput ? (parent.width - parent.spacing * 4) / 5 : implicitWidth
                         text: modelData.label
                         enabled: !speedColumn.hasSpeedCurve
@@ -181,8 +181,8 @@ Item {
         }
         ThemedChip {
             id: speedReverseChip
+            parent: Theme.phone ? rampRow : speedColumn
             visible: !root.nestedSource
-            chipHeight: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
             text: qsTr("Reverse")
             selected: {
                 void root.clipDataRevision
@@ -198,6 +198,11 @@ Item {
                     EditorState.requestClipReverse(EditorState.selectedTrack,
                                                    EditorState.selectedClip)
             }
+        }
+
+        AndroidInfoButton {
+            Component.onCompleted: parent = rampRow
+            hint: qsTr("Split the clip to speed up only part of it")
         }
 
         // Shown when a reversed video clip has no rendered copy covering it — after a cancelled

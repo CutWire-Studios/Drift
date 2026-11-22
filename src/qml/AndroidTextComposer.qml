@@ -211,7 +211,7 @@ Item {
 
         Item {
             width: parent.width
-            height: Theme.androidMinTouchTarget
+            height: Theme.androidRowHeight
 
             Row {
                 id: navRow

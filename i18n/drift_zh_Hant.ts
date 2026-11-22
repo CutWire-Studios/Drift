@@ -513,6 +513,10 @@
         <translation>淡化曲線</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">曲線</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>動畫</translation>
     </message>
@@ -679,14 +683,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>暫停</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>播放</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>跳轉</translation>
@@ -1003,6 +999,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">在此處新建資料夾</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">建立空白時間軸並開啟</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1125,6 +1129,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>這裡還沒有內容——您儲存的項目將顯示在此列表中。</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6169,6 +6180,14 @@
         <source>Remove from history</source>
         <translation>從記錄中移除</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">搜索</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10507,6 +10526,18 @@
         <translation>搜索效果</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">更多</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">添加調整圖層</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>調整圖層</translation>
     </message>
@@ -10529,10 +10560,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">導入</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26702,6 +26729,14 @@ If playback stutters, try another.</source>
         <translation>算圖防抖副本，或使用稀疏變換關鍵格為片段添加動畫</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>平滑度</translation>
     </message>
@@ -28022,6 +28057,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>導出文本樣式</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32105,6 +32148,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>類型</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

@@ -529,7 +529,6 @@ ManipOverlay {
 
                     CropPresets {
                         id: strip
-                        chipHeight: Theme.androidMinTouchTarget
                         variant: "outline"
                         aspect: root.aspect
                         originalAspect: root.originalAspect
@@ -556,7 +555,6 @@ ManipOverlay {
 
                 ThemedChip {
                     visible: !root.showPresets && root.touchPresets
-                    chipHeight: Theme.androidMinTouchTarget
                     text: qsTr("Thirds")
                     selected: root.thirds
                     onClicked: root.toggleThirds()

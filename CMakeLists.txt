@@ -2655,6 +2655,7 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidPageSection.qml
         src/qml/components/android/AndroidTabStrip.qml
         src/qml/components/android/AndroidTextTabs.qml
+        src/qml/components/android/AndroidInfoButton.qml
         src/qml/components/android/AndroidSliderRow.qml
         src/qml/components/android/AndroidDownloadJobRow.qml
         src/qml/components/android/AndroidToolPage.qml

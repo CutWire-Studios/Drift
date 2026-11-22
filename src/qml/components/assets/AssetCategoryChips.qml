@@ -28,7 +28,32 @@ Item {
         return s.id !== root.favoritesId && s.id !== root.recentId && s.id !== root.mineId
     })
 
+    // Phone: the row folds away while the grid scrolls down and returns on the way back up, so the
+    // cards get the height. Set to the grid's Flickable.
+    property Flickable flickable: null
+    property bool folded: false
+    property real _lastY: 0
+
     signal categoryActivated(string categoryId)
+
+    Connections {
+        target: root.flickable
+        enabled: Theme.phone
+        function onContentYChanged() {
+            const f = root.flickable
+            const y = f.contentY
+            const d = y - root._lastY
+            root._lastY = y
+            if (foldAnim.running || !(f.dragging || f.flicking))
+                return
+            if (y <= 0)
+                root.folded = false
+            else if (d > 6 && y > root.implicitHeight)
+                root.folded = true
+            else if (d < -6)
+                root.folded = false
+        }
+    }
 
     function _revealActive() {
         for (let i = 0; i < categoryRepeater.count; ++i) {
@@ -43,7 +68,15 @@ Item {
     onActiveCategoryChanged: _revealActive()
 
     width: parent ? parent.width : 0
-    height: visible ? (Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : Theme.controlHeightSm) : 0
+    readonly property real fullHeight: Theme.phone ? Theme.controlHeightSm + Theme.spacingLg : Theme.controlHeightSm
+    implicitHeight: fullHeight
+    height: visible ? (folded ? 0 : fullHeight) : 0
+    clip: Theme.phone
+
+    Behavior on height {
+        enabled: Theme.phone
+        NumberAnimation { id: foldAnim; duration: Theme.durationFast; easing.type: Theme.easing }
+    }
     visible: !searching && sections.length > 1
 
     Row {

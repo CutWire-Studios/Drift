@@ -18,7 +18,6 @@ TouchContextBar {
     z: 120
 
     ThemedChip {
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Delete")
         onClicked: {
             bar.session.deleteSelected(bar.session.healOnDelete)
@@ -27,7 +26,6 @@ TouchContextBar {
     }
 
     ThemedChip {
-        chipHeight: Theme.androidMinTouchTarget
         text: bar.session.selectedMode === 0 ? qsTr("Smooth") : qsTr("Corner")
         onClicked: {
             bar.session.toggleSmoothSelected()
@@ -36,7 +34,6 @@ TouchContextBar {
     }
 
     ThemedChip {
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Break handles")
         selected: bar.session.selectedMode === 3
         onClicked: {
@@ -46,7 +43,6 @@ TouchContextBar {
     }
 
     ThemedChip {
-        chipHeight: Theme.androidMinTouchTarget
         text: qsTr("Heal")
         selected: bar.session.healOnDelete
         onClicked: bar.session.healOnDelete = !bar.session.healOnDelete

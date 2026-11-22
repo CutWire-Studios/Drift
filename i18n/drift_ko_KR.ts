@@ -513,6 +513,10 @@
         <translation>페이드 곡선</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">곡선</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>애니메이션</translation>
     </message>
@@ -679,14 +683,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>일시정지</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>재생</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>이동</translation>
@@ -1003,6 +999,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">여기에 새 폴더 만들기</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">빈 타임라인을 만들고 엽니다</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1125,6 +1129,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>아직 아무것도 없습니다 — 저장한 프로젝트가 이 목록에 표시됩니다.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6169,6 +6180,14 @@
         <source>Remove from history</source>
         <translation>기록에서 제거</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">검색</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10507,6 +10526,18 @@
         <translation>효과 검색</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">보정 레이어 추가</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>보정 레이어</translation>
     </message>
@@ -10529,10 +10560,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">가져오기</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26694,6 +26721,14 @@ If playback stutters, try another.</source>
         <translation>흔들림 보정된 사본을 렌더링하거나 희소 변형 키로 클립에 애니메이션을 적용합니다</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>부드러움</translation>
     </message>
@@ -28013,6 +28048,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>텍스트 스타일 내보내기</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32096,6 +32139,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>유형</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

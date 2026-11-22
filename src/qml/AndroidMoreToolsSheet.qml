@@ -546,7 +546,7 @@ AndroidBottomSheet {
                         id: tileGrid
                         x: Theme.spacingMd + root.safeLeft
                         width: group.width - Theme.spacingMd * 2 - root.safeLeft - root.safeRight
-                        columns: 3
+                        columns: Theme.phone ? 4 : 3
                         readonly property real tileWidth: Math.floor(width / columns)
 
                         Repeater {

@@ -29,8 +29,16 @@ Button {
     font.weight: variant === "primary" ? Font.Medium : Font.Normal
     leftPadding: glyph.length > 0 ? Theme.spacingXl : Theme.spacing2xl - Theme.spacingXs
     rightPadding: Theme.spacing2xl - Theme.spacingXs
-    topPadding: Theme.spacingMd + 1
-    bottomPadding: Theme.spacingMd + 1
+    topPadding: Theme.phone ? Theme.spacingSm : Theme.spacingMd + 1
+    bottomPadding: topPadding
+    containmentMask: Theme.phone ? buttonHit : null
+
+    Item {
+        id: buttonHit
+        anchors.fill: parent
+        anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - root.height) / 2)
+        anchors.bottomMargin: anchors.topMargin
+    }
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
 

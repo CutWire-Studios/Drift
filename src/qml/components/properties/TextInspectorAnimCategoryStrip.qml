@@ -6,7 +6,7 @@ ScrollStrip {
     property var inspector
     width: parent.width
     readonly property bool phone: Theme.touchInput && Theme.compact
-    height: phone ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+    height: phone ? Theme.androidRowHeight : Theme.controlHeightSm
     visible: inspector.animCategories.length > 1
 
     Row {

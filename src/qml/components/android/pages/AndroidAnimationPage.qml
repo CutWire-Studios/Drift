@@ -164,6 +164,7 @@ Item {
 
         property string curve: "smooth"
         property bool chipsEnabled: true
+        property string heading: ""
 
         signal chosen(string id)
 
@@ -171,6 +172,18 @@ Item {
         spacing: Theme.spacingSm
         enabled: chips.chipsEnabled
         opacity: chips.chipsEnabled ? 1 : 0.5
+
+        Text {
+            visible: Theme.phone
+            height: visible ? Theme.androidChipHeight : 0
+            verticalAlignment: Text.AlignVCenter
+            rightPadding: Theme.spacingSm
+            text: chips.heading
+            color: Theme.c.androidPageSection.foreground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSm
+            font.weight: Font.Medium
+        }
 
         Repeater {
             model: root.curveModel
@@ -198,9 +211,10 @@ Item {
             x: Theme.pagePadding
             y: Theme.pagePadding
             width: scroll.width - Theme.pagePadding * 2
-            spacing: Theme.spacing2xl
+            spacing: Theme.phone ? Theme.spacingXl : Theme.spacing2xl
 
             Row {
+                id: edgeRow
                 width: parent.width
                 spacing: Theme.spacingSm
 
@@ -211,11 +225,17 @@ Item {
                     ]
                     delegate: ThemedChip {
                         required property var modelData
-                        width: (parent.width - Theme.spacingSm) / 2
+                        width: (parent.width - Theme.spacingSm - (Theme.phone ? edgeInfo.width + Theme.spacingSm : 0)) / 2
                         text: modelData.label
                         selected: root.edge === modelData.id
                         onClicked: root.edge = modelData.id
                     }
+                }
+
+                AndroidInfoButton {
+                    id: edgeInfo
+                    anchors.verticalCenter: parent.verticalCenter
+                    hint: root.supportsAnim ? qsTr("Fade also ramps the volume.") : qsTr("Fade ramps the volume.")
                 }
             }
 
@@ -224,6 +244,7 @@ Item {
                 spacing: Theme.spacingMd
 
                 Text {
+                    visible: !Theme.phone
                     width: parent.width
                     wrapMode: Text.WordWrap
                     text: root.supportsAnim ? qsTr("Fade also ramps the volume.") : qsTr("Fade ramps the volume.")
@@ -251,10 +272,12 @@ Item {
                 }
 
                 AndroidPageSection {
+                    visible: !Theme.phone
                     text: qsTr("Fade curve")
                 }
 
                 CurveChips {
+                    heading: qsTr("Curve")
                     curve: root.fadeCurve
                     onChosen: (id) => root.chooseFadeCurve(id)
                 }
@@ -272,7 +295,7 @@ Item {
                 Grid {
                     id: tileGrid
                     width: parent.width
-                    columns: 3
+                    columns: Theme.phone ? 4 : 3
                     spacing: Theme.spacingSm
 
                     Repeater {
@@ -283,7 +306,8 @@ Item {
                             readonly property bool chosen: modelData.id === root.animKind
 
                             width: (tileGrid.width - tileGrid.spacing * (tileGrid.columns - 1)) / tileGrid.columns
-                            height: Math.max(Theme.androidMinTouchTarget * 1.5, tileContent.implicitHeight + Theme.spacingLg * 2)
+                            height: Theme.phone ? tileContent.implicitHeight + Theme.spacingLg * 2
+                                               : Math.max(Theme.androidMinTouchTarget * 1.5, tileContent.implicitHeight + Theme.spacingLg * 2)
                             radius: Theme.c.androidAnimationPage.tileRadius
                             color: tile.chosen ? Theme.c.androidAnimationPage.tileBackgroundSelected
                                                : Theme.c.androidAnimationPage.tileBackground
@@ -360,10 +384,12 @@ Item {
                     spacing: Theme.spacingMd
 
                     AndroidPageSection {
+                        visible: !Theme.phone
                         text: qsTr("Animation curve")
                     }
 
                     CurveChips {
+                        heading: qsTr("Curve")
                         curve: root.anim.curve || "smooth"
                         chipsEnabled: root.animKind !== "none"
                         onChosen: (id) => root.chooseAnimCurve(id)

@@ -13,7 +13,7 @@ Item {
 
     signal actionTriggered()
 
-    visible: shown && !dismissed && EditorState.preferences.showTips && !ShellBridge.phoneShell
+    visible: shown && !dismissed && EditorState.preferences.showTips && !ShellBridge.phoneShell && !Theme.phone
     width: parent ? parent.width : implicitWidth
     implicitHeight: visible ? Math.max(tipText.implicitHeight, closeButton.height) : 0
     height: implicitHeight

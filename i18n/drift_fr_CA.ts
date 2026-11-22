@@ -513,6 +513,10 @@
         <translation>Courbe de fondu</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Courbe</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>Animation</translation>
     </message>
@@ -680,14 +684,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>Pause</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>Lire</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>Chercher</translation>
@@ -1004,6 +1000,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">Créer un nouveau dossier ici</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">Créer une ligne du temps vide et l&apos;ouvrir</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1126,6 +1130,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>Rien ici pour le moment — les projets que vous enregistrez apparaîtront dans cette liste.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6189,6 +6200,14 @@
         <source>Remove from history</source>
         <translation>Retirer de l&apos;historique</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Rechercher</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10548,6 +10567,18 @@
         <translation>Rechercher des effets</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Plus</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">Ajouter un calque de réglage</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>Calque d&apos;ajustement</translation>
     </message>
@@ -10570,10 +10601,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">Importer</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26798,6 +26825,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Rendre une copie stabilisée, ou animer le clip avec des clés de transformation clairsemées</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>Lissage</translation>
     </message>
@@ -28125,6 +28160,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Export text style</source>
         <translation>Exporter style de texte</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32217,6 +32260,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Type</source>
         <translation>Type</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

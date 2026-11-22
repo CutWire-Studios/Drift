@@ -58,6 +58,8 @@ Item {
     }
 
     readonly property bool phone: Theme.touchInput && Theme.compact
+    // Phone fields sit beside their label instead of under it.
+    readonly property real inlineLabelWidth: Theme.phone ? Theme.phoneLabelWidth : 0
     readonly property real labelSize: phone ? Theme.fontSizeSm : Theme.fontSizeXs
 
     height: contentCol.height
@@ -105,10 +107,23 @@ Item {
 
     Component.onCompleted: refreshFields()
 
+    function transitionHint(includeBasic) {
+        const t = root.activeTransition
+        let line = !includeBasic ? "" : t.overlapping
+            ? (Theme.touchInput ? qsTr("Overlap transition. Tap the type to replace it.")
+                                : qsTr("Overlap transition. Drag another kind from Transitions to replace it."))
+            : (Theme.touchInput ? qsTr("Transition to the next clip. Scrub across the cut to preview it.")
+                                : qsTr("Transition to the next clip. Move across the cut to preview it."))
+        const h = t.handles || {}
+        if (!t.overlapping && (h.out === false || h.in === false))
+            line += " " + qsTr("One side has no media past the cut, so its sound fades through silence instead of crossfading.")
+        return line.trim()
+    }
+
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
             width: parent.width
@@ -167,27 +182,20 @@ Item {
             Text {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                text: {
-                    const t = root.activeTransition
-                    let line = t.overlapping
-                        ? (Theme.touchInput ? qsTr("Overlap transition. Tap the type to replace it.")
-                                            : qsTr("Overlap transition. Drag another kind from Transitions to replace it."))
-                        : (Theme.touchInput ? qsTr("Transition to the next clip. Scrub across the cut to preview it.")
-                                            : qsTr("Transition to the next clip. Move across the cut to preview it."))
-                    const h = t.handles || {}
-                    if (!t.overlapping && (h.out === false || h.in === false))
-                        line += " " + qsTr("One side has no media past the cut, so its sound fades through silence instead of crossfading.")
-                    return line
-                }
+                visible: !Theme.phone || text.length > 0
+                text: root.transitionHint(!Theme.phone)
                 color: Theme.c.transitionInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: root.labelSize
             }
 
-            Column {
+            Flow {
                 width: parent.width
                 spacing: 4
                 Text {
+                    width: root.phone ? root.inlineLabelWidth : implicitWidth
+                    height: root.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                     text: qsTr("Type")
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
@@ -207,8 +215,8 @@ Item {
                     }
                     readonly property string strip: kindInfo.previewStripPath || ""
                     readonly property int frameCount: Math.max(1, kindInfo.previewFrames || 1)
-                    width: parent.width
-                    height: Theme.controlHeight * 1.6
+                    width: parent.width - root.inlineLabelWidth - (root.phone ? parent.spacing * 2 + typeInfo.width : 0)
+                    height: Theme.phone ? Theme.controlHeight : Theme.controlHeight * 1.6
                     radius: Theme.c.themedComboBox.radius
                     color: Theme.c.themedComboBox.background
                     border.width: kindMouse.containsMouse || kindButton.activeFocus
@@ -296,12 +304,20 @@ Item {
                         id: kindPicker
                     }
                 }
+
+                AndroidInfoButton {
+                    id: typeInfo
+                    hint: root.transitionHint(true) + " " + qsTr("A transition needs two clips next to each other on one track.")
+                }
             }
 
-            Column {
+            Flow {
                 width: parent.width
                 spacing: 4
                 Text {
+                    width: root.phone ? root.inlineLabelWidth : implicitWidth
+                    height: root.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                     text: qsTr("Duration")
                     SearchAnchor {
                         searchId: "transition-duration"
@@ -316,7 +332,7 @@ Item {
                     id: transitionDurationField
                     to: 60
                     unit: "s"
-                    width: parent.width
+                    width: parent.width - root.inlineLabelWidth - (root.phone ? parent.spacing : 0)
                     decimals: 2
                     step: 0.05
                     from: 0.05
@@ -331,10 +347,13 @@ Item {
 
             // Remaps progress across the transition window. "Custom" hands off to the same
             // curve editor the clip fades use, scoped to this transition.
-            Column {
+            Flow {
                 width: parent.width
                 spacing: 4
                 Text {
+                    width: root.phone ? root.inlineLabelWidth : implicitWidth
+                    height: root.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                     text: qsTr("Curve")
                     SearchAnchor {
                         searchId: "transition-curve"
@@ -347,7 +366,7 @@ Item {
                 }
                 CurveField {
                     id: transitionCurveBox
-                    width: parent.width
+                    width: parent.width - root.inlineLabelWidth - (root.phone ? parent.spacing : 0)
                     domain: "fade"
                     curve: root.activeTransition.easingCurve || "linear"
                     handles: root.activeTransition.easingHandles || []

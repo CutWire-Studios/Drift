@@ -10,7 +10,7 @@ Item {
     default property alias trailing: trailingRow.data
 
     width: parent ? parent.width : implicitWidth
-    implicitHeight: Math.max(label.implicitHeight, trailingRow.children.length > 0 ? Theme.androidMinTouchTarget : 0)
+    implicitHeight: Math.max(label.implicitHeight, trailingRow.children.length > 0 ? Theme.androidRowHeight : 0)
     height: implicitHeight
 
     Text {

@@ -694,6 +694,32 @@ Item {
 
     AndroidBottomSheet {
         id: assetsSheet
+        headerActions: [
+            IconButton {
+                visible: assetsPanel.phoneHeaderActions
+                buttonSize: Theme.androidIconButtonVisual
+                glyph: Theme.icons.folder
+                variant: "text"
+                tooltip: qsTr("Create a new folder here")
+                onClicked: assetsPanel.openNewFolder()
+            },
+            IconButton {
+                visible: assetsPanel.phoneHeaderActions
+                buttonSize: Theme.androidIconButtonVisual
+                glyph: Theme.icons.layers
+                variant: "text"
+                tooltip: qsTr("Create an empty timeline and open it")
+                onClicked: EditorState.newTimeline()
+            },
+            AssetsPanelImportSplit {
+                visible: assetsPanel.phoneHeaderActions
+                compact: true
+                importing: assetsPanel.importing
+                onImportFilesRequested: assetsPanel.importMedia()
+                onImportFolderRequested: assetsPanel.importFolder()
+                onCollectMediaRequested: assetsPanel.collectMedia()
+            }
+        ]
         onClosed: {
             if (sheetKind === "assets") {
                 sheetKind = ""
@@ -735,7 +761,7 @@ Item {
         anchors.rightMargin: root.SafeArea.margins.right
         // A tool page's footer row also sits right above the keyboard, so the bar goes over it.
         anchors.bottomMargin: Math.max(root.SafeArea.margins.bottom, Theme.keyboardInset)
-                              + (toolPage.isOpen ? Theme.androidBottomRailHeight : 0)
+                              + (toolPage.isOpen ? Theme.androidTopBarHeight : 0)
         z: 101
     }
 

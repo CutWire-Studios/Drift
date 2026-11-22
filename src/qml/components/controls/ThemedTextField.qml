@@ -28,6 +28,14 @@ TextField {
     topPadding: Theme.spacingMd
     bottomPadding: Theme.spacingMd
     implicitHeight: Theme.controlHeight
+    containmentMask: Theme.phone ? fieldHit : null
+
+    Item {
+        id: fieldHit
+        anchors.fill: parent
+        anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - root.height) / 2)
+        anchors.bottomMargin: anchors.topMargin
+    }
     hoverEnabled: true
     opacity: enabled ? 1 : 0.5
 

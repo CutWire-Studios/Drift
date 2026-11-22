@@ -513,6 +513,10 @@
         <translation>フェードカーブ</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">カーブ</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>アニメーション</translation>
     </message>
@@ -679,14 +683,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>一時停止</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>再生</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>シーク</translation>
@@ -1003,6 +999,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">ここに新しいフォルダーを作成</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">空のタイムラインを作成して開く</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1125,6 +1129,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>ここにはまだ何もありません — 保存したプロジェクトはこのリストに表示されます。</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6169,6 +6180,14 @@
         <source>Remove from history</source>
         <translation>履歴から削除</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">検索</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10507,6 +10526,18 @@
         <translation>エフェクトを検索</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">その他</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">調整レイヤーを追加</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>調整レイヤー</translation>
     </message>
@@ -10529,10 +10560,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">インポート</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26702,6 +26729,14 @@ If playback stutters, try another.</source>
         <translation>手ぶれ補正済みのコピーをレンダリングするか、疎なトランスフォームキーでクリップをアニメーション化します</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>滑らかさ</translation>
     </message>
@@ -28022,6 +28057,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>テキストスタイルをエクスポート</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32105,6 +32148,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>タイプ</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

@@ -35,7 +35,7 @@ Item {
             visible: root.isText
             x: Theme.pagePadding
             width: parent.width - Theme.pagePadding * 2
-            height: visible ? Theme.androidMinTouchTarget : 0
+            height: visible ? Theme.androidControlHeight : 0
             variant: "secondary"
             glyph: Theme.icons.type
             text: root.content.length > 0 ? root.content.replace(/\s+/g, " ") : qsTr("Tap to type text")
@@ -57,8 +57,9 @@ Item {
         anchors.topMargin: Theme.spacingSm
         width: parent.width
         height: root.embedded ? contentHeight : Math.max(0, root.height - header.height - Theme.spacingSm)
+        readonly property real inset: Theme.phone ? Theme.spacingMd : Theme.pagePadding
         contentWidth: width
-        contentHeight: inspector.height + Theme.pagePadding * 2
+        contentHeight: inspector.height + body.inset * 2
         interactive: !root.embedded
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -67,7 +68,7 @@ Item {
         TextInspector {
             id: inspector
             x: Theme.pagePadding
-            y: Theme.pagePadding
+            y: body.inset
             width: body.width - Theme.pagePadding * 2
             mode: root.tab
         }

@@ -73,7 +73,6 @@ Rectangle {
             ThemedChip {
                 required property string modelData
                 anchors.verticalCenter: parent.verticalCenter
-                chipHeight: Theme.androidMinTouchTarget
                 text: bar.labels[modelData]
                 selected: bar.isOn(modelData)
                 onClicked: bar.toggle(modelData)

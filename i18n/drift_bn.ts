@@ -513,6 +513,10 @@
         <translation>ফেড কার্ভ</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">কার্ভ</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>অ্যানিমেশন</translation>
     </message>
@@ -680,14 +684,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>বিরতি দিন</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>চালান</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>সময় বদলান</translation>
@@ -1004,6 +1000,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">এখানে একটি নতুন ফোল্ডার তৈরি করুন</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">একটি খালি টাইমলাইন তৈরি করুন এবং এটি খুলুন</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1126,6 +1130,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>এখনও কিছু নেই — সংরক্ষণ করা প্রকল্পগুলো এই তালিকায় দেখা যাবে.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6189,6 +6200,14 @@
         <source>Remove from history</source>
         <translation>ইতিহাস থেকে সরান</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">অনুসন্ধান করুন</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10548,6 +10567,18 @@
         <translation>অনুসন্ধান ইফেক্ট</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">আরও</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">অ্যাডজাস্টমেন্ট লেয়ার যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>সমন্বয় স্তর</translation>
     </message>
@@ -10570,10 +10601,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">ইমপোর্ট</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26797,6 +26824,14 @@ If playback stutters, try another.</source>
         <translation>একটি স্থিতিশীল অনুলিপি রেন্ডার করুন, বা স্পার্স ট্রান্সফর্ম কী দিয়ে ক্লিপটিকে অ্যানিমেট করুন</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>স্মুথিং</translation>
     </message>
@@ -28123,6 +28158,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>টেক্সট শৈলী এক্সপোর্ট করুন</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32214,6 +32257,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>প্রকার</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

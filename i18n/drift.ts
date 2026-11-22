@@ -513,6 +513,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -680,14 +684,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation type="unfinished"></translation>
@@ -1004,6 +1000,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1125,6 +1129,13 @@
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6189,6 +6200,14 @@
         <source>Remove from history</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10548,6 +10567,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10569,10 +10600,6 @@
     </message>
     <message>
         <source>Create a new effect in Forge</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26790,6 +26817,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -28114,6 +28149,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Export text style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -32205,6 +32248,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

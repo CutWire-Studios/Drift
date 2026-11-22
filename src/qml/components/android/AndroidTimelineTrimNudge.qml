@@ -14,7 +14,7 @@ Rectangle {
 
     visible: shown
     width: row.width + Theme.spacingSm * 2
-    height: Theme.androidMinTouchTarget
+    height: Theme.androidControlHeight
     radius: Theme.c.androidTimelineTrimNudge.radius
     color: Theme.c.androidTimelineTrimNudge.background
     border.width: Theme.c.androidTimelineTrimNudge.borderWidth
@@ -71,7 +71,7 @@ Rectangle {
                     delegate: Rectangle {
                         id: button
                         required property int modelData
-                        width: Theme.androidMinTouchTarget
+                        width: Theme.androidChipHeight + Theme.spacingMd
                         height: nudge.height - nudge.border.width * 2
                         radius: nudge.radius
                         color: tap.pressed ? Theme.c.androidTimelineTrimNudge.pressed : "transparent"
@@ -91,6 +91,8 @@ Rectangle {
                         MouseArea {
                             id: tap
                             anchors.fill: parent
+                            anchors.topMargin: -Math.max(0, (Theme.androidMinTouchTarget - button.height) / 2)
+                            anchors.bottomMargin: anchors.topMargin
                             onClicked: nudge.step(group.modelData.side, button.modelData)
                         }
                     }

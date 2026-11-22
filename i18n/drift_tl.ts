@@ -513,6 +513,10 @@
         <translation>Curve ng fade</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Kurba</translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>Animasyon</translation>
     </message>
@@ -680,14 +684,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>I-pause</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>I-play</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>Mag-seek</translation>
@@ -1004,6 +1000,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">Lumikha ng bagong folder dito</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">Gumawa ng walang lamang timeline at buksan ito</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1126,6 +1130,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>Wala pa rito — lalabas sa listahang ito ang mga proyektong ise-save mo.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6189,6 +6200,14 @@
         <source>Remove from history</source>
         <translation>Alisin sa kasaysayan</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Maghanap</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10548,6 +10567,18 @@
         <translation>Maghanap ng mga epekto</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">Higit pa</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">Magdagdag ng adjustment layer</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>Adjustment layer</translation>
     </message>
@@ -10570,10 +10601,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">Mag-import</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -26798,6 +26825,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Mag-render ng napatatag na kopya, o i-animate ang clip gamit ang mga sparse transform key</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>Pagpapakinis</translation>
     </message>
@@ -28124,6 +28159,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Export text style</source>
         <translation>Mag-export ng estilo ng teksto</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32215,6 +32258,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Type</source>
         <translation>Uri</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

@@ -17,7 +17,7 @@ Item {
     Rectangle {
         id: card
         width: parent.width
-        height: Math.max(lineCol.implicitHeight + 14, Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : 0)
+        height: Math.max(lineCol.implicitHeight + 14, Theme.touchInput && Theme.compact ? Theme.androidRowHeight : 0)
         radius: Theme.c.subtitleCueCard.radius
         color: cueDelegate.isSelected ? Theme.c.subtitleCueCard.backgroundSelected : (rowHover.containsMouse ? Theme.c.subtitleCueCard.backgroundHover : "transparent")
         border.width: (cueDelegate.isSelected || cueDelegate.isActive || rowHover.containsMouse) ? Theme.c.subtitleCueCard.borderWidth : 0
@@ -96,7 +96,7 @@ Item {
         id: addRow
         anchors.top: card.bottom
         width: parent.width
-        height: Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : 30
+        height: Theme.touchInput && Theme.compact ? Theme.androidRowHeight : 30
         visible: cueDelegate.isSelected
 
         IconButton {

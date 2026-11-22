@@ -11,6 +11,9 @@ Item {
     signal added()
     // Set by the phone's add page: tap adds, hold opens the card menu, and the last pick is marked.
     property bool pickerMode: false
+    property var headerTabs: []
+    property string headerTabId: ""
+    signal headerTabSelected(string tabId)
     property string pickedId: ""
     // AssetsPanel owns the emoji picker; the button for it lives in this tab's search bar.
     signal emojiPickerRequested()
@@ -71,6 +74,9 @@ Item {
 
         AssetSearchBar {
             id: search
+            tabs: root.headerTabs
+            currentTabId: root.headerTabId
+            onTabSelected: tabId => root.headerTabSelected(tabId)
             placeholderText: qsTr("Search stickers")
             historyKey: "stickers"
 
@@ -125,12 +131,14 @@ Item {
         }
 
         Item {
+            id: chipsGap
             width: 1
-            height: Theme.spacingSm
+            height: Theme.phone ? 0 : Theme.spacingSm
         }
 
         AssetCategoryChips {
             id: categoryChips
+            flickable: stickerGrid
             width: parent.width
             sections: root.hasStickers ? stickerGrid.visibleSections : []
             activeCategory: root.activeCategory
@@ -141,7 +149,7 @@ Item {
         Item {
             width: parent.width
             height: Math.max(0, parent.height - search.height
-                             - Theme.spacingSm - categoryChips.height)
+                             - chipsGap.height - categoryChips.height)
 
             EmptyState {
                 visible: !root.hasStickers

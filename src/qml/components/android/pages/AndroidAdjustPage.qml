@@ -38,7 +38,7 @@ Item {
         id: scroll
         anchors.fill: parent
         contentWidth: width
-        contentHeight: adjustColumn.height + Theme.pagePadding * 2
+        contentHeight: adjustColumn.height + Theme.spacingLg * 2
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
@@ -46,9 +46,9 @@ Item {
         Column {
             id: adjustColumn
             x: Theme.pagePadding
-            y: Theme.pagePadding
+            y: Theme.spacingLg
             width: scroll.width - Theme.pagePadding * 2
-            spacing: Theme.spacing2xl
+            spacing: Theme.spacingLg
             enabled: root.hasTarget
 
             Row {

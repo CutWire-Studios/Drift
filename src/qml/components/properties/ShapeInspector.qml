@@ -125,6 +125,7 @@ Item {
             }
 
             ThemedLabel {
+                visible: !Theme.phone
                 width: parent.width
                 opacity: 0.8
                 text: qsTr("Swapping the shape keeps its position, size, style and effects.")

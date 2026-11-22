@@ -513,6 +513,10 @@
         <translation>منحنى التلاشي</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Animation</source>
         <translation>التحريك</translation>
     </message>
@@ -684,14 +688,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>إيقاف مؤقت</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>تشغيل</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>تمرير</translation>
@@ -1008,6 +1004,14 @@
         <source>Clips you add appear here as layers.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">إنشاء مجلد جديد هنا</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">إنشاء مخطط زمني فارغ وفتحه</translation>
+    </message>
 </context>
 <context>
     <name>AndroidExtrasPage</name>
@@ -1130,6 +1134,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>لا يوجد شيء هنا بعد — ستظهر المشاريع التي تحفظها في هذه القائمة.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6269,6 +6280,14 @@
         <source>Remove from history</source>
         <translation>إزالة من السجل</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">بحث</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -10712,6 +10731,18 @@
         <translation>البحث في التأثيرات</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">المزيد</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">إضافة طبقة ضبط</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>طبقة ضبط</translation>
     </message>
@@ -10734,10 +10765,6 @@
     <message>
         <source>Create a new effect in Forge</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation type="unfinished">استيراد</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -27181,6 +27208,14 @@ If playback stutters, try another.</source>
         <translation>عرض نسخة مثبتة، أو تحريك المقطع باستخدام مفاتيح تحويل متباعدة</translation>
     </message>
     <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Smoothing</source>
         <translation>التنعيم</translation>
     </message>
@@ -28531,6 +28566,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>تصدير نمط النص</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -32654,6 +32697,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>النوع</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>

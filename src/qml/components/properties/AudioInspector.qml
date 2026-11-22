@@ -41,7 +41,7 @@ Item {
     Column {
         id: audioTabColumn
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         SearchAnchor {
             searchId: "audio-volume"

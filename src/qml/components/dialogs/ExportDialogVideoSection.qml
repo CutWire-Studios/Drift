@@ -157,7 +157,7 @@ Column {
 
     Item {
         width: parent.width
-        height: section.phone ? Theme.androidMinTouchTarget : advancedHeader.implicitHeight
+        height: section.phone ? Theme.androidRowHeight : advancedHeader.implicitHeight
 
         Row {
             id: advancedHeader
