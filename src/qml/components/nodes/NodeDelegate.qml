@@ -183,12 +183,26 @@ Item {
         }
     }
 
+    // Each drag's moves merge into one undo step (see ForgeController::moveNodes). Esc drops that
+    // step, which leaves the graph where it started until the button is released.
+    function cancelMove() {
+        drag.revert()
+    }
+
     DragHandler {
         id: drag
         target: null
         acceptedButtons: Qt.LeftButton
         property point last
         property var ids: []
+        property bool reverted: false
+
+        function revert() {
+            if (!active || reverted)
+                return
+            reverted = true
+            root.controller.cancelMove()
+        }
 
         onActiveChanged: {
             if (active) {
@@ -198,19 +212,23 @@ Item {
                     root.controller.select(root.nodeId, false)
                 ids = root.controller.selection
                 last = centroid.scenePosition
+                reverted = false
+                root.canvas.movingNode = root
             } else {
                 root.controller.endMove()
+                root.canvas.movingNode = null
             }
         }
         onCentroidChanged: {
-            if (!active)
+            if (!active || reverted)
                 return
             const p = centroid.scenePosition
             const dx = (p.x - last.x) / root.canvas.zoom
             const dy = (p.y - last.y) / root.canvas.zoom
             last = p
-            if (dx !== 0 || dy !== 0)
+            if (dx !== 0 || dy !== 0) {
                 root.controller.moveNodes(ids, dx, dy)
+            }
         }
     }
 

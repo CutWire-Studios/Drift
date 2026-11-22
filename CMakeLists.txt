@@ -1949,6 +1949,7 @@ qt_add_qml_module(drift
         src/qml/components/manip/curve/CurveGraphKnobs.qml
         src/qml/components/manip/curve/CurveGraphPointBar.qml
         src/qml/components/manip/HandleKnob.qml
+        src/qml/components/manip/MarqueeSelector.qml
         src/qml/components/manip/TransformManip.qml
         src/qml/components/manip/transform/TransformClipBox.qml
         src/qml/components/manip/transform/TransformGrip.qml
