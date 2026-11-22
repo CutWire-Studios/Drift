@@ -1931,6 +1931,10 @@
         <translation>Qualité : %1</translation>
     </message>
     <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Guides</source>
         <translation>Guides</translation>
     </message>
@@ -31412,6 +31416,37 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TransformGizmo</name>
+    <message>
+        <source>%1 %2 / %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rot %1 %2°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1 %2×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Local</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished">Monde</translation>
+    </message>
+</context>
+<context>
     <name>TransformGroupBox</name>
     <message>
         <source>Δ %1, %2</source>
@@ -31696,6 +31731,50 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Add</source>
         <translation type="unfinished">Ajouter</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">Déplacer</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Tourner</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Échelle</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Local</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished">X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation type="unfinished">Y</translation>
+    </message>
+    <message>
+        <source>Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">Libre</translation>
+    </message>
+    <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished">Déplacer le clip en 3D</translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished">Pivoter le clip en 3D</translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">Mettre le clip à l&apos;échelle</translation>
     </message>
 </context>
 <context>
@@ -32607,8 +32686,12 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Pas de rotation</translation>
     </message>
     <message>
-        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation>Le glissement du gizmo déplace et pivote selon ces pas; maintenez Ctrl pour un mouvement libre. 0 désactive le pas.</translation>
+        <source>Scale step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Navigation</source>

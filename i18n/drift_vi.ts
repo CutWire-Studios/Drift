@@ -1930,6 +1930,10 @@
         <translation>Chất lượng: %1</translation>
     </message>
     <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Guides</source>
         <translation>Đường kẻ</translation>
     </message>
@@ -31302,6 +31306,37 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TransformGizmo</name>
+    <message>
+        <source>%1 %2 / %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rot %1 %2°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1 %2×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Cục bộ</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished">Toàn cầu</translation>
+    </message>
+</context>
+<context>
     <name>TransformGroupBox</name>
     <message>
         <source>Δ %1, %2</source>
@@ -31585,6 +31620,50 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Add</source>
         <translation type="unfinished">Thêm</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">Di chuyển</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Xoay</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Tỷ lệ</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Cục bộ</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished">X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation type="unfinished">Y</translation>
+    </message>
+    <message>
+        <source>Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">Tự do</translation>
+    </message>
+    <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished">Di chuyển clip ở chế độ 3D</translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished">Xoay clip ở chế độ 3D</translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">Tỷ lệ clip</translation>
     </message>
 </context>
 <context>
@@ -32492,8 +32571,12 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Bước xoay</translation>
     </message>
     <message>
-        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation>Kéo Gizmo sẽ di chuyển và xoay theo các bước này; giữ Ctrl để di chuyển tự do. 0 sẽ tắt bước.</translation>
+        <source>Scale step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Navigation</source>

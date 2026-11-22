@@ -1930,6 +1930,10 @@
         <translation>화질: %1</translation>
     </message>
     <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Guides</source>
         <translation>안내선</translation>
     </message>
@@ -31293,6 +31297,37 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformGizmo</name>
+    <message>
+        <source>%1 %2 / %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rot %1 %2°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1 %2×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">로컬</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished">월드</translation>
+    </message>
+</context>
+<context>
     <name>TransformGroupBox</name>
     <message>
         <source>Δ %1, %2</source>
@@ -31576,6 +31611,50 @@ If playback stutters, try another.</source>
     <message>
         <source>Add</source>
         <translation type="unfinished">더하기</translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">이동</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">회전</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">크기 조정</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">로컬</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished">X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation type="unfinished">Y</translation>
+    </message>
+    <message>
+        <source>Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished">3D에서 클립 이동</translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished">3D에서 클립 회전</translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">클립 크기 조정</translation>
     </message>
 </context>
 <context>
@@ -32483,8 +32562,12 @@ If playback stutters, try another.</source>
         <translation>회전 단계</translation>
     </message>
     <message>
-        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation>기즈모 드래그 시 이 단계 단위로 이동 및 회전합니다. Ctrl 키를 누르면 자유롭게 이동할 수 있습니다. 0으로 설정하면 단계를 끕니다.</translation>
+        <source>Scale step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Navigation</source>
