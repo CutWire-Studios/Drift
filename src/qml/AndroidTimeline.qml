@@ -1637,4 +1637,27 @@ Item {
         }
     }
 
+    property point dragPointer
+    function setDragPointer(sceneX, sceneY) {
+        dragPointer = dragReadout.parent.mapFromItem(null, sceneX, sceneY)
+    }
+    function formatTimecode(seconds, withFrames) {
+        const fps = Math.max(1, EditorState.projectFile.projectFps())
+        const total = Math.round(Math.max(0, seconds) * fps)
+        const whole = Math.floor(total / fps)
+        const pad = (n) => (n < 10 ? "0" : "") + n
+        const hms = Math.floor(whole / 3600) + ":" + pad(Math.floor(whole / 60) % 60) + ":" + pad(whole % 60)
+        return withFrames ? hms + ":" + pad(total - whole * fps) : hms
+    }
+    function formatDelta(seconds) {
+        return (seconds < 0 ? "-" : "+") + formatTimecode(Math.abs(seconds), false)
+    }
+
+    LiveReadout {
+        id: dragReadout
+        visible: EditorState.drag.interacting && text.length > 0
+                 && ["fadeIn", "fadeOut", "trimStart", "trimEnd", "transitionResize"].indexOf(EditorState.drag.kind) >= 0
+        text: EditorState.drag.hudText
+        pointer: root.dragPointer
+    }
 }

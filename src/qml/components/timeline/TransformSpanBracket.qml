@@ -13,13 +13,12 @@ Item {
     property int layerIndex: -1
     property real contentY: 0
     property real indentStep: 8
-    property bool touchMode: false
     // Header geometry, shared with the rows: function(index) -> content y / height.
     property var rowTop: null
     property var rowHeight: null
 
     // While the foot is dragged: the end it would snap to, for the header tint and the chip.
-    readonly property int previewEnd: dragArea.pressed && dragArea.snapEnd >= 0 ? dragArea.snapEnd : -1
+    readonly property int previewEnd: dragArea.active && dragArea.snapEnd >= 0 ? dragArea.snapEnd : -1
     signal scrollRequested(real dy)
 
     readonly property var layerTrack: layerIndex >= 0 && layerIndex < tracks.length ? tracks[layerIndex] : null
@@ -46,7 +45,7 @@ Item {
     readonly property real lineX: 3 + depth * indentStep
 
     visible: layerTrack !== null && shownEnd > layerIndex
-    opacity: bypassed ? 0.3 : (active || dragArea.pressed ? 1.0 : 0.6)
+    opacity: bypassed ? 0.3 : (active || dragArea.active ? 1.0 : 0.6)
 
     Behavior on opacity {
         NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -90,27 +89,24 @@ Item {
         lineX: root.lineX
         drawnBottom: root.drawnBottom
         indentStep: root.indentStep
-        hot: dragArea.containsMouse || dragArea.pressed
+        hot: dragArea.hovered || dragArea.active
     }
 
     TimelineSpanBracketChip {
-        shown: dragArea.pressed
+        shown: dragArea.active
         lineX: root.lineX
         indentStep: root.indentStep
         bottomY: root.bottomY
         snapCount: dragArea.snapCount
     }
 
-    MouseArea {
+    HandleKnob {
         id: dragArea
-        readonly property real hit: root.touchMode ? 44 : 14
-        x: root.lineX - hit / 2 + 1
-        y: root.bottomY - hit / 2
-        width: hit
-        height: hit
-        hoverEnabled: true
-        preventStealing: true
-        cursorShape: Qt.SizeVerCursor
+        x: root.lineX - width / 2 + 1
+        y: root.bottomY - height / 2
+        shape: "none"
+        space: root
+        cursor: Qt.SizeVerCursor
 
         property var options: []
         property int snapEnd: -1
@@ -152,16 +148,15 @@ Item {
             snapCount = count
         }
 
-        onPressed: {
+        onPressed: (point, modifiers, device) => {
             options = EditorState.transformSpanOptions(root.layerIndex)
             snapEnd = root.endIndex
             snapCount = coveredCount()
             Haptics.pickUp()
+            EditorState.drag.begin("transformSpan", device, qsTr("Change transform span"))
         }
-        onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            const p = mapToItem(root, mouse.x, mouse.y)
+        onMoved: (point, modifiers, device) => {
+            const p = point
             snapTo(p.y + root.contentY)
             // Near an edge the list scrolls, so an end off screen is reachable.
             const edge = 24
@@ -171,6 +166,7 @@ Item {
                 root.scrollRequested(p.y - (root.height - edge))
         }
         onReleased: {
+            EditorState.drag.commit()
             const end = snapEnd
             snapEnd = -1
             if (end < 0 || end === root.endIndex) {
@@ -185,6 +181,13 @@ Item {
                 }
             }
         }
-        onCanceled: snapEnd = -1
+
+        Connections {
+            target: EditorState.drag
+            function onCancelled() {
+                if (dragArea.active)
+                    dragArea.snapEnd = -1
+            }
+        }
     }
 }
