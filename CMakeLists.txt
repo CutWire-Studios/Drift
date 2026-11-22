@@ -1286,6 +1286,8 @@ qt_add_executable(drift
     src/ui/manip/DragSession.cpp
     src/ui/manip/ClipFrameMapper.h
     src/ui/manip/ClipFrameMapper.cpp
+    src/ui/manip/ManipQml.h
+    src/ui/manip/ManipQml.cpp
     src/ui/color/ColorWheelMath.h
     src/ui/color/ColorWheelPad.h
     src/ui/color/ColorWheelPad.cpp
@@ -1929,6 +1931,12 @@ qt_add_qml_module(drift
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
+        src/qml/components/manip/HandleKnob.qml
+        src/qml/components/manip/LiveReadout.qml
+        src/qml/components/manip/Loupe.qml
+        src/qml/components/manip/ManipOverlay.qml
+        src/qml/components/manip/TouchContextBar.qml
+        src/qml/components/manip/ViewNavigation.qml
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/ShapePathOverlay.qml
@@ -2557,7 +2565,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/guides/GuidesPopoverDivider.qml
         src/qml/components/preview/guides/GuidesPopoverColorRow.qml
         src/qml/components/preview/guides/GuidesPopoverAspectFields.qml
-        src/qml/components/preview/guides/GuideEditReadout.qml
         src/qml/components/preview/guides/GuideEditHighlight.qml
         src/qml/components/preview/guides/GuideEditBar.qml
         src/qml/components/preview/guides/GuideEditAddStrip.qml

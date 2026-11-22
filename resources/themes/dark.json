@@ -2930,13 +2930,6 @@
       "backgroundRemoving": "$semantic.destructive",
       "strokeWidth": 3
     },
-    "guideEditReadout": {
-      "background": "$semantic.surface.panel",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.sm",
-      "foreground": "$semantic.foreground"
-    },
     "guideLayerMark": {
       "borderWidth": 1
     },
@@ -3404,6 +3397,51 @@
     },
     "transformOverlaySnapGuide": {
       "background": "$semantic.primary"
+    },
+    "manipContextBar": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "radius": "$metrics.radius.md",
+      "foreground": "$semantic.foreground",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "manipHandle": {
+      "background": "$semantic.primaryForeground",
+      "backgroundHover": "$semantic.onMedia",
+      "backgroundActive": "$semantic.primary",
+      "backgroundSelected": "$semantic.primary",
+      "border": "$semantic.primary",
+      "borderHover": "$semantic.primary",
+      "borderWidth": "$metrics.borderWidthFocus",
+      "outline": "$semantic.scrimStrong"
+    },
+    "manipHint": {
+      "background": "$semantic.scrimStrong",
+      "border": "$semantic.guide.weak",
+      "borderWidth": "$metrics.borderWidth",
+      "foreground": "$semantic.onMedia",
+      "radius": "$metrics.radius.sm"
+    },
+    "manipHud": {
+      "background": "$semantic.scrimStrong",
+      "border": "$semantic.guide.weak",
+      "borderWidth": "$metrics.borderWidth",
+      "foreground": "$semantic.onMedia",
+      "foregroundMuted": "$semantic.guide.medium",
+      "inputBackground": "$semantic.scrim",
+      "inputBorder": "$semantic.primary",
+      "radius": "$metrics.radius.sm"
+    },
+    "manipLoupe": {
+      "background": "$semantic.scrimStrong",
+      "border": "$semantic.onMedia",
+      "borderWidth": 2,
+      "crosshair": "$semantic.primary"
+    },
+    "manipSnapLine": {
+      "background": "$palette.snapGuide",
+      "strokeWidth": 1
     },
     "viewAxisDisc": {
       "backgroundHover": "$semantic.preview.axisDiscHover"

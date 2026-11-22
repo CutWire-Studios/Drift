@@ -32,6 +32,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "ui/preview/PreviewController.h"
+#include "ui/manip/DragSession.h"
 
 #include "app/online/addons/AddonManager.h"
 #include "engine/render2d/pdf/PdfClipRenderer.h"
@@ -636,6 +637,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_voices = new VoiceLibrary(this, m_tts, this);
     m_tts->setVoices(m_voices);
     m_preview = new PreviewController(*this, this);
+    m_drag = new drift::manip::DragSession(this);
+    m_drag->setHooks({[this](const QString &undoText) { beginPreviewDrag(undoText); },
+                      [this] { commitPreviewDrag(); },
+                      [this] { cancelPreviewDrag(); }});
     m_preferences = new PreferencesController(this);
     connect(m_preferences, &PreferencesController::restartNoticeRequested, this,
             [this](const QString &text) {

@@ -79,6 +79,7 @@ struct TransformParent;
 
 #include "playback/PlaybackEngine.h"
 #include "engine/audio/AudioRecorder.h"
+#include "ui/manip/DragSession.h"
 
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
@@ -157,6 +158,8 @@ class AppController : public QObject
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
     // The preview area's editor state, tools and overlay maths.
     Q_PROPERTY(PreviewController *preview READ preview CONSTANT)
+    // The one drag/undo/cancel session for on-canvas manipulators. QML: EditorState.drag.
+    Q_PROPERTY(drift::manip::DragSession *drag READ drag CONSTANT)
     // App-wide preferences and persisted UI layout. QML: EditorState.preferences.
     Q_PROPERTY(PreferencesController *preferences READ preferences CONSTANT)
     // Project file lifecycle and project setup. QML: EditorState.projectFile.
@@ -399,6 +402,7 @@ public:
     SourceLabController *sourceLab() const { return m_sourceLab; }
     PlaybackEngine *playback() { return &m_playback; }
     PreviewController *preview() const { return m_preview; }
+    drift::manip::DragSession *drag() const { return m_drag; }
     PreferencesController *preferences() const { return m_preferences; }
     ProjectFileController *projectFile() const { return m_projectFile; }
     AssetPreviewController *assetPreview() const { return m_assetPreview; }
@@ -2732,6 +2736,7 @@ protected:
     int m_timelineCursorOwner = 0;
     int m_trimCursorTokenSeq = 0;
     PreviewController *m_preview = nullptr;
+    drift::manip::DragSession *m_drag = nullptr;
     PreferencesController *m_preferences = nullptr;
     ProjectFileController *m_projectFile = nullptr;
     AssetPreviewController *m_assetPreview = nullptr;
