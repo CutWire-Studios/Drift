@@ -809,6 +809,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
@@ -823,14 +827,6 @@
 </context>
 <context>
     <name>AndroidCropPage</name>
-    <message>
-        <source>Free</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Clip</source>
         <translation type="unfinished"></translation>
@@ -2456,31 +2452,6 @@
     </message>
     <message>
         <source>Untitled</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Transform</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4194,6 +4165,10 @@
     </message>
     <message>
         <source>Rotate clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8366,6 +8341,29 @@
     </message>
 </context>
 <context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ClipSuggestions</name>
     <message>
         <source>Generate captions</source>
@@ -8973,7 +8971,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation type="unfinished"></translation>
@@ -9007,6 +9024,21 @@
     </message>
     <message>
         <source>Middle-drag to pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12699,6 +12731,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13014,6 +13050,10 @@
     <name>GuideEditOverlay</name>
     <message>
         <source>Release to remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move guide</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -25059,6 +25099,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
@@ -28780,6 +28827,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -29754,6 +29805,29 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -30937,6 +31011,63 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -31194,21 +31325,18 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
+        <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
         <translation type="unfinished"></translation>

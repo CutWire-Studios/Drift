@@ -809,6 +809,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">ক্রপ ক্যানভাস</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>রিসেট করুন</translation>
     </message>
@@ -823,14 +827,6 @@
 </context>
 <context>
     <name>AndroidCropPage</name>
-    <message>
-        <source>Free</source>
-        <translation>মুক্ত</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>আসল</translation>
-    </message>
     <message>
         <source>Clip</source>
         <translation>ক্লিপ</translation>
@@ -2457,31 +2453,6 @@
     <message>
         <source>Untitled</source>
         <translation>শিরোনামহীন</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>%1 নির্বাচন করুন</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
     </message>
 </context>
 <context>
@@ -4195,6 +4166,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>ক্লিপ ঘোরান</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -8366,6 +8341,29 @@
     </message>
 </context>
 <context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">ক্লিপ ক্রপ করুন</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">সম্পন্ন</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ClipSuggestions</name>
     <message>
         <source>Generate captions</source>
@@ -8973,7 +8971,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">ক্রপ ক্যানভাস</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>ফিট ভিউ</translation>
@@ -9008,6 +9025,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>প্যান করতে মাঝখানে টেনে আনুন</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">মুক্ত</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">আসল</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12683,6 +12715,10 @@
         <translation>সোজা করুন</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>এ শুরু হয়</translation>
     </message>
@@ -13015,6 +13051,10 @@
     <message>
         <source>Release to remove</source>
         <translation>সরাতে রিলিজ</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25066,6 +25106,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+</context>
+<context>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
@@ -28788,6 +28835,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ট্রান্সফর্ম</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -29763,6 +29814,29 @@ If playback stutters, try another.</source>
     <message>
         <source>Dismiss</source>
         <translation>খারিজ</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30945,6 +31019,63 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">ক্লিপ সরান</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">ক্লিপের আকার পরিবর্তন করুন</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">ক্লিপ ঘোরান</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · %nটি ক্লিপ</numerusform>
+            <numerusform>%1 · %nটি ক্লিপ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">ট্রান্সফর্ম</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -31202,32 +31333,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-            <numerusform>%1 · %nটি ক্লিপ</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
+        <source>Add</source>
+        <translation type="unfinished">যোগ করুন</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>%1 নির্বাচন করুন</translation>
+        <translation type="unfinished">%1 নির্বাচন করুন</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>ট্রান্সফর্ম</translation>
+        <translation type="unfinished">ট্রান্সফর্ম</translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>এই ক্লিপটি সরানো ট্রান্সফর্ম স্তর নির্বাচন করুন (%1)</translation>
+        <translation type="unfinished">এই ক্লিপটি সরানো ট্রান্সফর্ম স্তর নির্বাচন করুন (%1)</translation>
     </message>
 </context>
 <context>

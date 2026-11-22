@@ -810,6 +810,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">Przytnij płótno</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>Resetuj</translation>
     </message>
@@ -824,14 +828,6 @@
 </context>
 <context>
     <name>AndroidCropPage</name>
-    <message>
-        <source>Free</source>
-        <translation>Dowolne</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>Oryginał</translation>
-    </message>
     <message>
         <source>Clip</source>
         <translation>Klip</translation>
@@ -2459,32 +2455,6 @@
     <message>
         <source>Untitled</source>
         <translation>Bez tytułu</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %n klip</numerusform>
-            <numerusform>%1 · %n klipy</numerusform>
-            <numerusform>%1 · %n klipów</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>Przekształcenie</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>Wybierz %1</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>Przekształcenie</translation>
     </message>
 </context>
 <context>
@@ -4206,6 +4176,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>Obróć klip</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -8399,6 +8373,29 @@
     </message>
 </context>
 <context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">Kadruj klip</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Resetuj</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Gotowe</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ClipSuggestions</name>
     <message>
         <source>Generate captions</source>
@@ -9010,7 +9007,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Przytnij kadr</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">Przytnij płótno</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>Dopasuj widok</translation>
@@ -9045,6 +9061,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>Przeciągnij środkowym przyciskiem, aby przesunąć</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">Dowolne</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">Oryginał</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12730,6 +12761,10 @@
         <translation>Wyprostuj</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>Zaczyna się o</translation>
     </message>
@@ -13062,6 +13097,10 @@
     <message>
         <source>Release to remove</source>
         <translation>Puść, aby usunąć</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25162,6 +25201,13 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Przytnij kadr</translation>
+    </message>
+</context>
+<context>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
@@ -28892,6 +28938,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -29870,6 +29920,29 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Dismiss</source>
         <translation>Odrzuć</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31054,6 +31127,64 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">Przesuń klip</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">Zmień rozmiar klipu</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">Obróć klip</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · %n klip</numerusform>
+            <numerusform>%1 · %n klipy</numerusform>
+            <numerusform>%1 · %n klipów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -31312,33 +31443,29 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %n klip</numerusform>
-            <numerusform>%1 · %n klipy</numerusform>
-            <numerusform>%1 · %n klipów</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>Przekształcenie</translation>
+        <source>Add</source>
+        <translation type="unfinished">Dodaj</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>Wybierz %1</translation>
+        <translation type="unfinished">Wybierz %1</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>Transformacja</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>Wybierz warstwę transformacji poruszającą tym klipem (%1)</translation>
+        <translation type="unfinished">Wybierz warstwę transformacji poruszającą tym klipem (%1)</translation>
     </message>
 </context>
 <context>

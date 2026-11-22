@@ -808,6 +808,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
@@ -822,14 +826,6 @@
 </context>
 <context>
     <name>AndroidCropPage</name>
-    <message>
-        <source>Free</source>
-        <translation>자유</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>원본</translation>
-    </message>
     <message>
         <source>Clip</source>
         <translation>클립</translation>
@@ -2455,30 +2451,6 @@
     <message>
         <source>Untitled</source>
         <translation>제목 없음</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · 클립 %n개</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>변환</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>%1 선택</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>변환</translation>
     </message>
 </context>
 <context>
@@ -4184,6 +4156,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>클립 회전</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -8333,6 +8309,29 @@
     </message>
 </context>
 <context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">클립 자르기</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ClipSuggestions</name>
     <message>
         <source>Generate captions</source>
@@ -8936,7 +8935,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>보기 맞춤</translation>
@@ -8971,6 +8989,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>가운데 버튼으로 드래그하여 패닝</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">원본</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12636,6 +12669,10 @@
         <translation>수평 맞추기</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>시작 시점</translation>
     </message>
@@ -12968,6 +13005,10 @@
     <message>
         <source>Release to remove</source>
         <translation>놓아서 제거</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24964,6 +25005,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+</context>
+<context>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
@@ -28677,6 +28725,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">변환</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -29649,6 +29701,29 @@ If playback stutters, try another.</source>
     <message>
         <source>Dismiss</source>
         <translation>닫기</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30829,6 +30904,62 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">클립 이동</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">클립 크기 조정</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">클립 회전</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · 클립 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">변환</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -31085,31 +31216,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · 클립 %n개</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>변환</translation>
+        <source>Add</source>
+        <translation type="unfinished">더하기</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>%1 선택</translation>
+        <translation type="unfinished">%1 선택</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>변환</translation>
+        <translation type="unfinished">변환</translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>이 클립을 움직이는 변환 레이어 선택(%1)</translation>
+        <translation type="unfinished">이 클립을 움직이는 변환 레이어 선택(%1)</translation>
     </message>
 </context>
 <context>

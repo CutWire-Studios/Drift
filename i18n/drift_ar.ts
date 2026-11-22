@@ -813,6 +813,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">اقتصاص اللوحة</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>إعادة تعيين</translation>
     </message>
@@ -827,14 +831,6 @@
 </context>
 <context>
     <name>AndroidCropPage</name>
-    <message>
-        <source>Free</source>
-        <translation>حر</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>الأصلي</translation>
-    </message>
     <message>
         <source>Clip</source>
         <translation>المقطع</translation>
@@ -2468,35 +2464,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %n مقطع</numerusform>
-            <numerusform>%1 · %n مقطع</numerusform>
-            <numerusform>%1 · %n مقطعان</numerusform>
-            <numerusform>%1 · %n مقاطع</numerusform>
-            <numerusform>%1 · %n مقطعًا</numerusform>
-            <numerusform>%1 · %n مقطع</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>تحويل</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>تحديد %1</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>تحويل</translation>
-    </message>
-</context>
-<context>
     <name>AndroidTransitionPickerSheet</name>
     <message>
         <source>Transitions</source>
@@ -4079,6 +4046,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>تدوير المقطع</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -8498,6 +8469,29 @@
     </message>
 </context>
 <context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">اقتصاص المقطع</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">إعادة تعيين</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">تم</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ClipSuggestions</name>
     <message>
         <source>Generate captions</source>
@@ -9121,7 +9115,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">اقتصاص</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">اقتصاص اللوحة</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>ملاءمة العرض</translation>
@@ -9156,6 +9169,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>اسحب بالزر الأوسط للتحريك</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">حر</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">الأصلي</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12871,6 +12899,10 @@
         <translation>تسوية</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>يبدأ عند</translation>
     </message>
@@ -13203,6 +13235,10 @@
     <message>
         <source>Release to remove</source>
         <translation>أفلت للإزالة</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25446,6 +25482,13 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">اقتصاص</translation>
+    </message>
+</context>
+<context>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
@@ -29200,6 +29243,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -30187,6 +30234,29 @@ If playback stutters, try another.</source>
     <message>
         <source>Dismiss</source>
         <translation>تجاهل</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -31377,6 +31447,67 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">تحريك المقطع</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">تغيير حجم المقطع</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">تدوير المقطع</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · %n مقطع</numerusform>
+            <numerusform>%1 · %n مقطع</numerusform>
+            <numerusform>%1 · %n مقطعان</numerusform>
+            <numerusform>%1 · %n مقاطع</numerusform>
+            <numerusform>%1 · %n مقطعًا</numerusform>
+            <numerusform>%1 · %n مقطع</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -31638,36 +31769,29 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · %n مقطع</numerusform>
-            <numerusform>%1 · %n مقطع</numerusform>
-            <numerusform>%1 · %n مقطعان</numerusform>
-            <numerusform>%1 · %n مقاطع</numerusform>
-            <numerusform>%1 · %n مقطعًا</numerusform>
-            <numerusform>%1 · %n مقطع</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>تحويل</translation>
+        <source>Add</source>
+        <translation type="unfinished">إضافة</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>تحديد %1</translation>
+        <translation type="unfinished">تحديد %1</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>تحويل</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>حدد طبقة التحويل التي تحرك هذا المقطع (%1)</translation>
+        <translation type="unfinished">حدد طبقة التحويل التي تحرك هذا المقطع (%1)</translation>
     </message>
 </context>
 <context>
