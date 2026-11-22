@@ -147,7 +147,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 26
                 height: 12
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: Theme.c.quickSetupMockEditor.primary
 
                 Rectangle {
@@ -155,7 +155,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 8
                     height: 8
-                    radius: 4
+                    radius: Theme.radiusPill
                     color: Theme.c.quickSetupMockEditor.primaryForeground
                 }
             }
@@ -169,7 +169,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width
                     height: 4
-                    radius: 2
+                    radius: Theme.radiusPill
                     color: Theme.c.quickSetupMockEditor.toggleTrack
                 }
 
@@ -177,7 +177,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width * 0.6
                     height: 4
-                    radius: 2
+                    radius: Theme.radiusPill
                     color: Theme.c.quickSetupMockEditor.primary
                 }
 
@@ -186,7 +186,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 10
                     height: 10
-                    radius: 5
+                    radius: Theme.radiusPill
                     color: Theme.c.quickSetupMockEditor.primary
                 }
             }

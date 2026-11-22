@@ -6,6 +6,7 @@ Item {
     id: root
 
     property int clipDataRevision: 0
+    readonly property real labelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
     readonly property var clipData: {
         void clipDataRevision
         return EditorState.selectedClipData
@@ -166,7 +167,7 @@ Item {
                     Text {
                         text: qsTr("Fit")
                         color: Theme.c.vectorInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedComboBox {
@@ -186,7 +187,7 @@ Item {
                     Text {
                         text: qsTr("After the end")
                         color: Theme.c.vectorInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedComboBox {
@@ -207,7 +208,7 @@ Item {
                 Text {
                     text: qsTr("Start offset")
                     color: Theme.c.vectorInspector.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                     font.family: Theme.fontFamily
                 }
                 ThemedNumberField {
@@ -243,7 +244,7 @@ Item {
                 Text {
                     text: qsTr("Target")
                     color: Theme.c.vectorInspector.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                     font.family: Theme.fontFamily
                 }
                 ThemedComboBox {

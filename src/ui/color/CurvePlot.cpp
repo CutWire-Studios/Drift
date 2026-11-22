@@ -2,6 +2,7 @@
 
 #include <QCursor>
 #include <QGuiApplication>
+#include <QKeyEvent>
 #include <QLinearGradient>
 #include <QMouseEvent>
 #include <QPainter>
@@ -12,6 +13,9 @@
 #include <cmath>
 
 using namespace drift::curveedit;
+using drift::manip::CurveGraphModel;
+using drift::manip::DragSession;
+using drift::manip::GraphPoint;
 
 namespace {
 
@@ -19,18 +23,77 @@ const QStringList kColorChannels{QStringLiteral("master"), QStringLiteral("r"), 
                                  QStringLiteral("b")};
 const QStringList kHueChannels{QStringLiteral("hue"), QStringLiteral("sat"), QStringLiteral("lum")};
 
+constexpr int kHoldMs = 500;
+
+Points toCurvePoints(const QList<GraphPoint> &list)
+{
+    Points out;
+    out.reserve(size_t(list.size()));
+    for (const GraphPoint &p : list)
+        out.push_back({p.x, p.y, p.tag});
+    return out;
+}
+
+QList<GraphPoint> toGraphPoints(const Points &pts)
+{
+    QList<GraphPoint> out;
+    out.reserve(qsizetype(pts.size()));
+    for (const drift::CurvePoint &p : pts) {
+        GraphPoint g;
+        g.x = p.x;
+        g.y = p.y;
+        g.tag = p.ease;
+        out.append(g);
+    }
+    return out;
+}
+
 } // namespace
 
 CurvePlot::CurvePlot(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
-    setAcceptedMouseButtons(Qt::LeftButton);
+    setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton);
+    setAcceptHoverEvents(true);
     setActiveFocusOnTab(true);
     setAntialiasing(true);
     setCursor(QCursor(Qt::CrossCursor));
+    m_holdTimer.setSingleShot(true);
+    m_holdTimer.setInterval(kHoldMs);
+    configureModel();
+    connect(&m_model, &CurveGraphModel::changed, this, [this] {
+        emit selectedChanged();
+        update();
+    });
+    connect(&m_model, &CurveGraphModel::edited, this, &CurvePlot::emitEdited);
+    connect(&m_model, &CurveGraphModel::gestureBegan, this, &CurvePlot::began);
+    connect(&m_model, &CurveGraphModel::gestureEnded, this, &CurvePlot::ended);
+    connect(&m_model, &CurveGraphModel::gestureCancelled, this, &CurvePlot::cancelled);
+    connect(&m_holdTimer, &QTimer::timeout, this, [this] {
+        if (m_model.moved())
+            return;
+        const int idx = m_model.pointAt(m_pressPos, m_pressDevice);
+        if (idx < 0)
+            return;
+        m_model.cancelPress();
+        m_model.selectOnly(idx);
+        emit contextRequested(idx, m_pressPos);
+    });
     for (const auto signal : {&CurvePlot::styleChanged, &CurvePlot::curvesChanged, &CurvePlot::channelChanged,
                               &CurvePlot::hueModeChanged, &CurvePlot::selectedChanged})
         connect(this, signal, this, [this] { update(); });
+}
+
+void CurvePlot::configureModel()
+{
+    m_model.setupColor(m_hue, [this](double x) { return drift::evalCurve(pointsOf(m_channel), x, m_hue); });
+    m_model.setPlot(QRectF(0, 0, std::max(1.0, width()), std::max(1.0, height())));
+}
+
+void CurvePlot::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
+{
+    QQuickPaintedItem::geometryChange(newGeometry, oldGeometry);
+    m_model.setPlot(QRectF(0, 0, std::max(1.0, newGeometry.width()), std::max(1.0, newGeometry.height())));
 }
 
 QStringList CurvePlot::channels() const
@@ -38,18 +101,23 @@ QStringList CurvePlot::channels() const
     return m_hue ? kHueChannels : kColorChannels;
 }
 
-const Points &CurvePlot::pointsOf(const QString &channel) const
+Points CurvePlot::pointsOf(const QString &channel) const
 {
-    if (channel == m_channel && m_hasLive)
-        return m_live;
+    if (channel == m_channel)
+        return toCurvePoints(m_model.graphPoints());
     const auto it = m_parsed.constFind(channel);
     if (it != m_parsed.cend())
         return it->points;
-    static Points identity[2];
-    Points &fallback = identity[m_hue ? 1 : 0];
-    if (fallback.empty())
-        fallback = drift::identityCurve(m_hue);
-    return fallback;
+    return drift::identityCurve(m_hue);
+}
+
+void CurvePlot::loadModel()
+{
+    if (m_model.dragging())
+        return;
+    const auto it = m_parsed.constFind(m_channel);
+    m_model.setGraphPoints(toGraphPoints(it != m_parsed.cend() && !it->points.empty() ? it->points
+                                                                                       : drift::identityCurve(m_hue)));
 }
 
 void CurvePlot::setCurves(const QVariantMap &curves)
@@ -65,8 +133,7 @@ void CurvePlot::setCurves(const QVariantMap &curves)
         parsed.json = json;
         parsed.points = drift::parseCurvePoints(json, m_hue);
     }
-    if (m_selected >= pointCount())
-        m_selected = -1;
+    loadModel();
     emit selectedChanged();
     emit curvesChanged();
 }
@@ -75,13 +142,14 @@ void CurvePlot::setHueMode(bool hue)
 {
     if (hue == m_hue)
         return;
-    endDrag();
+    m_model.cancelPress();
     m_hue = hue;
     m_parsed.clear();
     const QVariantMap curves = m_curves;
     m_curves.clear();
+    configureModel();
     if (!channels().contains(m_channel))
-        setChannel(channels().first());
+        m_channel = channels().first();
     setCurves(curves);
     emit hueModeChanged();
 }
@@ -90,32 +158,33 @@ void CurvePlot::setChannel(const QString &channel)
 {
     if (channel == m_channel)
         return;
-    endDrag();
+    m_model.cancelPress();
     m_channel = channel;
-    m_selected = -1;
+    m_model.clearSelection();
+    loadModel();
     emit selectedChanged();
     emit channelChanged();
 }
 
+int CurvePlot::selected() const
+{
+    return m_model.selectionCount() > 0 ? m_model.primary() : -1;
+}
+
 QPointF CurvePlot::selectedPoint() const
 {
-    const Points &pts = pointsOf(m_channel);
-    if (m_selected < 0 || m_selected >= int(pts.size()))
+    const int idx = selected();
+    const auto &pts = m_model.graphPoints();
+    if (idx < 0 || idx >= pts.size())
         return {};
-    return {pts[size_t(m_selected)].x, pts[size_t(m_selected)].y};
+    return {pts[idx].x, pts[idx].y};
 }
 
-void CurvePlot::setSelected(int idx)
+void CurvePlot::emitEdited()
 {
-    if (idx == m_selected)
-        return;
-    m_selected = idx;
+    emit changed(m_channel, toJson(toCurvePoints(m_model.graphPoints())));
     emit selectedChanged();
-}
-
-double CurvePlot::reach() const
-{
-    return std::max(m_handleRadius + 4.0, 10.0);
+    update();
 }
 
 bool CurvePlot::recentlyAdded(int idx) const
@@ -124,126 +193,95 @@ bool CurvePlot::recentlyAdded(int idx) const
            && m_clickAddedAt.elapsed() < QGuiApplication::styleHints()->mouseDoubleClickInterval();
 }
 
-void CurvePlot::openGesture()
+int CurvePlot::deviceOf(const QMouseEvent *event)
 {
-    if (m_gestureBegun)
-        return;
-    m_gestureBegun = true;
-    emit began();
-}
-
-void CurvePlot::closeGesture()
-{
-    if (!m_gestureBegun)
-        return;
-    m_gestureBegun = false;
-    emit ended();
-}
-
-void CurvePlot::emitPoints(const Points &pts)
-{
-    m_live = pts;
-    m_hasLive = true;
-    emit changed(m_channel, toJson(pts));
-    emit selectedChanged();
-    update();
-}
-
-void CurvePlot::commitPoints(const Points &pts)
-{
-    openGesture();
-    emitPoints(pts);
-    m_hasLive = false;
-    closeGesture();
-}
-
-void CurvePlot::endDrag()
-{
-    m_dragging = false;
-    m_dragIndex = -1;
-    m_hasLive = false;
-    setKeepMouseGrab(false);
-    setKeepTouchGrab(false);
-    closeGesture();
+    return event->source() != Qt::MouseEventNotSynthesized ? int(DragSession::Device::Touch)
+                                                            : int(DragSession::Device::Mouse);
 }
 
 void CurvePlot::resetChannel()
 {
-    endDrag();
-    commitPoints(drift::identityCurve(m_hue));
-    setSelected(-1);
+    m_model.resetCurve();
 }
 
-void CurvePlot::beginPress(const QPointF &pos)
+void CurvePlot::applyTyped(double value)
 {
-    Points pts = pointsOf(m_channel);
-    int idx = hit(pts, size(), pos, reach());
-    m_dragging = true;
-    if (idx < 0) {
-        idx = insertAt(pts, pos.x(), width(), m_hue);
-        if (idx < 0) {
-            m_dragIndex = -1;
-            setSelected(-1);
-            return;
-        }
-        openGesture();
-        emitPoints(pts);
-        m_clickAddedAt.start();
-        m_clickAddedIndex = idx;
-    } else {
-        m_live = pts;
-        m_hasLive = true;
-    }
-    m_dragIndex = idx;
-    setSelected(idx);
+    m_model.applyTyped(value);
 }
 
 void CurvePlot::mousePressEvent(QMouseEvent *event)
 {
     forceActiveFocus(Qt::MouseFocusReason);
-    // The second press of a double-click on a point just added would drag it; skip it.
-    if (recentlyAdded(hit(pointsOf(m_channel), size(), event->position(), reach()))) {
-        event->accept();
+    event->accept();
+    m_pressPos = m_lastPos = event->position();
+    m_pressDevice = deviceOf(event);
+    if (event->button() == Qt::RightButton) {
+        const int idx = m_model.pointAt(m_pressPos, m_pressDevice);
+        if (idx >= 0) {
+            m_model.selectOnly(idx);
+            emit contextRequested(idx, m_pressPos);
+        }
         return;
     }
+    // The second press of a double-click on a point just added would drag it; skip it.
+    if (recentlyAdded(m_model.pointAt(m_pressPos, m_pressDevice)))
+        return;
     setKeepMouseGrab(true);
     setKeepTouchGrab(true);
-    beginPress(event->position());
-    event->accept();
+    m_model.press(m_pressPos, int(event->modifiers()), m_pressDevice);
+    if (m_pressDevice == int(DragSession::Device::Touch))
+        m_holdTimer.start();
 }
 
 void CurvePlot::mouseMoveEvent(QMouseEvent *event)
 {
-    if (!m_dragging || m_dragIndex < 0 || !m_hasLive)
-        return;
-    openGesture();
-    Points pts = m_live;
-    m_dragIndex = dragTo(pts, m_dragIndex, event->position(), size(), m_hue);
-    if (m_dragIndex < 0)
-        setSelected(-1);
-    emitPoints(pts);
+    m_lastPos = event->position();
+    m_model.move(event->position(), int(event->modifiers()));
+    if (m_model.moved())
+        m_holdTimer.stop();
     event->accept();
 }
 
 void CurvePlot::mouseReleaseEvent(QMouseEvent *event)
 {
-    endDrag();
+    m_holdTimer.stop();
+    const QString result = m_model.release(event->position(), int(event->modifiers()));
+    if (result == QLatin1String("add")) {
+        m_clickAddedAt.start();
+        m_clickAddedIndex = m_model.primary();
+    }
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
     event->accept();
 }
 
 void CurvePlot::mouseUngrabEvent()
 {
-    endDrag();
+    m_holdTimer.stop();
+    m_model.release(m_lastPos, 0);
+    setKeepMouseGrab(false);
+    setKeepTouchGrab(false);
 }
 
 void CurvePlot::touchUngrabEvent()
 {
-    endDrag();
+    mouseUngrabEvent();
+}
+
+void CurvePlot::hoverMoveEvent(QHoverEvent *event)
+{
+    m_model.hover(event->position(), int(DragSession::Device::Mouse));
+}
+
+void CurvePlot::hoverLeaveEvent(QHoverEvent *)
+{
+    m_model.clearHover();
 }
 
 void CurvePlot::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    const int idx = hit(pointsOf(m_channel), size(), event->position(), reach());
+    const int device = deviceOf(event);
+    const int idx = m_model.pointAt(event->position(), device);
     event->accept();
     if (recentlyAdded(idx))
         return;
@@ -251,47 +289,41 @@ void CurvePlot::mouseDoubleClickEvent(QMouseEvent *event)
         mousePressEvent(event);
         return;
     }
-    endDrag();
-    Points pts = pointsOf(m_channel);
-    if (removeAt(pts, idx)) {
-        commitPoints(pts);
-        setSelected(-1);
-    }
+    m_model.doubleClick(event->position(), device);
 }
 
 void CurvePlot::keyPressEvent(QKeyEvent *event)
 {
-    const double step = (event->modifiers() & Qt::ShiftModifier ? 10.0 : 1.0) / 255.0;
-    const auto nudgeSelected = [this](double dx, double dy) {
-        Points pts = pointsOf(m_channel);
-        if (m_selected < 0 || m_selected >= int(pts.size()))
-            return;
-        nudge(pts, m_selected, dx, dy, m_hue);
-        commitPoints(pts);
-    };
+    const bool shift = event->modifiers() & Qt::ShiftModifier;
     switch (event->key()) {
-    case Qt::Key_Delete:
-    case Qt::Key_Backspace: {
-        Points pts = pointsOf(m_channel);
-        if (removeAt(pts, m_selected)) {
-            commitPoints(pts);
-            setSelected(-1);
+    case Qt::Key_Escape:
+        if (!m_model.dragging()) {
+            event->ignore();
+            return;
         }
+        m_model.cancel();
         break;
-    }
+    case Qt::Key_Delete:
+    case Qt::Key_Backspace:
+        m_model.deleteSelected();
+        break;
     case Qt::Key_Left:
-        nudgeSelected(-step, 0);
+        m_model.nudge(-1, 0, shift);
         break;
     case Qt::Key_Right:
-        nudgeSelected(step, 0);
+        m_model.nudge(1, 0, shift);
         break;
     case Qt::Key_Up:
-        nudgeSelected(0, step);
+        m_model.nudge(0, 1, shift);
         break;
     case Qt::Key_Down:
-        nudgeSelected(0, -step);
+        m_model.nudge(0, -1, shift);
         break;
     default:
+        if (selected() >= 0 && event->text().size() == 1 && QStringLiteral("0123456789-.").contains(event->text())) {
+            emit entryRequested(event->text());
+            break;
+        }
         QQuickPaintedItem::keyPressEvent(event);
         return;
     }
@@ -350,13 +382,23 @@ void CurvePlot::paint(QPainter *painter)
     drawCurve(m_channel, 1.0, m_curveLineWidth);
 
     const QColor channelColor = m_channelColors.value(m_channel).value<QColor>();
-    const Points &pts = pointsOf(m_channel);
+    const auto &pts = m_model.graphPoints();
     painter->setOpacity(1.0);
-    for (size_t i = 0; i < pts.size(); ++i) {
+    for (int i = 0; i < pts.size(); ++i) {
         const QPointF c(pts[i].x * w, (1.0 - pts[i].y) * h);
-        painter->setBrush(int(i) == m_selected ? channelColor : m_pointBackground);
-        painter->setPen(QPen(channelColor, m_knobBorderWidth));
-        painter->drawEllipse(c, m_handleRadius - m_knobBorderWidth / 2, m_handleRadius - m_knobBorderWidth / 2);
+        const bool doomed = m_model.deleteZoneActive() && m_model.isSelected(i);
+        painter->setBrush(doomed ? m_deleteColor : m_model.isSelected(i) ? channelColor : m_pointBackground);
+        painter->setPen(QPen(doomed ? m_deleteColor : channelColor, m_knobBorderWidth));
+        const double r = (i == m_model.hot() ? 1.3 : 1.0) * (m_handleRadius - m_knobBorderWidth / 2);
+        painter->drawEllipse(c, r, r);
+    }
+    if (m_model.deleteZoneActive()) {
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(m_deleteColor, 2.0));
+        painter->setOpacity(1.0);
+        painter->drawRect(QRectF(1, 1, w - 2, h - 2));
+        painter->fillRect(QRectF(0, 0, w, h), QColor(m_deleteColor.red(), m_deleteColor.green(), m_deleteColor.blue(),
+                                                      int(255 * m_deleteOpacity * 0.5)));
     }
 }
 

@@ -104,7 +104,7 @@ PanelFrame {
                 SearchAnchor {
                     searchId: "view3d-snap"
                     title: qsTr("3D snapping")
-                    keywords: "snap step translate rotate rotation increment"
+                    keywords: "snap step translate rotate rotation scale increment"
                 }
             }
             Row {
@@ -112,7 +112,7 @@ PanelFrame {
                 spacing: Theme.spacingMd
 
                 Column {
-                    width: (parent.width - parent.spacing) / 2
+                    width: (parent.width - parent.spacing * 2) / 3
                     spacing: 4
                     Text {
                         text: qsTr("Move step")
@@ -132,7 +132,7 @@ PanelFrame {
                     }
                 }
                 Column {
-                    width: (parent.width - parent.spacing) / 2
+                    width: (parent.width - parent.spacing * 2) / 3
                     spacing: 4
                     Text {
                         text: qsTr("Rotation step")
@@ -152,10 +152,30 @@ PanelFrame {
                         onEdited: v => EditorState.preview.rotationSnap = v
                     }
                 }
+                Column {
+                    width: (parent.width - parent.spacing * 2) / 3
+                    spacing: 4
+                    Text {
+                        text: qsTr("Scale step")
+                        color: Theme.c.view3dPanel.foregroundMuted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeXs
+                    }
+                    ThemedNumberField {
+                        id: scaleSnapField
+                        width: parent.width
+                        from: 0
+                        to: 10
+                        step: 0.1
+                        decimals: 2
+                        Binding on value { when: !scaleSnapField.activeFocus; value: EditorState.preview.scaleSnap }
+                        onEdited: v => EditorState.preview.scaleSnap = v
+                    }
+                }
             }
             Text {
                 width: parent.width
-                text: qsTr("Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.")
+                text: qsTr("Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.")
                 color: Theme.c.view3dPanel.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs

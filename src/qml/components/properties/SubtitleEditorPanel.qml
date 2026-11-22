@@ -103,7 +103,7 @@ Rectangle {
                         radius: Theme.c.subtitleEditorPanel.radius
                         readonly property bool dirty: editor.selectedCue !== null
                                                       && cueText.text !== (editor.selectedCue ? editor.selectedCue.text : "")
-                        color: applyMouse.containsMouse ? Qt.lighter(Theme.c.subtitleEditorPanel.applyBackgroundHover, 1.08) : Theme.c.subtitleEditorPanel.applyBackground
+                        color: applyMouse.containsMouse ? Theme.c.subtitleEditorPanel.applyBackgroundHover : Theme.c.subtitleEditorPanel.applyBackground
                         opacity: (dirty || applyMouse.containsMouse) ? 1 : 0.5
 
                         // Was a raw "✓" glyph while every other button in the app
@@ -223,6 +223,7 @@ Rectangle {
             }
 
             Text {
+                visible: !editor.compactEdit
                 width: parent.width
                 text: editor.localPlayhead >= 0
                       ? qsTr("At %1").arg(editor.formatCueTime(editor.localPlayhead))
@@ -237,7 +238,11 @@ Rectangle {
                 variant: "primary"
                 glyph: Theme.icons.plus
                 enabled: editor.localPlayhead >= 0
-                text: qsTr("Add subtitle at current time")
+                text: editor.compactEdit
+                      ? (editor.localPlayhead >= 0
+                         ? qsTr("Add subtitle at %1").arg(editor.formatCueTime(editor.localPlayhead))
+                         : qsTr("Move the playhead into this clip to add"))
+                      : qsTr("Add subtitle at current time")
                 onClicked: editor.addCueAtPlayhead()
             }
         }

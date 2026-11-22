@@ -49,7 +49,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: Theme.radiusPill
         color: Theme.c.timelineCutButton.background
         border.width: Theme.c.timelineCutButton.borderWidth
         border.color: Theme.c.timelineCutButton.border
@@ -58,9 +58,9 @@ Item {
         Rectangle {
             anchors.fill: parent
             anchors.margins: -1
-            radius: height / 2
+            radius: Theme.radiusPill
             color: "transparent"
-            border.width: 1
+            border.width: Theme.c.timelineCutButton.outlineWidth
             border.color: Theme.c.timelineCutButton.outline
         }
 

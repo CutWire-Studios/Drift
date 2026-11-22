@@ -459,6 +459,15 @@ ThemedContextMenu {
                 onTriggered: ShellBridge.main.openCrop(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
             }
             ThemedMenuItem {
+                text: qsTr("Crop on canvas")
+                icon.name: Theme.icons.crop
+                visible: clipContextMenu.owner.clipData.kind === "video" || clipContextMenu.owner.clipData.kind === "image"
+                onTriggered: {
+                    EditorState.selectClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+                    EditorState.preview.clipCropMode = true
+                }
+            }
+            ThemedMenuItem {
                 text: qsTr("Auto reframe…")
                 icon.name: Theme.icons.crop
                 visible: typeof clipContextMenu.owner.panel.requestAutoReframe === "function"

@@ -511,8 +511,9 @@ AndroidBottomSheet {
         Column {
             id: groupColumn
             width: parent.width
+            topPadding: Theme.spacingSm
             bottomPadding: Theme.spacing3xl
-            spacing: Theme.spacingLg
+            spacing: Theme.spacingXl
 
             Repeater {
                 model: root.groups
@@ -539,13 +540,13 @@ AndroidBottomSheet {
                         sideInset: root.safeLeft
                     }
 
-                    // Four to a row: the sheet had grown past two screens as a list. Grid skips
+                    // Three to a row: the sheet had grown past two screens as a list. Grid skips
                     // hidden tiles, so a group packs whatever applies to the selection.
                     Grid {
                         id: tileGrid
                         x: Theme.spacingMd + root.safeLeft
                         width: group.width - Theme.spacingMd * 2 - root.safeLeft - root.safeRight
-                        columns: 4
+                        columns: Theme.phone ? 4 : 3
                         readonly property real tileWidth: Math.floor(width / columns)
 
                         Repeater {

@@ -60,7 +60,7 @@ QuickSetupPage {
                     anchors.bottomMargin: Theme.spacingMd
                     width: badge.implicitWidth + Theme.spacingLg * 2
                     height: badge.implicitHeight + Theme.spacingXs * 2
-                    radius: height / 2
+                    radius: Theme.radiusPill
                     color: Theme.c.quickSetupCard.badgeBackground
 
                     Text {

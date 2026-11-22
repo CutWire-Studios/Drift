@@ -60,14 +60,21 @@ QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
     }
     case drift::MaskShape::Freeform: {
         QPainterPath path;
-        if (mask.points.isEmpty())
+        const QVector<drift::ShapeVertex> &v = mask.vertices;
+        if (v.isEmpty())
             return path;
-        for (int i = 0; i < mask.points.size(); ++i) {
-            const QPointF pt(mask.points.at(i).x() * canvasWidth, mask.points.at(i).y() * canvasHeight);
-            if (i == 0)
-                path.moveTo(pt);
-            else
-                path.lineTo(pt);
+        const auto px = [&](const QPointF &n) { return QPointF(n.x() * canvasWidth, n.y() * canvasHeight); };
+        path.moveTo(px(v.first().p));
+        for (int i = 1; i <= v.size(); ++i) {
+            const drift::ShapeVertex &a = v.at(i - 1);
+            const drift::ShapeVertex &b = v.at(i % v.size());
+            if (a.out.isNull() && b.in.isNull()) {
+                // closeSubpath draws the closing edge, which keeps an all-corner path's elements
+                // exactly what the polygon renderer produced.
+                if (i < v.size())
+                    path.lineTo(px(b.p));
+            } else
+                path.cubicTo(px(a.p + a.out), px(b.p + b.in), px(b.p));
         }
         path.closeSubpath();
         return path;

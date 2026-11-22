@@ -4,8 +4,9 @@ import Drift
 Rectangle {
     property var card
     property var inspector
+    readonly property bool phone: Theme.touchInput && Theme.compact
     width: parent.width
-    height: audioEffectHeader.implicitHeight + 8
+    height: phone ? Theme.androidRowHeight : audioEffectHeader.implicitHeight + 8
     radius: Theme.c.audioEffectHeader.radius
     color: Theme.c.audioEffectHeader.background
 
@@ -96,9 +97,9 @@ Rectangle {
             color: card.effectEnabled
                    ? Theme.c.audioEffectHeader.foreground : Theme.c.audioEffectHeader.foregroundDisabled
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeSm
+            font.pixelSize: phone ? Theme.fontSizeBase : Theme.fontSizeSm
             font.weight: Font.Medium
-            width: parent.width - 22 * 5 - 20 - 8
+            width: parent.width - (phone ? Theme.androidMinTouchTarget * 2 : 22 * 5) - 20 - 8
             elide: Text.ElideRight
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -108,6 +109,7 @@ Rectangle {
             buttonSize: 22
             iconSize: 12
             enabled: card.index > 0
+            visible: !phone
             tooltip: qsTr("Move audio effect up")
             onClicked: EditorState.moveAudioEffect(
                            EditorState.selectedTrack, EditorState.selectedClip,
@@ -119,6 +121,7 @@ Rectangle {
             buttonSize: 22
             iconSize: 12
             enabled: card.index < inspector.selectedAudioEffects.length - 1
+            visible: !phone
             tooltip: qsTr("Move audio effect down")
             onClicked: EditorState.moveAudioEffect(
                            EditorState.selectedTrack, EditorState.selectedClip,
@@ -127,8 +130,8 @@ Rectangle {
         IconButton {
             glyph: card.effectEnabled ? Theme.icons.eye : Theme.icons.eyeOff
             variant: "ghost"
-            buttonSize: 22
-            iconSize: 12
+            buttonSize: phone ? Theme.androidMinTouchTarget : 22
+            iconSize: phone ? Theme.iconSizeMd : 12
             tooltip: card.effectEnabled
                      ? qsTr("Disable audio effect") : qsTr("Enable audio effect")
             onClicked: EditorState.setAudioEffectEnabled(
@@ -140,6 +143,7 @@ Rectangle {
             variant: "ghost"
             buttonSize: 22
             iconSize: 12
+            visible: !phone
             tooltip: qsTr("Copy this audio effect")
             onClicked: EditorState.copyAudioEffectToClipboard(
                            EditorState.selectedTrack, EditorState.selectedClip,
@@ -150,10 +154,21 @@ Rectangle {
             variant: "ghost"
             buttonSize: 22
             iconSize: 12
+            visible: !phone
             tooltip: qsTr("Remove audio effect")
             onClicked: EditorState.removeAudioEffect(
                            EditorState.selectedTrack, EditorState.selectedClip,
                            card.index)
+        }
+        IconButton {
+            id: moreButton
+            visible: phone
+            glyph: Theme.icons.ellipsis
+            variant: "ghost"
+            buttonSize: Theme.androidMinTouchTarget
+            iconSize: Theme.iconSizeMd
+            tooltip: qsTr("More")
+            onClicked: audioEffectCardMenu.popup(moreButton, 0, moreButton.height)
         }
     }
 }

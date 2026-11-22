@@ -166,27 +166,6 @@ Item {
                                                 fx ? fx.param.max : 1)
     }
 
-    // A preview move emits tracksChanged, which would re-evaluate `series` and
-    // make the Repeater destroy the delegate owning the active DragHandler —
-    // killing the grab on the first mouse move. Freeze the model while dragging
-    // and track the in-flight key separately.
-    property bool draggingKey: false
-    property var frozenSeries: []
-    property string dragProp: ""
-    property int dragIndex: -1
-    property real dragSeconds: 0
-    property real dragValue: 0
-
-    // The in-flight tangent, for the same reason: the canvas paints from the frozen series,
-    // so without this the curve would not reshape until the handle was released.
-    property int dragTangentIndex: -1
-    property real dragTangentInDx: 0
-    property real dragTangentInDy: 0
-    property real dragTangentOutDx: 0
-    property real dragTangentOutDy: 0
-    // A bent segment reshapes two keys at once, so the canvas takes both from here.
-    property var dragKeys: []
-
     // Bezier handles are opt-in; without them a curve is shaped by dragging the curve itself.
     property bool showHandles: false
 
@@ -214,6 +193,7 @@ Item {
                            EditorState.selectedTrack, EditorState.selectedClip, id, 0)
             const range = root.valueRangeFor(id, pts, base)
             out.push({
+                fixedRange: effectParam(id) !== null,
                 prop: id,
                 label: root.chipLabel(id),
                 color: Theme.keyframeCurveColor(id),
@@ -231,8 +211,6 @@ Item {
 
     // The curves actually drawn: everything the chips have left visible.
     readonly property var series: {
-        if (draggingKey)
-            return frozenSeries
         const out = []
         for (let i = 0; i < allSeries.length; ++i) {
             if (allSeries[i].shown)
@@ -241,56 +219,11 @@ Item {
         return out
     }
 
-    // Flattened key dots so a single Repeater can own every series' handles.
-    readonly property var keyHandles: {
-        const out = []
-        for (let s = 0; s < series.length; ++s) {
-            const entry = series[s]
-            for (let i = 0; i < entry.points.length; ++i) {
-                out.push({
-                    seriesIndex: s,
-                    pointIndex: i,
-                    prop: entry.prop,
-                    color: entry.color,
-                    seconds: entry.points[i].seconds,
-                    value: entry.points[i].value
-                })
-            }
-        }
-        return out
-    }
-    readonly property int keyCount: keyHandles.length
-
-    // Tangent grips for the focused series only: two per key (in / out), minus the ones that
-    // would dangle off the ends of the curve where there is no neighbouring segment.
-    readonly property var tangentHandles: {
-        const out = []
-        if (!showHandles || !curveEditing || focusedIndex < 0 || focusedIndex >= series.length)
-            return out
-        const entry = series[focusedIndex]
-        const pts = entry.points
-        for (let i = 0; i < pts.length; ++i) {
-            // A step or a Penner function ignores its handles, so neither end of its segment has one.
-            const leavesShaped = pts[i].hold || !!pts[i].fn
-            if (i > 0 && !(pts[i - 1].hold || !!pts[i - 1].fn))
-                out.push({ pointIndex: i, outgoing: false, color: entry.color, point: pts[i] })
-            if (i < pts.length - 1 && !leavesShaped)
-                out.push({ pointIndex: i, outgoing: true, color: entry.color, point: pts[i] })
-        }
-        return out
-    }
-
-    // A handle with no length still needs to be grabbable, so an unset tangent is drawn at a
-    // default reach into its segment rather than sitting exactly on the key.
-    readonly property real defaultHandleSeconds: 0.12
-    function handleSeconds(point, outgoing) {
-        const raw = outgoing ? (point.outDx || 0) : (point.inDx || 0)
-        if (Math.abs(raw) > 1e-6)
-            return raw
-        return outgoing ? defaultHandleSeconds : -defaultHandleSeconds
-    }
-    function handleValue(point, outgoing) {
-        return point.value + (outgoing ? (point.outDy || 0) : (point.inDy || 0))
+    readonly property int keyCount: {
+        let n = 0
+        for (let i = 0; i < series.length; ++i)
+            n += series[i].points.length
+        return n
     }
 
     readonly property real clipStart: clipData.start || 0
@@ -349,10 +282,17 @@ Item {
             laneHeight = expandedHeight
     }
 
-    height: visible ? laneHeight : 0
-    // Open whenever the clip has an animation to show, even if every curve is currently folded
-    // away — otherwise hiding the last one would take the chips with it.
-    visible: keyframesTab && hasClip && clipData && allSeries.length > 0
+    readonly property bool hasKeys: allSeries.length > 0
+    readonly property real emptyHeight: 28
+
+    // Open even if every curve is currently folded away, otherwise hiding the last one would take
+    // the chips with it. A clip with nothing animated gets a slim empty lane so the toggle shows.
+    // Hosts gate on `shown`, not `visible`: visible reads back false while a hidden parent (the
+    // Loader that only becomes visible once this is) holds it, which would never open the lane.
+    readonly property bool shown: keyframesTab && hasClip && !!clipData
+
+    height: shown ? (hasKeys ? laneHeight : emptyHeight) : 0
+    visible: shown
 
     // Curve editing focuses one series: it gets tangent handles and owns the value axis,
     // while the others stay drawn as dimmed context. Handles from two series normalized to
@@ -367,7 +307,6 @@ Item {
     }
     // Tangent handles need room; below this the lane is an overview and shows keys only.
     readonly property bool curveEditing: laneHeight >= 140
-    function isFocused(index) { return index === focusedIndex }
 
     function autoSmooth() {
         const entries = focusedIndex >= 0 ? [series[focusedIndex]] : series
@@ -378,33 +317,14 @@ Item {
         EditorState.endEditGroup(qsTr("Auto-smooth keyframes"))
     }
 
-    // Double-click on empty graph inserts a key on the focused curve. The value comes from the
-    // curve itself rather than from the cursor's height, so dropping a node in never changes
-    // the animation — same contract as the speed editor's addPointAt/speedAtPos.
-    function addKeyAt(px) {
-        if (focusedIndex < 0 || focusedIndex >= series.length)
-            return
-        const entry = series[focusedIndex]
-        const seconds = Math.max(
-            clipStart,
-            Math.min(clipStart + clipDuration, EditorState.snapTime(secondsForX(px))))
-        const value = EditorState.propertyValueAt(
-                        EditorState.selectedTrack, EditorState.selectedClip, entry.prop,
-                        seconds, entry.baseValue)
-        EditorState.showKeyframeGraphProperty(entry.prop)
-        EditorState.setClipKeyframe(EditorState.selectedTrack, EditorState.selectedClip,
-                                    entry.prop, seconds, value)
-        focusedProp = entry.prop
-    }
-
-    function openKeyMenu(dot, x, y) {
-        keyMenu.keyProp = dot.modelData.prop
-        keyMenu.keySeconds = dot.modelData.seconds
-        keyMenu.keyDot = dot
+    function openKeyMenu(hit, x, y) {
+        const ref = hit.refs[0]
+        keyMenu.keyProp = ref.prop
+        keyMenu.keySeconds = ref.seconds
         keyMenu.segment = EditorState.keyframeSegmentEasing(EditorState.selectedTrack,
                                                             EditorState.selectedClip,
                                                             keyMenu.keyProp, keyMenu.keySeconds)
-        keyMenu.popup(dot, x, y)
+        keyMenu.popup(input, x, y)
     }
 
     // Absolute timeline X — same mapping as clips on the track.
@@ -414,55 +334,23 @@ Item {
     function secondsForX(x) {
         return x / pxPerSecond
     }
-    function yForValue(v, entry) {
-        const span = Math.max(1e-6, entry.valueMax - entry.valueMin)
-        return graph.height - ((v - entry.valueMin) / span) * graph.height
-    }
-    function valueForY(y, entry) {
-        const span = Math.max(1e-6, entry.valueMax - entry.valueMin)
-        const t = (graph.height - y) / Math.max(1, graph.height)
-        return entry.valueMin + t * span
-    }
-
-    // The handle-shaped segment of the focused curve under a graph point, or null.
-    function segmentAt(x, y) {
-        const hit = curvesItem.segmentAt(x - contentX, y, Theme.touchInput ? 14 : 8)
-        return hit.a !== undefined ? hit : null
-    }
-    function beginBend() {
-        frozenSeries = series
-        dragProp = series[focusedIndex].prop
-        dragKeys = []
-        draggingKey = true
-        EditorState.beginPreviewDrag(qsTr("Edit keyframe curve"))
-    }
-    // Shift keeps the segment's handles where they are in time.
-    function updateBend(hit, dx, dy, shift) {
-        const entry = series[focusedIndex]
-        const dSeconds = shift ? 0 : dx / pxPerSecond
-        const dValue = valueForY(dy, entry) - valueForY(0, entry)
-        const keys = curvesItem.deformSegment(hit.a, hit.b, hit.t, dSeconds, dValue)
-        for (const k of keys)
-            EditorState.previewSetKeyframeTangents(EditorState.selectedTrack, EditorState.selectedClip,
-                                                   dragProp, k.seconds, k.inDx, k.inDy, k.outDx, k.outDy,
-                                                   k.corner)
-        dragKeys = keys
-    }
-    function endBend(commit) {
-        // Same ordering as a key drag: reset before unfreezing.
-        dragProp = ""
-        dragKeys = []
-        if (commit)
-            EditorState.commitPreviewDrag()
-        else
-            EditorState.cancelPreviewDrag()
-        draggingKey = false
-    }
 
     KeyframeGraphFrame { anchors.fill: parent }
 
+    Text {
+        anchors.fill: parent
+        anchors.leftMargin: root.labelsWidth + Theme.spacingMd
+        visible: !root.hasKeys
+        verticalAlignment: Text.AlignVCenter
+        elide: Text.ElideRight
+        text: qsTr("No keyframes on this clip")
+        color: Theme.c.keyframeGraphLaneStatus.foregroundMuted
+        font.pixelSize: Theme.fontSizeXs
+    }
+
     Row {
         anchors.fill: parent
+        visible: root.hasKeys
 
         // Left gutter — same width as track labels so the graph lines up.
         Item {
@@ -600,12 +488,12 @@ Item {
                     }
 
                     KeyframeCurvesItem {
-                        id: curvesItem
                         x: root.contentX
                         width: viewport.width
                         height: parent.height
-                        series: root.series
-                        focusedIndex: root.focusedIndex
+                        model: curvesModel
+                        selection: selectionModel
+                        controller: EditorState.keyframes
                         curveEditing: root.curveEditing
                         pxPerSecond: root.pxPerSecond
                         originX: root.contentX
@@ -615,90 +503,25 @@ Item {
                         lineWidthMuted: Theme.c.keyframeGraphCurveCanvas.lineWidthMuted
                         opacityContext: Theme.c.keyframeGraphCurveCanvas.opacityContext
                         opacityDisabled: Theme.c.keyframeGraphCurveCanvas.opacityDisabled
-                        positionLinked: EditorState.positionLinked
-                        dragProp: root.dragProp
-                        dragIndex: root.dragIndex
-                        dragSeconds: root.dragSeconds
-                        dragValue: root.dragValue
-                        dragTangentIndex: root.dragTangentIndex
-                        dragTangentInDx: root.dragTangentInDx
-                        dragTangentInDy: root.dragTangentInDy
-                        dragTangentOutDx: root.dragTangentOutDx
-                        dragTangentOutDy: root.dragTangentOutDy
-                        dragKeys: root.dragKeys
-                        showHandles: root.showHandles && root.curveEditing
+                        showKeys: true
+                        hoverId: interaction.hoverId
+                        keyOpacityContext: Theme.c.keyframeGraphKeyDot.opacityUnfocused
+                        animationDuration: Theme.durationFast
+                        dotStyle: Theme.plainMap(Theme.c.keyframesKeyDot)
                         handleStyle: Theme.plainMap(Theme.c.keyframeGraphTangentHandle)
                     }
 
-                    // Below the tangent grips and key dots, so double-clicking an existing node
-                    // grabs it instead of inserting another one on top of it. Dragging the focused
-                    // curve bends it; on a touchscreen the lane pans instead.
-                    MouseArea {
-                        id: bendArea
-                        anchors.fill: parent
-                        z: 1
-                        acceptedButtons: Qt.LeftButton
-                        hoverEnabled: root.curveEditing
-                        preventStealing: bending
-                        cursorShape: bending ? Qt.SizeAllCursor
-                                             : (hoverBend ? Qt.PointingHandCursor : Qt.ArrowCursor)
-                        property var bend: null
-                        property bool bending: false
-                        property bool hoverBend: false
-                        property point pressPos
-
-                        onPressed: (mouse) => {
-                            pressPos = Qt.point(mouse.x, mouse.y)
-                            bend = root.curveEditing && mouse.source === Qt.MouseEventNotSynthesized
-                                   ? root.segmentAt(mouse.x, mouse.y) : null
-                        }
-                        onPositionChanged: (mouse) => {
-                            if (!pressed) {
-                                hoverBend = root.curveEditing && root.segmentAt(mouse.x, mouse.y) !== null
-                                return
-                            }
-                            if (!bend)
-                                return
-                            const dx = mouse.x - pressPos.x
-                            const dy = mouse.y - pressPos.y
-                            if (!bending) {
-                                if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3)
-                                    return
-                                bending = true
-                                root.beginBend()
-                            }
-                            root.updateBend(bend, dx, dy, mouse.modifiers & Qt.ShiftModifier)
-                        }
-                        onReleased: finish(true)
-                        onCanceled: finish(false)
-                        onExited: hoverBend = false
-                        onDoubleClicked: function (mouse) { root.addKeyAt(mouse.x) }
-
-                        function finish(commit) {
-                            bend = null
-                            if (!bending)
-                                return
-                            bending = false
-                            root.endBend(commit)
-                        }
-                    }
-
-                    Repeater {
-                        model: root.keyHandles
-                        delegate: KeyframeGraphKeyDot {
-                            host: root
-                        }
-                    }
-
-                    // Tangent grips for the focused curve, under the key dots (z 2) so a handle
-                    // lying on a key never hides it. The canvas draws them.
-                    Repeater {
-                        model: root.tangentHandles
-
-                        delegate: KeyframeGraphTangentHandle {
-                            host: root
-                            z: 1.5
-                        }
+                    // Everything the pointer does on keys, handles and the curve goes through the
+                    // interaction; the strip behind scrolls with the timeline, so this sits on the viewport.
+                    KeyframeInputArea {
+                        id: input
+                        x: root.contentX
+                        width: viewport.width
+                        height: parent.height
+                        interaction: interaction
+                        focusTarget: root
+                        handlesWheel: false
+                        buttons: Qt.LeftButton | Qt.RightButton
                     }
                 }
             }
@@ -712,6 +535,110 @@ Item {
     KeyframeGraphResizeGrip {
         id: resizeGrip
         host: root
+        visible: root.hasKeys
+    }
+
+    KeyframeSelection {
+        id: selectionModel
+    }
+
+    KeyframeTimeView {
+        id: timeView
+        pxPerSecond: root.pxPerSecond
+        contentX: root.contentX
+        clipStart: root.clipStart
+        clipDuration: root.clipDuration
+    }
+
+    KeyframeCurvesModel {
+        id: curvesModel
+        selection: selectionModel
+        externalSeries: root.series
+        focusedProp: root.focusedIndex >= 0 && root.focusedIndex < root.series.length
+                     ? root.series[root.focusedIndex].prop : ""
+        showHandles: root.showHandles && root.curveEditing
+        graphMargin: 0
+        viewHeight: graph.height
+    }
+
+    KeyframeInteraction {
+        id: interaction
+
+        mode: "curves"
+        selection: selectionModel
+        track: EditorState.selectedTrack
+        clip: EditorState.selectedClip
+        viewWidth: viewport.width
+        viewHeight: graph.height
+        playhead: EditorState.playheadSeconds
+        fps: Math.max(1, EditorState.projectFile.projectFps())
+        curveEditing: root.curveEditing
+        doubleClickKey: "remove"
+        timelineSnap: true
+        entryTarget: "value"
+
+        Component.onCompleted: attach(null, curvesModel, timeView, EditorState.keyframes)
+        onFocusRequested: (track, rowProp) => root.focusedProp = track
+        onKeysAdded: (props) => {
+            EditorState.showKeyframeGraphProperty(props[0])
+            root.focusedProp = props[0]
+        }
+        onContextRequested: (x, y, hit) => {
+            if (hit.dot)
+                root.openKeyMenu(hit, x, y)
+        }
+    }
+
+    // Selection changes also fire for edits to the same clip, so only a different clip resets it.
+    readonly property string clipKey: EditorState.selectedTrack + ":" + EditorState.selectedClip
+    onClipKeyChanged: {
+        interaction.cancel()
+        selectionModel.clear()
+    }
+
+    Keys.onShortcutOverride: (event) => {
+        if (selectionModel.count === 0)
+            return
+        const arrows = [Qt.Key_Delete, Qt.Key_Backspace, Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down]
+        if (arrows.indexOf(event.key) >= 0)
+            event.accepted = true
+    }
+
+    Keys.onPressed: (event) => {
+        if (input.handleKey(event)) {
+            event.accepted = true
+            return
+        }
+        if (event.key === Qt.Key_Escape) {
+            event.accepted = interaction.escape()
+            return
+        }
+        if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
+            interaction.selectAll()
+            event.accepted = true
+            return
+        }
+        if (selectionModel.count === 0)
+            return
+        const shift = !!(event.modifiers & Qt.ShiftModifier)
+        switch (event.key) {
+        case Qt.Key_Delete:
+        case Qt.Key_Backspace:
+            event.accepted = interaction.deleteSelected()
+            break
+        case Qt.Key_Left:
+            event.accepted = interaction.nudge(-1, 0, shift)
+            break
+        case Qt.Key_Right:
+            event.accepted = interaction.nudge(1, 0, shift)
+            break
+        case Qt.Key_Up:
+            event.accepted = interaction.nudge(0, 1, shift)
+            break
+        case Qt.Key_Down:
+            event.accepted = interaction.nudge(0, -1, shift)
+            break
+        }
     }
 
     // Right-click on a key: how the segment leaving it moves. Checks the segment's current choice.
@@ -720,7 +647,6 @@ Item {
 
         property string keyProp: ""
         property real keySeconds: 0
-        property Item keyDot: null
         property var segment: ({})
         readonly property string segmentKind: segment.spec ? segment.spec.kind : ""
 
@@ -738,7 +664,7 @@ Item {
                 return
             }
             easingPopupLoader.active = true
-            easingPopupLoader.item.anchorItem = keyDot
+            easingPopupLoader.item.anchorItem = input
             easingPopupLoader.item.propLabel = root.propertyLabel(keyProp)
             easingPopupLoader.item.openFor(EditorState.selectedTrack, EditorState.selectedClip,
                                            keyProp, keySeconds)

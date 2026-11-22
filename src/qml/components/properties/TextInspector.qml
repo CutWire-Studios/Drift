@@ -174,13 +174,15 @@ Item {
     // pass over several clips stays on the page being worked in.
     property string textTab: "text"
 
-    // "" shows the tabbed inspector. "style", "settings" and "animate" show just that slice with
-    // the tab bar hidden, for the phone tool pages.
+    // "" shows the tabbed inspector. "font", "style", "effects", "animate" and "settings" show just
+    // that slice with the tab bar hidden, for the phone's text page, which has its own tab strip.
     property string mode: ""
     readonly property bool showContent: mode === "" && textTab === "text"
-    readonly property bool showFont: (mode === "" && textTab === "text") || mode === "style" || mode === "settings"
+    readonly property bool showFont: (mode === "" && textTab === "text") || mode === "font" || mode === "settings"
     readonly property bool showSpacing: (mode === "" && textTab === "text") || mode === "settings"
-    readonly property bool showStyle: mode === "style" || (mode === "" && textTab === "style")
+    readonly property bool showStyle: mode === "style" || mode === "effects" || (mode === "" && textTab === "style")
+    readonly property bool showPreset: mode === "style" || (mode === "" && textTab === "style")
+    readonly property bool showLook: mode === "effects" || (mode === "" && textTab === "style")
     readonly property bool showAnimate: mode === "animate" || (mode === "" && textTab === "animate")
 
     // The content field's user-dragged height and the id of the clip its text was loaded from,

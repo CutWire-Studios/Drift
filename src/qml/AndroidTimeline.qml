@@ -385,8 +385,10 @@ Item {
     // Ruler, bookmark lane and (when analysis is showing) the beat marker lane. Also
     // the playhead's scrub target and, in its left corner, the add-track button — so it
     // is deliberately taller than the desktop ruler.
+    readonly property real bookmarkRowHeight: EditorState.bookmarks.length > 0 || EditorState.workAreaActive
+                                              ? Theme.timelineBookmarkRowHeight : 0
     readonly property real seekHeaderHeight:
-        Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight + beatLaneHeight
+        Theme.timelineRulerHeight + bookmarkRowHeight + beatLaneHeight
     // Exposed for clip filmstrip viewport culling (Flickable id is local).
     readonly property real timelineViewX: flick.contentX
     readonly property real timelineViewW: flick.width
@@ -481,6 +483,18 @@ Item {
             "gapOutline": Theme.c.androidTimeline.gapOutline,
             "keyframeMarker": Theme.c.androidTimeline.keyframeMarker,
             "keyframeMarkerRim": Theme.c.androidTimeline.keyframeMarkerRim,
+            "waveformBarBackground": Theme.c.androidTimeline.waveformBarBackground,
+            "fadeFill": Theme.c.androidTimeline.fadeFill,
+            "fadeStroke": Theme.c.androidTimeline.fadeStroke,
+            "disabledChipForegroundOpacity": Theme.c.androidTimeline.disabledChipForegroundOpacity,
+            "clipEdgeOpacity": Theme.c.androidTimeline.clipEdgeOpacity,
+            "effectDropTintOpacity": Theme.c.androidTimeline.effectDropTintOpacity,
+            "rippleTintOpacity": Theme.c.androidTimeline.rippleTintOpacity,
+            "rippleOutlineOpacity": Theme.c.androidTimeline.rippleOutlineOpacity,
+            "waveformDividerOpacity": Theme.c.androidTimeline.waveformDividerOpacity,
+            "clipEdgeWidth": Theme.c.androidTimeline.clipEdgeWidth,
+            "rippleOutlineWidth": Theme.c.androidTimeline.rippleOutlineWidth,
+            "fadeStrokeWidth": Theme.c.androidTimeline.fadeStrokeWidth,
             "fontFamily": Theme.fontFamily,
             "fontSizeTiny": Theme.fontSizeTiny,
             "fontSizeXs": Theme.fontSizeXs,
@@ -1205,6 +1219,7 @@ Item {
             // `y: flick.contentY` compensations the old head needed to stay put while the
             // tracks panned vertically.
             AndroidTimelineTrimNudge {
+                id: trimNudge
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: Theme.spacingSm
@@ -1213,6 +1228,7 @@ Item {
 
             AndroidTimelinePlayhead {
                 id: playhead
+                visible: EditorState.clipCount > 0
                 x: root.labelsWidth + flick.width / 2 - Theme.androidPlayheadCentreWidth / 2
                 y: 0
                 z: 30
@@ -1227,8 +1243,11 @@ Item {
                 height: parent.height
                 contentWidth: Math.max(width, EditorState.durationSeconds * root.pxPerSecond
                                               + root.timelineEndPadPx)
+                // Room under the last track for the trim nudge, which floats over the bottom right:
+                // without it the nudge covered the lowest clips with nowhere to scroll them to.
                 contentHeight: Math.max(height,
-                                        root.seekHeaderHeight + root.totalTracksHeight() + Theme.trackGap)
+                                        root.seekHeaderHeight + root.totalTracksHeight() + Theme.trackGap
+                                        + (trimNudge.shown ? trimNudge.height + Theme.spacingSm * 2 : 0))
                 clip: true
                 interactive: !root.scrollLocked
                 boundsBehavior: Flickable.StopAtBounds
@@ -1358,7 +1377,7 @@ Item {
                             id: bookmarkRow
                             y: Theme.timelineRulerHeight
                             width: parent.width
-                            height: Theme.timelineBookmarkRowHeight
+                            height: root.bookmarkRowHeight
                             z: 2
 
                             Rectangle {
@@ -1369,7 +1388,7 @@ Item {
                                 width: Math.max(0, (EditorState.workAreaOutSeconds
                                                     - EditorState.workAreaInSeconds)
                                              * root.pxPerSecond)
-                                color: Qt.rgba(Theme.c.androidTimeline.primary.r, Theme.c.androidTimeline.primary.g, Theme.c.androidTimeline.primary.b, 0.18)
+                                color: Qt.alpha(Theme.c.androidTimeline.primary, Theme.c.androidTimeline.primaryOpacity)
                             }
 
                             ThemedContextMenu {
@@ -1422,7 +1441,7 @@ Item {
                         Canvas {
                             id: beatLane
                             x: flick.contentX
-                            y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
+                            y: Theme.timelineRulerHeight + root.bookmarkRowHeight
                             width: flick.width
                             height: root.beatLaneHeight
                             visible: root.beatLaneVisible
@@ -1474,9 +1493,7 @@ Item {
                                 visible: !root.tracks[trackIndex].isAdjustmentLane
                                 width: flick.contentWidth
                                 height: root.trackHeight(trackIndex)
-                                color: Qt.rgba(Theme.c.androidTimeline.track.r,
-                                               Theme.c.androidTimeline.track.g,
-                                               Theme.c.androidTimeline.track.b, 0.22)
+                                color: Qt.alpha(Theme.c.androidTimeline.track, Theme.c.androidTimeline.trackOpacity)
 
                                 // A transform layer's row carries a faint wash of its colour.
                                 AndroidTimelineTrackWash {
@@ -1637,4 +1654,27 @@ Item {
         }
     }
 
+    property point dragPointer
+    function setDragPointer(sceneX, sceneY) {
+        dragPointer = dragReadout.parent.mapFromItem(null, sceneX, sceneY)
+    }
+    function formatTimecode(seconds, withFrames) {
+        const fps = Math.max(1, EditorState.projectFile.projectFps())
+        const total = Math.round(Math.max(0, seconds) * fps)
+        const whole = Math.floor(total / fps)
+        const pad = (n) => (n < 10 ? "0" : "") + n
+        const hms = Math.floor(whole / 3600) + ":" + pad(Math.floor(whole / 60) % 60) + ":" + pad(whole % 60)
+        return withFrames ? hms + ":" + pad(total - whole * fps) : hms
+    }
+    function formatDelta(seconds) {
+        return (seconds < 0 ? "-" : "+") + formatTimecode(Math.abs(seconds), false)
+    }
+
+    LiveReadout {
+        id: dragReadout
+        visible: EditorState.drag.interacting && text.length > 0
+                 && ["fadeIn", "fadeOut", "trimStart", "trimEnd", "transitionResize"].indexOf(EditorState.drag.kind) >= 0
+        text: EditorState.drag.hudText
+        pointer: root.dragPointer
+    }
 }

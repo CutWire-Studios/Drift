@@ -135,7 +135,7 @@ SettingsPage {
                         visible: entry.modelData.modified
                         width: Theme.c.settingsKeymapPage.modifiedMarkerSize
                         height: width
-                        radius: width / 2
+                        radius: Theme.radiusPill
                         color: Theme.c.settingsKeymapPage.modifiedMarker
                         Accessible.role: Accessible.StaticText
                         Accessible.name: qsTr("Modified")

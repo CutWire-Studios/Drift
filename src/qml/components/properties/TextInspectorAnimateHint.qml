@@ -8,5 +8,5 @@ Text {
     text: qsTr("Plays for every caption")
     color: Theme.c.textInspectorAnimateHint.foregroundMuted
     font.family: Theme.fontFamily
-    font.pixelSize: Theme.fontSizeXs
+    font.pixelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
 }

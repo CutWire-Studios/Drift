@@ -28,11 +28,38 @@ private slots:
         QVERIFY(!pointHit({100, 113}, c, 60, 10));
     }
 
-    void cornerHitReachesPastTheHandle()
+    void boxWidthGrowsFromTheCentre()
     {
-        const QPointF c(50, 50);
-        QVERIFY(cornerHit({50 + 8 + 8, 50}, c, 16, 8));
-        QVERIFY(!cornerHit({50 + 17, 50}, c, 16, 8));
+        QCOMPARE(boxWidthFor(100, 150, 1000), 0.1);
+        QCOMPARE(boxWidthFor(100, 50, 1000), 0.1);
+        QCOMPARE(boxWidthFor(100, 100, 1000), 0.01);
+        QCOMPARE(boxWidthFor(100, 5000, 1000), 0.9);
+    }
+
+    void constrainKeepsTheLongerAxis()
+    {
+        QCOMPARE(constrainedDelta({10, -3}), QPointF(10, 0));
+        QCOMPARE(constrainedDelta({2, -9}), QPointF(0, -9));
+    }
+
+    void movedNormStaysInsideTheFrame()
+    {
+        QCOMPARE(movedNorm({0.5, 0.5}, {10, -20}, 100, 200), QPointF(0.6, 0.4));
+        QCOMPARE(movedNorm({0.95, 0.02}, {50, -50}, 100, 100), QPointF(1.0, 0.0));
+    }
+
+    void pathDotsFadeAwayFromTheCurrentFrame()
+    {
+        QCOMPARE(pathDotAlpha(0, 10), 1.0);
+        QVERIFY(pathDotAlpha(1, 10) < 1.0);
+        QVERIFY(pathDotAlpha(1, 10) > pathDotAlpha(10, 10));
+        QCOMPARE(pathDotAlpha(-4, 10), pathDotAlpha(4, 10));
+        QVERIFY(pathDotAlpha(10, 10) > 0.0);
+    }
+
+    void marqueeNormalizesItsCorners()
+    {
+        QCOMPARE(marqueeRect({10, 20}, {4, 30}), QRectF(QPointF(4, 20), QPointF(10, 30)));
     }
 
     void stripRunsMergeNeighbours()

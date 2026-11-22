@@ -9,7 +9,7 @@ Rectangle {
     id: updateRow
     visible: showUpdate
     height: visible ? rowHeight + Theme.spacingSm : 0
-    color: updateArea.containsMouse ? Qt.darker(Theme.c.notificationUpdateRow.background, 1.08)
+    color: updateArea.containsMouse ? Theme.c.notificationUpdateRow.backgroundHover
                                     : Theme.c.notificationUpdateRow.background
 
     // The whole row opens the dialog, not just its button.

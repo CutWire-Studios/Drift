@@ -68,6 +68,8 @@ public:
     // dx/dy are relative to the nodes' current positions; endMove() closes the undo step.
     Q_INVOKABLE virtual void moveNodes(const QStringList &ids, qreal dx, qreal dy) = 0;
     Q_INVOKABLE virtual void endMove() = 0;
+    // Reverts the move in flight and drops it from the undo stack, then closes it like endMove().
+    Q_INVOKABLE virtual void cancelMove() = 0;
     Q_INVOKABLE virtual bool canConnect(const QString &fromNode, const QString &fromPort,
                                         const QString &toNode, const QString &toPort) const = 0;
     Q_INVOKABLE virtual bool connectPorts(const QString &fromNode, const QString &fromPort,

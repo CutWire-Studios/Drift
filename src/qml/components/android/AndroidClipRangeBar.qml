@@ -1,6 +1,6 @@
 import QtQuick
 import Drift
-// Play/pause plus a scrubber confined to one clip's [start, end] on the timeline, so a tool
+// A scrubber confined to one clip's [start, end] on the timeline, so a tool
 // page can audition just the clip it is editing. The time readout is relative to the clip start.
 Item {
     id: root
@@ -39,20 +39,7 @@ Item {
         return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1)
     }
 
-    implicitHeight: Theme.androidIconButtonSize
-
-    IconButton {
-        id: playButton
-        anchors.left: parent.left
-        anchors.leftMargin: Theme.spacingSm
-        anchors.verticalCenter: parent.verticalCenter
-        buttonSize: Theme.androidIconButtonSize
-        iconSize: Theme.iconSizeLg
-        glyph: EditorState.playing ? Theme.icons.pause : Theme.icons.play
-        variant: "text"
-        tooltip: EditorState.playing ? qsTr("Pause") : qsTr("Play")
-        onClicked: EditorState.togglePlayback()
-    }
+    implicitHeight: Theme.androidControlHeight
 
     Text {
         id: readout
@@ -69,7 +56,8 @@ Item {
     ThemedSlider {
         id: slider
         label: qsTr("Seek")
-        anchors.left: playButton.right
+        anchors.left: parent.left
+        anchors.leftMargin: Theme.pagePadding
         anchors.right: readout.left
         anchors.rightMargin: Theme.spacingMd
         anchors.verticalCenter: parent.verticalCenter

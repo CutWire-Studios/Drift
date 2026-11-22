@@ -13,7 +13,7 @@ Item {
         radius: Theme.c.voiceoverMicPicker.radius
         color: micPickerMouse.containsMouse || micMenu.opened
                ? Theme.c.voiceoverMicPicker.backgroundHover
-               : Qt.rgba(Theme.c.voiceoverMicPicker.background.r, Theme.c.voiceoverMicPicker.background.g, Theme.c.voiceoverMicPicker.background.b, 0.05)
+               : Qt.alpha(Theme.c.voiceoverMicPicker.background, Theme.c.voiceoverMicPicker.backgroundOpacity)
         border.color: Theme.c.voiceoverMicPicker.border
         border.width: Theme.c.voiceoverMicPicker.borderWidth
     }

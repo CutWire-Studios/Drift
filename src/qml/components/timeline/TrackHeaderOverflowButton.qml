@@ -25,7 +25,10 @@ IconGlyph {
     MouseArea {
         id: overflowMouse
         anchors.fill: parent
-        anchors.margins: -4
+        anchors.leftMargin: Theme.touchInput ? -5 : -4
+        anchors.rightMargin: Theme.touchInput ? -5 : -4
+        anchors.topMargin: Theme.touchInput ? -14 : -4
+        anchors.bottomMargin: Theme.touchInput ? -14 : -4
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: overflowGlyph.activated()

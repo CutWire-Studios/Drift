@@ -46,6 +46,7 @@ Item {
                                     || Math.round(cropX) !== 0 || Math.round(cropY) !== 0
 
     function reset() {
+        frame.aspect = 0
         cropX = 0
         cropY = 0
         cropW = projW
@@ -64,126 +65,44 @@ Item {
     readonly property real frameW: cropW * pxScale
     readonly property real frameH: cropH * pxScale
 
-    // Navigation sits below the handles in stacking order, and takes
-    // only the middle button, so left-drags still reach the grips.
-    MouseArea {
+    property alias aspect: frame.aspect
+
+    // Everything outside the crop frame is discarded, so it is dimmed. The frame takes the
+    // middle-drag pan, Ctrl+wheel zoom and pinch, and the middle and wheel only where no grip is.
+    CropFrame {
+        id: frame
         anchors.fill: parent
-        acceptedButtons: Qt.MiddleButton
-        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
-
-        property real lastX: 0
-        property real lastY: 0
-
-        onPressed: (mouse) => {
-            lastX = mouse.x
-            lastY = mouse.y
+        viewport: root.previewViewport
+        stageRect: Qt.rect(root.previewCanvas.x, root.previewCanvas.y,
+                           root.previewCanvas.width, root.previewCanvas.height)
+        spaceSize: Qt.size(root.projW, root.projH)
+        crop: Qt.rect(root.cropX, root.cropY, root.cropW, root.cropH)
+        minSize: 16
+        overflow: true
+        scrimFillsViewport: true
+        showPresets: true
+        undoText: qsTr("Crop canvas")
+        onEdited: (c) => {
+            root.cropX = c.x
+            root.cropY = c.y
+            root.cropW = c.width
+            root.cropH = c.height
+            root.didResize = true
         }
-        onPositionChanged: (mouse) => {
-            if (!pressed)
-                return
-            root.previewViewport.panX += mouse.x - lastX
-            root.previewViewport.panY += mouse.y - lastY
-            lastX = mouse.x
-            lastY = mouse.y
-            root.didPan = true
-        }
-
-        // Zoom lives here rather than in a sibling WheelHandler: a
-        // MouseArea accepts wheel events even with no onWheel bound,
-        // so a separate handler behind it never got them. Ctrl-less
-        // scrolls are explicitly rejected so they keep propagating.
-        onWheel: (wheel) => {
-            if (!Theme.primaryModifierPressed(wheel.modifiers)
-                    || wheel.angleDelta.y === 0) {
-                wheel.accepted = false
-                return
-            }
-            root.previewViewport.zoomAt(wheel.x, wheel.y,
-                            wheel.angleDelta.y > 0 ? 1.15 : 1 / 1.15)
-            root.didZoom = true
-            wheel.accepted = true
-        }
+        onViewZoomed: root.didZoom = true
+        onViewPanned: root.didPan = true
+        onConfirmed: root.apply()
+        onEscaped: EditorState.preview.canvasCropMode = false
     }
 
-    // Two-finger zoom and pan, the touch counterpart of the wheel and middle-drag above.
-    PinchHandler {
-        id: viewPinch
-        target: null
-        acceptedDevices: PointerDevice.TouchScreen
-
-        property real lastScale: 1
-        property point lastCentroid
-
-        // Both signals fire for the same event; consuming the deltas makes the second call a no-op.
-        function step() {
-            if (!active)
-                return
-            const c = centroid.position
-            if (activeScale !== lastScale && lastScale > 0) {
-                root.previewViewport.zoomAt(c.x, c.y, activeScale / lastScale)
-                lastScale = activeScale
-            }
-            root.previewViewport.panX += c.x - lastCentroid.x
-            root.previewViewport.panY += c.y - lastCentroid.y
-            lastCentroid = c
-            root.didZoom = true
-            root.didPan = true
-        }
-
-        onActiveChanged: {
-            if (!active)
-                return
-            lastScale = activeScale
-            lastCentroid = centroid.position
-        }
-        onActiveScaleChanged: step()
-        onCentroidChanged: step()
-    }
-
-    // Everything outside the crop frame is discarded, so dim it.
-    // Four bands rather than a mask: no shader, no clipping cost.
-    CropOverlayScrim {
-        frameX: root.frameX
-        frameY: root.frameY
-        frameW: root.frameW
-        frameH: root.frameH
-    }
-
-    CropOverlayFrame {
-        x: root.frameX
-        y: root.frameY
-        width: root.frameW
-        height: root.frameH
-
-        // Rule-of-thirds inside the crop frame, the usual cue for
-        // judging a reframe.
-        CropOverlayThirdGuides { }
-    }
-
-    // Eight drag handles: 4 edges then 4 corners. `dx`/`dy` say
-    // which edges each handle moves (-1 = left/top, +1 = right/bottom).
-    Repeater {
-        model: [
-            { dx: -1, dy:  0, cursor: Qt.SizeHorCursor },
-            { dx:  1, dy:  0, cursor: Qt.SizeHorCursor },
-            { dx:  0, dy: -1, cursor: Qt.SizeVerCursor },
-            { dx:  0, dy:  1, cursor: Qt.SizeVerCursor },
-            { dx: -1, dy: -1, cursor: Qt.SizeFDiagCursor },
-            { dx:  1, dy:  1, cursor: Qt.SizeFDiagCursor },
-            { dx:  1, dy: -1, cursor: Qt.SizeBDiagCursor },
-            { dx: -1, dy:  1, cursor: Qt.SizeBDiagCursor }
-        ]
-
-        delegate: CropOverlayGrip {
-            crop: root
-        }
-    }
+    Component.onCompleted: frame.forceActiveFocus()
 
     // First-run hint. The crop tool has three non-obvious inputs and
     // no menu surface to discover them from, so they are spelled out
     // while the tool is open. Fades once the user has driven all
     // three, and stays gone for the rest of the session.
     CropOverlayHint {
+        anchors.topMargin: Math.max(Theme.spacingLg, frame.barBottom + Theme.spacingSm)
         hintDismissed: root.hintDismissed
         didResize: root.didResize
         didZoom: root.didZoom

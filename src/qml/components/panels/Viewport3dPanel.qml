@@ -246,7 +246,7 @@ PanelFrame {
 
     Component {
         id: transformTool
-        TransformOverlay {
+        TransformManip {
             canvas: editorView.canvas
             viewport: 1
         }

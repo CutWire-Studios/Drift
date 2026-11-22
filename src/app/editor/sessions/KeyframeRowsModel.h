@@ -13,8 +13,8 @@
 class KeyframeController;
 
 // The row tree of one Keyframes panel for the selected clip. Rebuilds are diffed against the
-// current rows, so a delegate only goes away when its row does. Gesture maths that needs the rows
-// (hit-testing, marquee, drag deltas, snapping) lives here so QML only forwards pointer events.
+// current rows, so a delegate only goes away when its row does. Pointer gestures on the rows are
+// KeyframeInteraction's.
 class KeyframeRowsModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -76,15 +76,6 @@ public:
     Q_INVOKABLE bool allTargetsKeyed(const QVariantList &indices, double t, double tolerance) const;
     Q_INVOKABLE bool targetsHaveKeys(const QVariantList &indices) const;
 
-    Q_INVOKABLE QVariantMap hitTest(double x, double y, double contentY, double rowHeight, double slop) const;
-    Q_INVOKABLE QVariantList marqueeRefs(double x0, double x1, double y0, double y1, double contentY,
-                                         double rowHeight, const QVariantList &base) const;
-    // The time shift of a dragged key group: `origin + dx / pxPerSecond`, clamped to the clip and
-    // snapped, minus `origin`.
-    Q_INVOKABLE double moveDelta(double origin, double dx, const QVariantList &excludeRefs, bool invertSnap,
-                                 bool zeroWhenStill) const;
-    Q_INVOKABLE double snapKeyTime(double seconds, const QVariantList &excludeRefs, bool invertSnap) const;
-
 signals:
     void controllerChanged();
     void timeViewChanged();
@@ -96,7 +87,6 @@ signals:
 private:
     QList<int> indicesOrDataRows(const QVariantList &indices) const;
     QList<KeyframeRows::Row> pick(const QVariantList &indices) const;
-    KeyframeRows::Axis axis() const;
 
     QPointer<KeyframeController> m_controller;
     QPointer<KeyframeTimeView> m_timeView;

@@ -1,7 +1,7 @@
 import QtQuick
 import Drift
 
-Rectangle {
+HandleKnob {
     id: knob
 
     required property var mask
@@ -21,15 +21,11 @@ Rectangle {
 
     visible: mask.isSelected && mask.maskData.enabled !== false && !EditorState.playing
              && mask.width > 0
-    width: Theme.spacingMd
-    height: Theme.spacingMd
-    radius: width / 2
+    shape: "dot"
+    space: knob.mask
+    visualSize: Theme.touchInput ? 14 : 8
+    cursor: "resize:" + knob.mask.rotation
     z: 1
-    color: area.containsMouse || area.pressed
-           ? Theme.c.maskOverlayRotateHandle.backgroundHover : Theme.c.maskOverlayRotateHandle.background
-    border.width: Theme.c.maskOverlayRotateHandle.borderWidth
-    border.color: area.containsMouse || area.pressed
-                  ? Theme.c.maskOverlayRotateHandle.borderHover : Theme.c.maskOverlayRotateHandle.border
     x: (onSplit ? mask.width / 2 + feather * scaleX : onEllipse ? mask.width / 2 + (mask.width / 2 + feather * scaleX) * diag
                   : mask.width + (inCorner
                                   ? Math.sqrt(Math.pow(cornerR + feather * scaleX, 2) - cornerDy * cornerDy) - cornerR
@@ -37,8 +33,7 @@ Rectangle {
     y: (onSplit ? mask.height / 2 + 40 : onEllipse ? mask.height / 2 - (mask.height / 2 + feather * scaleX) * diag
                   : mask.height * 0.25) - height / 2
 
-    function setFrom(mouse) {
-        const p = area.mapToItem(knob.mask, mouse.x, mouse.y)
+    function setFrom(p) {
         const edge = knob.onSplit ? p.x - knob.mask.width / 2 : knob.onEllipse
                      ? ((p.x - knob.mask.width / 2) / knob.diag - knob.mask.width / 2)
                      : knob.inCorner
@@ -49,18 +44,8 @@ Rectangle {
                                            Math.round(Math.max(0, Math.min(maxFeather, edge / Math.max(0.01, knob.scaleX)))))
     }
 
-    MouseArea {
-        id: area
-        anchors.fill: parent
-        anchors.margins: -Theme.spacingMd
-        hoverEnabled: true
-        cursorShape: Qt.SizeHorCursor
-        preventStealing: true
-        onWheel: (wheel) => { wheel.accepted = false }
-
-        onPressed: EditorState.beginPreviewDrag(qsTr("Edit %1").arg(qsTr("Feather")))
-        onPositionChanged: (mouse) => { if (pressed) knob.setFrom(mouse) }
-        onReleased: EditorState.commitPreviewDrag()
-        onCanceled: EditorState.commitPreviewDrag()
-    }
+    onPressed: (point, modifiers, device) =>
+        EditorState.drag.begin("maskFeather", device, qsTr("Edit %1").arg(qsTr("Feather")))
+    onMoved: (point, modifiers) => { if (EditorState.drag.kind === "maskFeather") knob.setFrom(point) }
+    onReleased: if (EditorState.drag.kind === "maskFeather") EditorState.drag.commit()
 }

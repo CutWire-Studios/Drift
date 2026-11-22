@@ -9,7 +9,7 @@ Rectangle {
     required property string grade
 
     width: gradeText.implicitWidth + 24
-    radius: height / 2
+    radius: Theme.radiusPill
     color: chip.tint
 
     Text {

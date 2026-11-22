@@ -64,12 +64,14 @@ Column {
         }
 
         Item {
+            id: chipsGap
             width: 1
-            height: Theme.spacingSm
+            height: Theme.phone ? 0 : Theme.spacingSm
         }
 
         AssetCategoryChips {
             id: categoryChips
+            flickable: presetGrid
             width: parent.width
             sections: presetGrid.visibleSections
             activeCategory: root.activeCategory
@@ -79,7 +81,7 @@ Column {
 
         Item {
             width: parent.width
-            height: Math.max(0, parent.height - search.height - Theme.spacingSm
+            height: Math.max(0, parent.height - search.height - chipsGap.height
                              - categoryChips.height)
 
             Text {

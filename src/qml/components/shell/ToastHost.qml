@@ -152,7 +152,7 @@ Item {
                                 anchors.topMargin: Theme.c.toastHost.radius
                                 anchors.bottomMargin: Theme.c.toastHost.radius
                                 width: Theme.c.toastHost.accentWidth
-                                radius: width / 2
+                                radius: Theme.radiusPill
                                 color: root._accent(toast.severity)
                             }
                         }

@@ -29,8 +29,8 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(root.tint.r, root.tint.g, root.tint.b, Theme.c.sourceLabStrip.rangeOpacity)
-        border.width: 1
+        color: Qt.alpha(root.tint, Theme.c.sourceLabStrip.rangeOpacity)
+        border.width: Theme.c.sourceLabStrip.rangeBorderWidth
         border.color: root.tint
     }
 

@@ -58,7 +58,7 @@ Item {
             height: controlsRow.height + 2 * Theme.spacingXs
             radius: Theme.c.nodeGraphEditor.radius
             color: Theme.c.nodeGraphEditor.controlsBackground
-            border.width: 1
+            border.width: Theme.c.nodeGraphEditor.controlsBorderWidth
             border.color: Theme.c.nodeGraphEditor.controlsBorder
 
             Row {

@@ -288,7 +288,6 @@ Item {
             layerIndex: root.tracks[index].isTransformLayer ? index : -1
             contentY: root.contentY
             indentStep: root.bracketIndent
-            touchMode: root.touchMode
             rowTop: root.trackRowTop
             rowHeight: root.trackHeight
             onPreviewEndChanged: {
@@ -313,5 +312,18 @@ Item {
     TrackHeaderResizeHandle {
         resizable: root.resizable
         phone: root.phone
+    }
+
+    property point dragPointer
+    function setDragPointer(sceneX, sceneY) {
+        dragPointer = mapFromItem(null, sceneX, sceneY)
+    }
+
+    LiveReadout {
+        visible: EditorState.drag.interacting
+                 && (EditorState.drag.kind === "trackHeaderWidth" || EditorState.drag.kind === "trackHeight")
+                 && text.length > 0
+        text: EditorState.drag.hudText
+        pointer: root.dragPointer
     }
 }

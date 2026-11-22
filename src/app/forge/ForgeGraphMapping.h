@@ -38,6 +38,7 @@ public:
                        std::function<void(const ForgeDoc &)> apply);
 
     int id() const override { return m_key.isEmpty() ? -1 : 1; }
+    const QString &key() const { return m_key; }
     bool mergeWith(const QUndoCommand *other) override;
     void undo() override { m_apply(m_before); }
     void redo() override { m_apply(m_after); }

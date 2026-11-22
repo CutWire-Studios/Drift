@@ -11,7 +11,7 @@ Rectangle {
 
     width: 40
     height: 22
-    radius: height / 2
+    radius: Theme.radiusPill
     color: switchTrack.checked ? Theme.c.androidSheetActionSwitch.backgroundChecked
                               : Theme.c.androidSheetActionSwitch.background
     border.width: Theme.c.androidSheetActionSwitch.borderWidth
@@ -27,7 +27,7 @@ Rectangle {
         x: switchTrack.checked ? parent.width - width - 2 : 2
         width: 18
         height: 18
-        radius: height / 2
+        radius: Theme.radiusPill
         color: switchTrack.checked ? Theme.c.androidSheetActionSwitch.handleChecked : Theme.c.androidSheetActionSwitch.handle
 
         Behavior on x {

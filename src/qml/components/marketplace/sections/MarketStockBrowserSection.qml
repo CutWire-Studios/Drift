@@ -175,7 +175,7 @@ Item {
                             required property var modelData
                             readonly property bool active: root.providerId === modelData.id
                             readonly property var quota: modelData.quota
-                            height: Theme.touchInput ? Theme.androidMinTouchTarget : Theme.controlHeightSm
+                            height: Theme.touchInput ? Theme.androidRowHeight : Theme.controlHeightSm
                             verticalAlignment: Text.AlignVCenter
                             text: quota && quota.remaining !== undefined && quota.remaining !== null
                                   ? qsTr("%1 (%2 left)").arg(modelData.label).arg(quota.remaining)

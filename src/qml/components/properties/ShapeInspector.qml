@@ -125,6 +125,7 @@ Item {
             }
 
             ThemedLabel {
+                visible: !Theme.phone
                 width: parent.width
                 opacity: 0.8
                 text: qsTr("Swapping the shape keeps its position, size, style and effects.")
@@ -204,6 +205,8 @@ Item {
                         keywords: "pen bezier points handles vector"
                     }
                 }
+
+                PathPointModeRow { }
 
                 Column {
                     width: parent.width
@@ -380,13 +383,14 @@ Item {
                     unit: "px"
                 }
 
-                Row {
+                Grid {
                     width: parent.width
+                    columns: Theme.touchInput && Theme.compact ? 1 : 2
                     spacing: 8
                     visible: root.shapeHas("points")
 
                     PropertyKeyframeRow {
-                        width: root.shapeHas("inner") ? (parent.width - parent.spacing) / 2 : parent.width
+                        width: root.shapeHas("inner") && !(Theme.touchInput && Theme.compact) ? (parent.width - parent.spacing) / 2 : parent.width
                         propDef: root.knob("points", root.pointsLabel, 0)
                         keyframeList: root.knobKeyframes("points")
                         useSlider: true
@@ -394,7 +398,7 @@ Item {
                         sliderTo: 60
                     }
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         visible: root.shapeHas("inner")
                         propDef: root.knob("innerRatio", qsTr("Inner radius"), 2)
                         keyframeList: root.knobKeyframes("innerRatio")
@@ -416,13 +420,14 @@ Item {
                     unit: "°"
                 }
 
-                Row {
+                Grid {
                     width: parent.width
+                    columns: Theme.touchInput && Theme.compact ? 1 : 2
                     spacing: 8
                     visible: root.shapeHas("arrow") || root.shapeHas("shaft")
 
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         visible: root.shapeHas("arrow")
                         propDef: root.knob("headSize", qsTr("Head size"), 2)
                         keyframeList: root.knobKeyframes("headSize")
@@ -432,7 +437,7 @@ Item {
                         percent: true
                     }
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         visible: root.shapeHas("shaft")
                         propDef: root.knob("thickness", qsTr("Thickness"), 2)
                         keyframeList: root.knobKeyframes("thickness")
@@ -443,13 +448,14 @@ Item {
                     }
                 }
 
-                Row {
+                Grid {
                     width: parent.width
+                    columns: Theme.touchInput && Theme.compact ? 1 : 2
                     spacing: 8
                     visible: root.shapeHas("bubble")
 
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         propDef: root.knob("tailX", qsTr("Tail position"), 2)
                         keyframeList: root.knobKeyframes("tailX")
                         useSlider: true
@@ -458,7 +464,7 @@ Item {
                         percent: true
                     }
                     PropertyKeyframeRow {
-                        width: (parent.width - parent.spacing) / 2
+                        width: Theme.touchInput && Theme.compact ? parent.width : (parent.width - parent.spacing) / 2
                         propDef: root.knob("tailSize", qsTr("Tail size"), 2)
                         keyframeList: root.knobKeyframes("tailSize")
                         useSlider: true

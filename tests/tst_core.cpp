@@ -2314,7 +2314,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 31);
+    QCOMPARE(drift::Project::kCurrentVersion, 32);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2354,7 +2354,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 31);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 32);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -3329,11 +3329,11 @@ void CoreTest::shapePathStyleJsonRoundTrip()
     style.kind = drift::ShapeKind::Path;
     style.fillRule = Qt::OddEvenFill;
     style.layers[1].cap = drift::StrokeCap::Square;
-    style.contours = {drift::ShapeContour{{{QPointF(0.1, 0.2), {}, QPointF(0.1, 0.0), true},
-                                           {QPointF(0.9, 0.8), QPointF(-0.1, 0.0), {}, false}},
+    style.contours = {drift::ShapeContour{{{QPointF(0.1, 0.2), {}, QPointF(0.1, 0.0), drift::TangentMode::Mirrored},
+                                           {QPointF(0.9, 0.8), QPointF(-0.1, 0.0), {}, drift::TangentMode::Corner}},
                                           false},
-                      drift::ShapeContour{{{QPointF(0, 0), {}, {}, false}, {QPointF(1, 0), {}, {}, false},
-                                           {QPointF(0.5, 1), {}, {}, false}},
+                      drift::ShapeContour{{{QPointF(0, 0), {}, {}, drift::TangentMode::Corner}, {QPointF(1, 0), {}, {}, drift::TangentMode::Corner},
+                                           {QPointF(0.5, 1), {}, {}, drift::TangentMode::Corner}},
                                           true}};
     auto moved = style.contours;
     moved[0].vertices[1].p = QPointF(0.5, 0.5);
@@ -3364,7 +3364,7 @@ void CoreTest::shapePathKeysInterpolateOrHold()
         drift::ShapeContour c;
         c.closed = closed;
         for (int i = 0; i < count; ++i)
-            c.vertices.append({QPointF(x + i, 0.0), {}, QPointF(x, 0.0), false});
+            c.vertices.append({QPointF(x + i, 0.0), {}, QPointF(x, 0.0), drift::TangentMode::Corner});
         return QVector<drift::ShapeContour>{c};
     };
     drift::ShapeStyle style;
@@ -5247,7 +5247,7 @@ void CoreTest::fadeSerializationAndMultiplier()
     QCOMPARE(cc.fadeInCurve, drift::FadeCurve::Custom);
     QVERIFY(!cc.fadeInShape.isEmpty());
     QCOMPARE(cc.fadeOutCurve, drift::FadeCurve::EqualPower);
-    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(), 31);
+    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(), 32);
     const drift::TimeUs midIn = c.timelineStart + drift::secondsToUs(0.5);
     QVERIFY(qAbs(cc.fadeMultiplier(midIn) - 0.25) < 1e-6);
 
@@ -5658,7 +5658,7 @@ void CoreTest::layoutV31RoundTrip()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 31);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 32);
     const QJsonObject clipJson = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                      .value(QStringLiteral("clips")).toArray().at(0).toObject();
     QVERIFY(!clipJson.contains(QStringLiteral("x")));

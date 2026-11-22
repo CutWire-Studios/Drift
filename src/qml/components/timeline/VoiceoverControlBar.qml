@@ -10,7 +10,7 @@ Rectangle {
     implicitHeight: 34
     implicitWidth: mainRow.implicitWidth + 20
     radius: Theme.c.voiceoverControlBar.radius
-    color: Qt.rgba(Theme.c.voiceoverControlBar.background.r, Theme.c.voiceoverControlBar.background.g, Theme.c.voiceoverControlBar.background.b, 0.96)
+    color: Qt.alpha(Theme.c.voiceoverControlBar.background, Theme.c.voiceoverControlBar.backgroundOpacity)
     border.color: EditorState.isAudioRecordingPaused ? Theme.c.voiceoverControlBar.borderPaused : Theme.c.voiceoverControlBar.border
     border.width: Theme.c.voiceoverControlBar.borderWidth
 

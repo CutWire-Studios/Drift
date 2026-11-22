@@ -26,6 +26,7 @@ ThemedTextField {
     signal edited(real value)
 
     inputMethodHints: Qt.ImhFormattedNumbersOnly
+    font.family: Theme.touchInput && Theme.compact ? Theme.fontFamily : Theme.monoFontFamily
 
     readonly property bool _bounded: from > -1e9 || to < 1e9
     readonly property string rangeHint: _bounded

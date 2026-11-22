@@ -10,7 +10,7 @@ Rectangle {
     anchors.bottom: parent.bottom
     anchors.margins: 2
     radius: Theme.c.timelineNewTrackGhostClip.radius
-    color: Qt.rgba(Theme.c.timelineNewTrackGhostClip.background.r, Theme.c.timelineNewTrackGhostClip.background.g, Theme.c.timelineNewTrackGhostClip.background.b, 0.3)
+    color: Qt.alpha(Theme.c.timelineNewTrackGhostClip.background, Theme.c.timelineNewTrackGhostClip.backgroundOpacity)
     border.width: Theme.c.timelineNewTrackGhostClip.borderWidth
     border.color: Theme.c.timelineNewTrackGhostClip.border
 

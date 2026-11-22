@@ -18,8 +18,7 @@ KeyframeCurvesItem::KeyframeCurvesItem(QQuickItem *parent)
 {
     setAntialiasing(true);
     for (const auto signal : {&KeyframeCurvesItem::viewChanged, &KeyframeCurvesItem::styleChanged,
-                              &KeyframeCurvesItem::dragChanged, &KeyframeCurvesItem::keysChanged,
-                              &KeyframeCurvesItem::seriesChanged})
+                              &KeyframeCurvesItem::keysChanged})
         connect(this, signal, this, [this] { update(); });
 }
 
@@ -44,29 +43,6 @@ void KeyframeCurvesItem::pullModel()
 {
     if (m_model)
         m_series = m_model->seriesList();
-}
-
-void KeyframeCurvesItem::setSeries(const QVariantList &series)
-{
-    if (m_seriesSource == series)
-        return;
-    m_seriesSource = series;
-    if (!m_model)
-        m_series = seriesFromList(series);
-    emit seriesChanged();
-}
-
-int KeyframeCurvesItem::focusedIndex() const
-{
-    return m_model ? m_model->focusedIndex() : m_focusedIndex;
-}
-
-void KeyframeCurvesItem::setFocusedIndex(int index)
-{
-    if (m_focusedIndex == index)
-        return;
-    m_focusedIndex = index;
-    emit viewChanged();
 }
 
 void KeyframeCurvesItem::setSelection(KeyframeSelection *selection)
@@ -109,7 +85,7 @@ void KeyframeCurvesItem::geometryChange(const QRectF &newGeometry, const QRectF 
 
 bool KeyframeCurvesItem::focusedAt(int index) const
 {
-    return m_model ? m_model->isFocused(index) : index == m_focusedIndex;
+    return m_model && m_model->isFocused(index);
 }
 
 qreal KeyframeCurvesItem::graphHeight() const
@@ -117,128 +93,9 @@ qreal KeyframeCurvesItem::graphHeight() const
     return std::max(1.0, height() - 2 * m_graphMargin);
 }
 
-QList<Point> KeyframeCurvesItem::livePoints(int index) const
-{
-    const Series &entry = m_series.at(index);
-    const bool partner = m_positionLinked
-                         && ((m_dragProp == QLatin1String("x") && entry.prop == QLatin1String("y"))
-                             || (m_dragProp == QLatin1String("y") && entry.prop == QLatin1String("x")));
-    if (!partner && entry.prop != m_dragProp)
-        return sortedPoints(entry.points);
-    if (!m_dragKeys.isEmpty()) {
-        if (partner)
-            return sortedPoints(entry.points);
-        QList<Point> live = entry.points;
-        for (const QVariant &v : m_dragKeys) {
-            const Point key = pointFromMap(v.toMap());
-            for (Point &p : live)
-                if (std::abs(p.seconds - key.seconds) < 1e-6)
-                    p = key;
-        }
-        return sortedPoints(live);
-    }
-
-    const int focused = focusedIndex();
-    const Series *master = focused >= 0 && focused < m_series.size() ? &m_series.at(focused) : nullptr;
-    const auto masterAt = [master](int i) -> const Point * {
-        return master && i >= 0 && i < master->points.size() ? &master->points.at(i) : nullptr;
-    };
-    constexpr double kPartnerWindow = 1.0 / 30;
-
-    QList<Point> live = entry.points;
-    for (int i = 0; i < live.size(); ++i) {
-        Point &p = live[i];
-        if (!partner) {
-            if (i == m_dragTangentIndex) {
-                p.inDx = m_dragTangentInDx;
-                p.inDy = m_dragTangentInDy;
-                p.outDx = m_dragTangentOutDx;
-                p.outDy = m_dragTangentOutDy;
-            } else if (i == m_dragIndex) {
-                p.seconds = m_dragSeconds;
-                p.value = m_dragValue;
-            }
-        } else if (m_dragTangentIndex >= 0 && master) {
-            const Point *m = masterAt(m_dragTangentIndex);
-            if (m && std::abs(m->seconds - p.seconds) < kPartnerWindow) {
-                double partnerIn = 0;
-                double partnerOut = 0;
-                if (i + 1 < entry.points.size() && masterAt(m_dragTangentIndex + 1)) {
-                    const double mSpan = masterAt(m_dragTangentIndex + 1)->value - m->value;
-                    const double sSpan = entry.points.at(i + 1).value - entry.points.at(i).value;
-                    if (std::abs(mSpan) > 1e-6)
-                        partnerOut = m_dragTangentOutDy * (sSpan / mSpan);
-                }
-                if (i > 0 && m_dragTangentIndex > 0) {
-                    const double mSpan = m->value - masterAt(m_dragTangentIndex - 1)->value;
-                    const double sSpan = entry.points.at(i).value - entry.points.at(i - 1).value;
-                    if (std::abs(mSpan) > 1e-6)
-                        partnerIn = m_dragTangentInDy * (sSpan / mSpan);
-                }
-                p.inDx = m_dragTangentInDx;
-                p.inDy = partnerIn;
-                p.outDx = m_dragTangentOutDx;
-                p.outDy = partnerOut;
-            }
-        } else if (m_dragIndex >= 0 && master) {
-            const Point *m = masterAt(m_dragIndex);
-            if (m && std::abs(m->seconds - p.seconds) < kPartnerWindow)
-                p.seconds = m_dragSeconds;
-        }
-    }
-    return sortedPoints(live);
-}
-
-QVariantMap KeyframeCurvesItem::segmentAt(double x, double y, double slop) const
-{
-    const int fi = focusedIndex();
-    if (fi < 0 || fi >= m_series.size() || m_pxPerSecond <= 0)
-        return {};
-    const Series &entry = m_series.at(fi);
-    const double gh = graphHeight();
-    const QList<Point> points = sortedPoints(entry.points);
-    int bestIndex = -1;
-    double bestSeconds = 0;
-    double bestDist = slop + 0.5;
-    for (int i = 0; i + 1 < points.size(); ++i) {
-        const Point &a = points.at(i);
-        const Point &b = points.at(i + 1);
-        if (a.shaped() || b.seconds <= a.seconds)
-            continue;
-        const double xa = a.seconds * m_pxPerSecond - m_originX;
-        const double xb = b.seconds * m_pxPerSecond - m_originX;
-        for (double sx = std::max(xa, x - slop); sx <= std::min(xb, x + slop); sx += 1.0) {
-            const double seconds = (sx + m_originX) / m_pxPerSecond;
-            const double sy = m_graphMargin + yForValue(segmentValue(a, b, seconds), entry, gh);
-            const double d = std::hypot(sx - x, sy - y);
-            if (d < bestDist) {
-                bestDist = d;
-                bestIndex = i;
-                bestSeconds = seconds;
-            }
-        }
-    }
-    if (bestIndex < 0)
-        return {};
-    const Point &a = points.at(bestIndex);
-    const Point &b = points.at(bestIndex + 1);
-    return {{QStringLiteral("t"), segmentParameter(a, b, bestSeconds)},
-            {QStringLiteral("a"), toMap(a)},
-            {QStringLiteral("b"), toMap(b)}};
-}
-
-QVariantList KeyframeCurvesItem::deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
-                                               double dValue) const
-{
-    Point pa = pointFromMap(a);
-    Point pb = pointFromMap(b);
-    KeyframeCurves::deformSegment(pa, pb, t, dSeconds, dValue);
-    return {toMap(pa), toMap(pb)};
-}
-
 void KeyframeCurvesItem::paintHandles(QPainter *painter, double gh) const
 {
-    const int fi = focusedIndex();
+    const int fi = m_model ? m_model->focusedIndex() : -1;
     if (fi < 0 || fi >= m_series.size())
         return;
     const Series &entry = m_series.at(fi);
@@ -254,7 +111,7 @@ void KeyframeCurvesItem::paintHandles(QPainter *painter, double gh) const
     const qreal leaderOpacity = number("leaderOpacity", 0.55);
     const double w = width();
 
-    const QList<Point> points = livePoints(fi);
+    const QList<Point> points = sortedPoints(entry.points);
     for (const Handle &h : tangentHandles(points)) {
         const Point &p = points.at(h.pointIndex);
         const QPointF key(p.seconds * m_pxPerSecond - m_originX, m_graphMargin + yForValue(p.value, entry, gh));
@@ -291,7 +148,7 @@ void KeyframeCurvesItem::paint(QPainter *painter)
         double alpha = m_curveEditing && !focused ? m_opacityContext : 1.0;
         if (!entry.enabled)
             alpha *= m_opacityDisabled;
-        const QVector<QPointF> samples = sampleCurve(livePoints(s), entry.baseValue, m_clipStart, clipEnd, s0, s1,
+        const QVector<QPointF> samples = sampleCurve(sortedPoints(entry.points), entry.baseValue, m_clipStart, clipEnd, s0, s1,
                                                      2.0 / m_pxPerSecond);
         QPolygonF line;
         line.reserve(samples.size());
@@ -305,7 +162,7 @@ void KeyframeCurvesItem::paint(QPainter *painter)
     }
     painter->setOpacity(1.0);
 
-    if (m_model ? m_model->showHandles() : m_showHandles)
+    if (m_model && m_model->showHandles())
         paintHandles(painter, gh);
     if (!m_showKeys)
         return;

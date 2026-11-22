@@ -609,7 +609,8 @@ QString runSam2Job(const Sam2Job &job, const std::function<bool()> &isCancelled,
     const int work = job.range.size();
     int done = 0;
     const auto tick = [&] {
-        progress(double(++done) / work,
+        ++done;
+        progress(double(done) / work,
                  QCoreApplication::translate("SegmentationController",
                                              "Processing frame %1 of %2…")
                      .arg(done)

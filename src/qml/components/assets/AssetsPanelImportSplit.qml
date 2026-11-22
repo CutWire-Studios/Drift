@@ -8,6 +8,8 @@ Rectangle {
 
     property bool importing: false
     property bool showCollect: true
+    // Icon-only, for a header too narrow for the label.
+    property bool compact: false
 
     signal importFilesRequested()
     signal importFolderRequested()
@@ -28,9 +30,11 @@ Rectangle {
 
         ThemedButton {
             id: importFilesHalf
-            text: qsTr("Import")
+            text: root.compact ? "" : qsTr("Import")
             variant: "ghost"
             flat: true
+            leftPadding: root.compact ? Theme.spacingLg : Theme.spacingXl
+            rightPadding: root.compact ? Theme.spacingLg : Theme.spacing2xl - Theme.spacingXs
             radius: Theme.c.assetsPanelImportSplit.buttonRadius
             glyph: Theme.icons.upload
             tooltip: qsTr("Import video, audio or image files")

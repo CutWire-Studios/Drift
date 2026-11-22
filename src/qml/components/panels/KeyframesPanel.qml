@@ -75,10 +75,6 @@ PanelFrame {
                + ":" + pad(total - whole * fps)
     }
 
-    function snapKeyTime(raw, excludeRefs, invert) {
-        return rowsModelObject.snapKeyTime(raw, excludeRefs, !!invert)
-    }
-
     function rebuild() {
         if (!shown || !hasClip) {
             rowsModelObject.clear()
@@ -188,20 +184,10 @@ PanelFrame {
             curvesView.fitValues(true)
     }
 
-    function nudgeSelection(frames) {
-        const dt = frames / Math.max(1, EditorState.projectFile.projectFps())
-        const moved = EditorState.keyframes.nudgeKeys(track, clipIndex, selectionObject.refs(), dt)
-        if (moved && moved.length > 0)
-            selectionObject.replace(moved)
-    }
+    readonly property var activeInteraction: mode === "curves" ? curvesView.interaction : surface.interaction
 
     function cancelGesture() {
-        if (!surface.busy && !curvesView.busy && !stretchBox.dragging)
-            return false
-        surface.cancelDrag()
-        curvesView.cancelDrag()
-        stretchBox.cancel()
-        return true
+        return activeInteraction.escape()
     }
 
     function textFieldFocused() {
@@ -234,10 +220,12 @@ PanelFrame {
         case "keyframes.nudgeRight":
         case "keyframes.nudgeLeftFar":
         case "keyframes.nudgeRightFar":
-            if (selectionObject.count === 0)
-                return false
-            root.nudgeSelection((id.indexOf("Left") >= 0 ? -1 : 1) * (id.endsWith("Far") ? 10 : 1))
-            return true
+            return activeInteraction.nudge(id.indexOf("Left") >= 0 ? -1 : 1, 0, id.endsWith("Far"))
+        case "keyframes.nudgeUp":
+        case "keyframes.nudgeDown":
+        case "keyframes.nudgeUpFar":
+        case "keyframes.nudgeDownFar":
+            return activeInteraction.nudge(0, id.indexOf("Up") >= 0 ? 1 : -1, id.endsWith("Far"))
         }
         return false
     }
@@ -259,16 +247,13 @@ PanelFrame {
         if (id === "selectAll") {
             if (selectionObject.count === 0 && !mine)
                 return false
-            selectionObject.replace(rowsModelObject.allVisibleKeyRefs())
+            activeInteraction.selectAll()
             return true
         }
         if (selectionObject.count === 0)
             return false
-        if (id === "delete") {
-            EditorState.keyframes.removeKeys(track, clipIndex, selectionObject.refs())
-            selectionObject.clear()
-            return true
-        }
+        if (id === "delete")
+            return activeInteraction.deleteSelected()
         if (id === "copy") {
             EditorState.keyframes.copyKeys(track, clipIndex, selectionObject.refs())
             return true
@@ -315,6 +300,10 @@ PanelFrame {
     // before the editor scope sees them.
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape && root.cancelGesture()) {
+            event.accepted = true
+            return
+        }
+        if ((root.mode === "curves" ? curvesView : surface).handleKey(event)) {
             event.accepted = true
             return
         }
@@ -542,6 +531,7 @@ PanelFrame {
                     anchors.fill: parent
                     visible: active && root.mode === "lanes"
                     panel: root
+                    interaction: surface.interaction
                 }
 
                 KeyframesContextMenu {

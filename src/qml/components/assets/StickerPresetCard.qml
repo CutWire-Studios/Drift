@@ -89,6 +89,7 @@ Column {
         }
 
         AssetQuickAddButton {
+            visible: !root.pickerMode
             z: 5
             anchors.right: parent.right
             anchors.bottom: parent.bottom

@@ -26,6 +26,7 @@ Column {
 
     Text {
         width: parent.width
+        visible: !Theme.phone
         text: root.title
         color: Theme.c.settingsPage.foreground
         font.family: Theme.fontFamily

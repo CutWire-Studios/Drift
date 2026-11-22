@@ -46,7 +46,7 @@ Flickable {
     readonly property real cardSize: cellWidth - gap
     // Override when the card is taller than it is wide (labels under the square).
     property real cellHeight: cardSize + gap
-    readonly property real headerHeight: Theme.controlHeightSm + Theme.spacingSm
+    readonly property real headerHeight: Theme.phone ? Theme.controlHeightSm - Theme.spacingXs : Theme.controlHeightSm + Theme.spacingSm
 
     readonly property int itemCount: {
         let n = 0
@@ -346,7 +346,7 @@ Flickable {
     // The current section's header, pinned to the top until the next one pushes it out.
     SectionHeader {
         readonly property var next: root._sections[root._currentIndex + 1]
-        visible: root._current !== null
+        visible: root._current !== null && !Theme.phone
         z: 1
         y: next ? Math.min(root.contentY, root._sectionY(next) - root.headerHeight) : root.contentY
         width: root.width

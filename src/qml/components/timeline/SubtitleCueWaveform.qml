@@ -16,7 +16,7 @@ Canvas {
     width: Math.max(2, windowX1 - windowX0)
     height: parent.height
     visible: lane.mediaWaveformRange.duration > 0 && windowX1 > windowX0
-    opacity: 0.75
+    opacity: Theme.c.subtitleCueWaveform.foregroundOpacity
     z: 1
     readonly property color wave: Theme.c.subtitleCueWaveform.foreground
     onWaveChanged: requestPaint()

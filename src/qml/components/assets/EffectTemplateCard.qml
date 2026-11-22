@@ -24,7 +24,7 @@ Column {
         radius: Theme.c.effectTemplateCard.radius
         color: cardHover.hovered ? Theme.c.effectTemplateCard.backgroundHover : Theme.c.effectTemplateCard.background
         border.width: Theme.c.effectTemplateCard.borderWidth
-        border.color: Qt.rgba(Theme.c.effectTemplateCard.accent.r, Theme.c.effectTemplateCard.accent.g, Theme.c.effectTemplateCard.accent.b, 0.35)
+        border.color: Qt.alpha(Theme.c.effectTemplateCard.accent, Theme.c.effectTemplateCard.accentOpacityBorder)
         clip: true
         // Matches the media cards in MediaAssetsTab; these snapped.
         scale: cardHover.hovered ? 1.03 : 1.0

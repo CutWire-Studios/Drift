@@ -33,7 +33,8 @@ Column {
 
             delegate: ThemedChip {
                 required property var modelData
-                text: modelData.label
+                width: Theme.touchInput && Theme.compact ? Math.floor((parent.width - Theme.spacingMd) / 2) : implicitWidth
+                text: (Theme.touchInput && Theme.compact) ? modelData.label.replace(" · ", "\n") : modelData.label
                 selected: dialog.scaleId === modelData.id
                 tooltip: qsTr("Export at %1×%2").arg(modelData.width).arg(modelData.height)
                 onClicked: {

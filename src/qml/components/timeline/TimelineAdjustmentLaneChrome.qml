@@ -8,7 +8,7 @@ Rectangle {
                                   : kind === "mask" ? Theme.c.timelineAdjustmentLaneChrome.maskTint
                                   : Theme.c.timelineAdjustmentLaneChrome.videoTint
     anchors.fill: parent
-    color: Qt.rgba(tint.r, tint.g, tint.b, 0.14)
+    color: Qt.alpha(tint, Theme.c.timelineAdjustmentLaneChrome.tintOpacity)
     Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right

@@ -19,11 +19,9 @@ ToolWindow {
     // Local mirror of the curve, and the source of truth while the window is open: reading it
     // back out of the controller mid-drag would fight the drag for the same values.
     property var points: []
-    property int selectedPoint: -1
 
     readonly property real minSpeed: 0.1
     readonly property real maxSpeed: 100.0
-    readonly property real logSpan: Math.log(maxSpeed / minSpeed)
 
     width: 900
     height: 720
@@ -35,9 +33,10 @@ ToolWindow {
     function openFor(track, clip) {
         root.trackIndex = track
         root.clipIndex = clip
-        root.selectedPoint = -1
         EditorState.speedCurve.begin(track, clip)
         root.points = EditorState.speedCurve.points
+        root.syncGraph()
+        graphView.graph.clearSelection()
         root.show()
         root.raise()
         root.requestActivate()
@@ -50,126 +49,31 @@ ToolWindow {
         function onApplied() { root.close() }
     }
 
-    // ----- Curve maths ----------------------------------------------------------------------
-    // Speed is drawn on a log axis so 1× sits centred between 0.1× and 100×.
-    function yForSpeed(speed, h) {
-        const clamped = Math.max(root.minSpeed, Math.min(root.maxSpeed, speed))
-        return h - (Math.log(clamped / root.minSpeed) / root.logSpan) * h
-    }
-    function speedForY(y, h) {
-        const t = Math.max(0, Math.min(1, (h - y) / Math.max(1, h)))
-        return root.minSpeed * Math.exp(t * root.logSpan)
+    function toGraph(points) {
+        return points.map(p => ({ x: p.pos, y: p.speed, inDx: p.inDx, inDy: p.inDy,
+                                  outDx: p.outDx, outDy: p.outDy, smooth: !p.corner }))
     }
 
-    // Only ever called on drag release: the controller sorts, clamps and pins the ends, so
-    // reading its result straight back is what keeps the local mirror honest — but doing it
-    // mid-drag would fight the drag for the same values.
+    function fromGraph(points) {
+        return points.map(p => ({ pos: p.x, speed: p.y, inDx: p.inDx, inDy: p.inDy,
+                                  outDx: p.outDx, outDy: p.outDy, corner: !p.smooth }))
+    }
+
+    function syncGraph() {
+        if (!graphView.graph.dragging && root.points.length >= 2)
+            graphView.graph.setPoints(root.toGraph(root.points))
+    }
+
+    // The controller sorts, clamps and pins the ends, so reading its result straight back is what
+    // keeps the local mirror honest. Only done when a gesture ends: mid-drag it would fight the drag.
     function commit() {
         EditorState.speedCurve.setPoints(root.points)
         root.points = EditorState.speedCurve.points
-        curveCanvas.requestPaint()
+        root.syncGraph()
     }
 
-    // Deep copy — the array is handed to C++ and re-read, so the delegates must not alias it.
-    function clonePoints() {
-        return root.points.map(function (p) {
-            return { pos: p.pos, speed: p.speed, inDx: p.inDx, inDy: p.inDy,
-                     outDx: p.outDx, outDy: p.outDy, corner: p.corner }
-        })
-    }
-
-    // Cubic through the segment's two points and their facing handles.
-    function speedAtPos(pos) {
-        const pts = root.points
-        if (pts.length < 2)
-            return 1
-        for (let i = 0; i + 1 < pts.length; ++i) {
-            const a = pts[i]
-            const b = pts[i + 1]
-            if (pos < a.pos || pos > b.pos)
-                continue
-            if (b.pos - a.pos < 1e-9)
-                return b.speed
-            // Same bisection the C++ side uses: the curve is single-valued in pos.
-            let lo = 0, hi = 1
-            const x0 = a.pos, x1 = a.pos + a.outDx, x2 = b.pos + b.inDx, x3 = b.pos
-            for (let k = 0; k < 20; ++k) {
-                const mid = (lo + hi) / 2
-                const mt = 1 - mid
-                const x = mt * mt * mt * x0 + 3 * mt * mt * mid * x1
-                        + 3 * mt * mid * mid * x2 + mid * mid * mid * x3
-                if (x < pos) lo = mid; else hi = mid
-            }
-            const t = (lo + hi) / 2
-            const mt = 1 - t
-            return mt * mt * mt * a.speed + 3 * mt * mt * t * (a.speed + a.outDy)
-                 + 3 * mt * t * t * (b.speed + b.inDy) + t * t * t * b.speed
-        }
-        return pts[pts.length - 1].speed
-    }
-
-    function addPointAt(pos) {
-        pos = Math.max(0.001, Math.min(0.999, pos))
-        const next = root.clonePoints()
-        const point = { pos: pos, speed: root.speedAtPos(pos), inDx: 0, inDy: 0,
-                        outDx: 0, outDy: 0, corner: true }
-        let index = next.length - 1
-        for (let i = 0; i < next.length; ++i) {
-            if (next[i].pos > pos) { index = i; break }
-        }
-        next.splice(index, 0, point)
-        root.points = next
-        root.selectedPoint = index
-        root.commit()
-    }
-
-    function deleteSelected() {
-        // The ends define the ramp's span; without them there is no curve.
-        if (root.selectedPoint <= 0 || root.selectedPoint >= root.points.length - 1)
-            return
-        const next = root.clonePoints()
-        next.splice(root.selectedPoint, 1)
-        root.points = next
-        root.selectedPoint = -1
-        root.commit()
-    }
-
-    // Corner points join with straight segments; smooth ones get symmetric tangents derived
-    // from their neighbours, which is what makes a ramp ease rather than kink.
-    function setSelectedCorner(corner) {
-        if (root.selectedPoint < 0)
-            return
-        const next = root.clonePoints()
-        const i = root.selectedPoint
-        const point = next[i]
-        point.corner = corner
-        if (corner) {
-            point.inDx = 0; point.inDy = 0; point.outDx = 0; point.outDy = 0
-        } else {
-            const prev = next[Math.max(0, i - 1)]
-            const after = next[Math.min(next.length - 1, i + 1)]
-            const spanX = Math.max(1e-6, after.pos - prev.pos)
-            const slope = (after.speed - prev.speed) / spanX
-            const outX = (after.pos - point.pos) / 3
-            const inX = (point.pos - prev.pos) / 3
-            point.outDx = outX; point.outDy = slope * outX
-            point.inDx = -inX; point.inDy = -slope * inX
-        }
-        root.points = next
-        root.commit()
-    }
-
-    function resetCurve() {
-        root.points = [
-            { pos: 0, speed: 1, inDx: 0, inDy: 0, outDx: 0, outDy: 0, corner: true },
-            { pos: 1, speed: 1, inDx: 0, inDy: 0, outDx: 0, outDy: 0, corner: true }
-        ]
-        root.selectedPoint = -1
-        root.commit()
-    }
-
-    readonly property var selected: root.selectedPoint >= 0 && root.selectedPoint < root.points.length
-                                    ? root.points[root.selectedPoint] : null
+    readonly property var selected: graphView.graph.primary >= 0 && graphView.graph.primary < root.points.length
+                                    ? root.points[graphView.graph.primary] : null
 
     Column {
         id: content
@@ -229,34 +133,34 @@ ToolWindow {
             ThemedButton {
                 variant: "secondary"
                 text: qsTr("Add point")
-                onClicked: root.addPointAt(EditorState.speedCurve.sourcePosition)
+                onClicked: graphView.graph.addPointAtX(EditorState.speedCurve.sourcePosition)
             }
 
             ThemedToggleButton {
                 text: qsTr("Sharp")
-                enabled: root.selected !== null
-                checked: root.selected !== null && root.selected.corner
-                onClicked: root.setSelectedCorner(true)
+                enabled: graphView.graph.selectionCount > 0
+                checked: graphView.graph.selectionCount > 0 && !graphView.graph.selectedSmooth
+                onClicked: graphView.graph.setSelectedSmooth(false)
             }
 
             ThemedToggleButton {
                 text: qsTr("Smooth")
-                enabled: root.selected !== null
-                checked: root.selected !== null && !root.selected.corner
-                onClicked: root.setSelectedCorner(false)
+                enabled: graphView.graph.selectionCount > 0
+                checked: graphView.graph.selectionCount > 0 && graphView.graph.selectedSmooth
+                onClicked: graphView.graph.setSelectedSmooth(true)
             }
 
             ThemedButton {
                 variant: "ghost"
                 text: qsTr("Delete point")
-                enabled: root.selectedPoint > 0 && root.selectedPoint < root.points.length - 1
-                onClicked: root.deleteSelected()
+                enabled: graphView.graph.canDelete
+                onClicked: graphView.graph.deleteSelected()
             }
 
             ThemedButton {
                 variant: "ghost"
                 text: qsTr("Reset")
-                onClicked: root.resetCurve()
+                onClicked: graphView.graph.resetCurve()
             }
 
             ThemedLabel {
@@ -268,67 +172,40 @@ ToolWindow {
         }
 
         // ----- Graph ------------------------------------------------------------------------
-        Rectangle {
+        Item {
             id: graph
             width: parent.width
             height: 220
-            radius: Theme.c.speedCurveWindow.graphRadius
-            color: Theme.c.speedCurveWindow.graphBackground
-            border.width: Theme.c.speedCurveWindow.graphBorderWidth
-            border.color: Theme.c.speedCurveWindow.graphBorder
-            clip: true
 
+            // The plot's x axis has to be the same axis the strip above draws on, or a point on the
+            // curve would not sit over its own frame, so the graph is inset vertically only.
+            CurveGraphView {
+                id: graphView
+                anchors.fill: parent
+                padX: 0
+                padY: Theme.spacingSm
+                backend: "speed"
+                minSpeed: root.minSpeed
+                maxSpeed: root.maxSpeed
+                zoomY: true
+                undoText: qsTr("Edit speed curve")
+
+                onSetupDone: root.syncGraph()
+                onEdited: root.points = root.fromGraph(graphView.graph.points())
+                onGestureEnded: root.commit()
+                onGestureCancelled: root.points = root.fromGraph(graphView.graph.points())
+            }
+
+            // Playhead, sweeping the source axis at whatever rate the curve dictates, and
+            // draggable like the timeline's own playhead. It is a thin strip over the graph, so
+            // the curve's points keep every press that is not on that strip.
             Item {
                 id: plot
                 anchors.fill: parent
-                // Inset vertically only: the plot's x axis has to be the same axis the strip
-                // above draws on, or a point on the curve would not sit over its own frame.
                 anchors.topMargin: Theme.spacingSm
                 anchors.bottomMargin: Theme.spacingSm
 
-                // Gridlines at the speeds worth aiming for.
-                Repeater {
-                    model: [0.1, 0.5, 1, 2, 5, 10, 25, 100]
-                    delegate: SpeedCurveGridLine {
-                        host: root
-                        plotItem: plot
-                    }
-                }
-
-                SpeedCurveCanvas { host: root }
-
-                // Playhead, sweeping the source axis at whatever rate the curve dictates — and
-                // draggable, following the same Item + Binding + grab-strip shape the timeline's
-                // own playhead uses.
                 SpeedCurveGraphPlayhead { plotItem: plot }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.selectedPoint = -1
-                    onDoubleClicked: function (mouse) { root.addPointAt(mouse.x / width) }
-                }
-
-                // ----- Control points -------------------------------------------------------
-                Repeater {
-                    model: root.points.length
-
-                    delegate: SpeedCurveKnob {
-                        host: root
-                        plotItem: plot
-                    }
-                }
-
-                // ----- Tangent handles ------------------------------------------------------
-                // An int model, not a list: a fresh array on every curve edit would tear down
-                // the delegate owning the live DragHandler and drop the grab on first move.
-                Repeater {
-                    model: root.selected ? 2 : 0
-
-                    delegate: SpeedCurveTangentHandle {
-                        host: root
-                        plotItem: plot
-                    }
-                }
             }
         }
     }

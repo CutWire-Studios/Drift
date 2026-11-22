@@ -12,5 +12,5 @@ Rectangle {
     anchors.top: parent.top
     anchors.bottom: parent.bottom
     color: Theme.c.timelineWorkAreaEdge.foreground
-    opacity: 0.85
+    opacity: Theme.c.timelineWorkAreaEdge.foregroundOpacity
 }

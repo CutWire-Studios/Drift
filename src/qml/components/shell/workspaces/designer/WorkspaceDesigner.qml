@@ -383,7 +383,7 @@ Item {
             visible: root.pendingAction !== null
             radius: Theme.radiusMd
             color: Theme.panelAccent
-            border.width: 1
+            border.width: Theme.c.workspaceDesigner.borderWidth
             border.color: Theme.warning
 
             Flow {
@@ -507,8 +507,8 @@ Item {
             width: parent.width
             height: Math.max(Theme.controlHeight + Theme.spacingLg * 2, paletteFlow.implicitHeight + Theme.spacingLg * 2)
             radius: Theme.radiusMd
-            color: root.removing ? Qt.alpha(Theme.destructive, 0.15) : Theme.panelAccent
-            border.width: 1
+            color: root.removing ? Qt.alpha(Theme.c.workspaceDesigner.removing, Theme.c.workspaceDesigner.removingOpacity) : Theme.panelAccent
+            border.width: Theme.c.workspaceDesigner.borderWidth
             border.color: root.removing ? Theme.destructive : Theme.panelBorder
 
             Column {
@@ -581,7 +581,7 @@ Item {
             height: Math.min(width / 1.6, 380)
             radius: Theme.radiusLg
             color: Theme.panelBackground
-            border.width: 1
+            border.width: Theme.c.workspaceDesigner.borderWidth
             border.color: Theme.panelBorder
 
             DesignerNode {
@@ -607,7 +607,7 @@ Item {
                         strokeWidth: 2
                         strokeStyle: ShapePath.DashLine
                         dashPattern: [4, 3]
-                        fillColor: root.hoverTarget === "empty" ? Qt.alpha(Theme.accent, 0.15) : "transparent"
+                        fillColor: root.hoverTarget === "empty" ? Qt.alpha(Theme.c.workspaceDesigner.emptyHover, Theme.c.workspaceDesigner.emptyHoverOpacity) : "transparent"
                         startX: 1
                         startY: 1
                         PathLine { x: canvas.width - Theme.spacingSm * 2 - 1; y: 1 }

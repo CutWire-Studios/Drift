@@ -7,6 +7,7 @@ Item {
 
     property int clipDataRevision: 0
     property bool sourceBoxRatioLocked: true
+    readonly property real labelSize: Theme.touchInput && Theme.compact ? Theme.fontSizeSm : Theme.fontSizeXs
     readonly property var clipData: {
         void clipDataRevision
         return EditorState.selectedClipData
@@ -229,14 +230,17 @@ Item {
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         // Read-only name plus a rename dialog: an editable field at the top of the panel kept
         // being mistaken for the text clip's content box.
-        Column {
+        Flow {
             width: root.width
             spacing: 4
             Text {
+                height: Theme.phone ? Theme.controlHeightSm : implicitHeight
+                verticalAlignment: Text.AlignVCenter
+                width: Theme.phone ? Theme.phoneLabelWidth : implicitWidth
                 text: qsTr("Clip name")
                 SearchAnchor {
                     searchId: "general-clip-name"
@@ -245,10 +249,10 @@ Item {
                 }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
             Row {
-                width: parent.width
+                width: Theme.phone ? parent.width - (Theme.phoneLabelWidth) - parent.spacing : parent.width
                 spacing: Theme.spacingSm
                 Text {
                     width: parent.width - renameButton.width - parent.spacing
@@ -272,10 +276,13 @@ Item {
         }
 
         // A stable tag that survives renames; splits and duplicates number the copies.
-        Column {
+        Flow {
             width: root.width
             spacing: 4
             Text {
+                height: Theme.phone ? Theme.controlHeightSm : implicitHeight
+                verticalAlignment: Text.AlignVCenter
+                width: Theme.phone ? Theme.phoneLabelWidth : implicitWidth
                 text: qsTr("Label")
                 SearchAnchor {
                     searchId: "general-clip-label"
@@ -284,10 +291,10 @@ Item {
                 }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
             Row {
-                width: parent.width
+                width: Theme.phone ? parent.width - (Theme.phoneLabelWidth) - parent.spacing : parent.width
                 spacing: Theme.spacingSm
                 Text {
                     width: parent.width - labelButton.width - parent.spacing
@@ -309,14 +316,15 @@ Item {
             }
         }
 
-        Column {
+        Flow {
             width: root.width
             spacing: 4
             Text {
+                width: Theme.phone ? Theme.phoneLabelWidth : implicitWidth
                 text: qsTr("Type")
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
             Text {
                 // Human label rather than the raw internal id.
@@ -326,7 +334,7 @@ Item {
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeSm
                 elide: Text.ElideRight
-                width: parent.width - x
+                width: Theme.phone ? parent.width - (Theme.phoneLabelWidth) - parent.spacing : parent.width - x
             }
         }
 
@@ -356,7 +364,7 @@ Item {
                         }
                         color: Theme.c.generalInspector.foregroundMuted
                         font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.weight: Font.Medium
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - ratioLockButton.width - parent.spacing
@@ -393,7 +401,7 @@ Item {
                         Text {
                             text: "X"
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -417,7 +425,7 @@ Item {
                         Text {
                             text: "Y"
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -446,7 +454,7 @@ Item {
                         Text {
                             text: qsTr("Width")
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -467,7 +475,7 @@ Item {
                         Text {
                             text: qsTr("Height")
                             color: Theme.c.generalInspector.foregroundMuted
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: root.labelSize
                             font.family: Theme.fontFamily
                         }
                         ThemedNumberField {
@@ -490,7 +498,7 @@ Item {
                     Text {
                         text: qsTr("Straighten")
                         color: Theme.c.generalInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -505,10 +513,20 @@ Item {
                     }
                 }
             }
-            ThemedButton {
-                text: qsTr("Crop…")
-                visible: root.canCrop && !!ShellBridge.main?.openCrop
-                onClicked: ShellBridge.main.openCrop(EditorState.selectedTrack, EditorState.selectedClip)
+            Row {
+                spacing: Theme.spacingSm
+
+                ThemedButton {
+                    text: qsTr("Crop…")
+                    visible: root.canCrop && !!ShellBridge.main?.openCrop
+                    onClicked: ShellBridge.main.openCrop(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+
+                ThemedButton {
+                    text: qsTr("Crop on canvas")
+                    visible: root.canCrop && !!ShellBridge.main?.openCrop
+                    onClicked: EditorState.preview.clipCropMode = !EditorState.preview.clipCropMode
+                }
             }
         }
 
@@ -516,20 +534,23 @@ Item {
             width: parent.width
             spacing: 8
 
-            Column {
+            Flow {
                 width: (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
+                width: Theme.phone ? 56 : implicitWidth
+                height: Theme.phone ? Theme.controlHeight : implicitHeight
+                verticalAlignment: Text.AlignVCenter
                     text: qsTr("Starts at")
                     color: Theme.c.generalInspector.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                     font.family: Theme.fontFamily
                 }
                 ThemedNumberField {
                     id: startField
                     to: 86400
                     unit: "s"
-                    width: parent.width
+                    width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                     decimals: 2
                     step: 0.1
                     from: 0
@@ -538,10 +559,13 @@ Item {
                 }
             }
 
-            Column {
+            Flow {
                 width: (parent.width - parent.spacing) / 2
                 spacing: 4
                 Text {
+                width: Theme.phone ? 56 : implicitWidth
+                height: Theme.phone ? Theme.controlHeight : implicitHeight
+                verticalAlignment: Text.AlignVCenter
                     text: qsTr("Duration")
                     SearchAnchor {
                         searchId: "general-duration"
@@ -549,14 +573,14 @@ Item {
                         keywords: "length"
                     }
                     color: Theme.c.generalInspector.foregroundMuted
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                     font.family: Theme.fontFamily
                 }
                 ThemedNumberField {
                     id: durationField
                     to: 86400
                     unit: "s"
-                    width: parent.width
+                    width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                     decimals: 2
                     step: 0.1
                     from: 1.0 / Math.max(1, EditorState.projectFile.projectFps())
@@ -589,17 +613,20 @@ Item {
                 ThemedToolTip { id: tip1217; property bool held: false; text: qsTr("Which part of the original file this clip plays"); visible: tipHover1217.hovered || held }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
 
             Row {
                 width: parent.width
                 spacing: 8
 
-                Column {
+                Flow {
                     width: (parent.width - parent.spacing) / 2
                     spacing: 4
                     Text {
+                    width: Theme.phone ? 56 : implicitWidth
+                    height: Theme.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                         text: qsTr("From")
                         HoverHandler { id: tipHover1231 }
                         TapHandler {
@@ -610,7 +637,7 @@ Item {
                         }
                         ThemedToolTip { id: tip1231; property bool held: false; text: qsTr("Seconds into the file where this clip starts"); visible: tipHover1231.hovered || held }
                         color: Theme.c.generalInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -618,7 +645,7 @@ Item {
                         enabled: !root.clipData.loop
                         to: 86400
                         unit: "s"
-                        width: parent.width
+                        width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                         decimals: 2
                         step: 0.1
                         from: 0
@@ -626,10 +653,13 @@ Item {
                     }
                 }
 
-                Column {
+                Flow {
                     width: (parent.width - parent.spacing) / 2
                     spacing: 4
                     Text {
+                    width: Theme.phone ? 56 : implicitWidth
+                    height: Theme.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                         text: qsTr("To")
                         HoverHandler { id: tipHover1252 }
                         TapHandler {
@@ -640,7 +670,7 @@ Item {
                         }
                         ThemedToolTip { id: tip1252; property bool held: false; text: qsTr("Seconds into the file where this clip ends"); visible: tipHover1252.hovered || held }
                         color: Theme.c.generalInspector.foregroundMuted
-                        font.pixelSize: Theme.fontSizeXs
+                        font.pixelSize: root.labelSize
                         font.family: Theme.fontFamily
                     }
                     ThemedNumberField {
@@ -648,7 +678,7 @@ Item {
                         enabled: !root.clipData.loop
                         to: 86400
                         unit: "s"
-                        width: parent.width
+                        width: Theme.phone ? parent.width - 56 - parent.spacing : parent.width
                         decimals: 2
                         step: 0.1
                         from: 0
@@ -688,7 +718,7 @@ Item {
                 text: qsTr("File")
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
 
             Text {

@@ -5,10 +5,22 @@ import Drift
 // Click-to-pick object cutout on the target clip's frame. The prompt points and the live matte
 // come from EditorState.segmentation, which encodes the frame under the playhead; propagation
 // runs from the Masking panel.
-Item {
+//
+// A click adds an include point or, in Exclude mode, an exclude point. The mode is the Include / Exclude
+// chips (EditorState.masking.brushErase, the brush's own state), X swaps them, and Alt, Ctrl or the right
+// button exclude for one click. Clicking an existing point removes it.
+ManipOverlay {
     id: root
 
-    property bool interacting: false
+    // Sizing and the finger-oriented chrome; each press's own device still decides the behaviour.
+    property bool touch: Theme.touchInput
+
+    refreshPolicy: "settled"
+    previewKeys: ["positionX", "positionY", "scaleX", "scaleY", "rotation", "rotationX", "rotationY", "z",
+                  "perspective"]
+    refreshOnClipData: true
+    onRefreshRequested: refresh()
+    touchBar: touch ? touchBarComponent : null
 
     // Snapshot from PreviewController::maskingFrame(): the selection's frame, and whether it is under the
     // playhead. Nothing is placed or accepted while it is not.
@@ -24,6 +36,15 @@ Item {
     property string sessionClipId: ""
 
     property int hoverIndex: -1
+    hint: !aiActive || !editorState.inside || EditorState.segmentation.running ? ""
+          : EditorState.segmentation.backendUsesPoints
+            ? (EditorState.segmentation.sessionPoints.length === 0
+               ? (touch ? qsTr("Tap the object to select it. Switch to Exclude to mark what to leave out.")
+                        : qsTr("Click the object to select it. Right-click, Alt-click or X to exclude."))
+               : qsTr("Add points to refine, then press “Cut out through whole clip” in the Masking panel"))
+            : (EditorState.segmentation.backends().length === 0
+               ? qsTr("Install a cutout model in the Masking panel first")
+               : qsTr("People are found automatically. Press “Cut out people” in the Masking panel"))
 
     readonly property real canvasW: Math.max(1, editorState.canvasWidth || 1)
     readonly property real canvasH: Math.max(1, editorState.canvasHeight || 1)
@@ -32,7 +53,7 @@ Item {
 
     function refresh() {
         // Hidden: onVisibleChanged catches up when shown.
-        if (!visible || interacting)
+        if (!visible)
             return
         // Playhead ticks ~60 Hz; the frame and target are only needed when a click lands.
         if (EditorState.playing)
@@ -89,34 +110,11 @@ Item {
 
     Connections {
         target: EditorState
-        function onTracksChanged() { root.refresh() }
-        function onClipPropertiesPreviewed(trackIndex, clipIndex, keys) {
-            for (const k of keys) {
-                if (k === "positionX" || k === "positionY" || k === "scaleX" || k === "scaleY" || k === "rotation"
-                        || k === "rotationX" || k === "rotationY" || k === "z" || k === "perspective") {
-                    root.refresh()
-                    return
-                }
-            }
-        }
-        function onSelectionChanged() { root.refresh() }
-        function onSelectedClipDataChanged() { root.refresh() }
-        // A scrub moves the playhead per scroll event; catch up once when it ends.
-        function onPlayheadSecondsChanged() {
-            if (!EditorState.scrubbing)
-                root.refresh()
-            root.scheduleFrame()
-        }
-        function onScrubbingChanged() {
-            if (!EditorState.scrubbing)
-                root.refresh()
-            root.scheduleFrame()
-        }
+        function onPlayheadSecondsChanged() { root.scheduleFrame() }
+        function onScrubbingChanged() { root.scheduleFrame() }
         function onPlayingChanged() {
-            if (!EditorState.playing) {
-                root.refresh()
+            if (!EditorState.playing)
                 root.scheduleFrame()
-            }
         }
     }
 
@@ -168,14 +166,14 @@ Item {
             visible: root.aiActive && EditorState.segmentation.previewMaskUrl !== ""
             colorization: 1.0
             colorizationColor: Theme.c.maskAiOverlay.tint
-            opacity: 0.45
+            opacity: Theme.c.maskAiOverlay.tintOpacity
         }
 
-        // Clicks on the frame: left adds an include point; right, Ctrl or Alt adds an exclude point.
-        // A click within 8 px of an existing point removes that point instead.
+        // Clicks on the frame: left adds a point in the chips' mode; right, Ctrl or Alt exclude for that
+        // click. A click within 8 px of an existing point removes that point instead.
         ToolCursor {
             target: pointArea
-            shape: EditorState.segmentation.previewBusy ? "busy" : (pointArea.excludeHeld ? "aiExclude" : "aiInclude")
+            shape: EditorState.segmentation.previewBusy ? "busy" : (pointArea.excludeNow ? "aiExclude" : "aiInclude")
         }
 
         MouseArea {
@@ -186,6 +184,7 @@ Item {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             property bool excludeHeld: false
+            readonly property bool excludeNow: excludeHeld || EditorState.masking.brushErase
             onWheel: (wheel) => { wheel.accepted = false }
 
             onPositionChanged: (mouse) => {
@@ -202,6 +201,7 @@ Item {
                 }
                 const exclude = mouse.button === Qt.RightButton
                                 || (mouse.modifiers & (Qt.ControlModifier | Qt.AltModifier)) !== 0
+                                || EditorState.masking.brushErase
                 EditorState.segmentation.addPoint(mouse.x / Math.max(1, clipFrame.width),
                                                   mouse.y / Math.max(1, clipFrame.height),
                                                   !exclude)
@@ -218,7 +218,7 @@ Item {
 
                 width: 12
                 height: 12
-                radius: width / 2
+                radius: Theme.radiusPill
                 x: modelData.x * clipFrame.width - width / 2
                 y: modelData.y * clipFrame.height - height / 2
                 scale: index === root.hoverIndex ? 1.35 : 1
@@ -301,28 +301,39 @@ Item {
     }
 
     Rectangle {
-        visible: root.aiActive && root.editorState.inside && !EditorState.segmentation.running
+        visible: !root.touch && root.aiActive && root.editorState.inside && !EditorState.segmentation.running
+                 && EditorState.segmentation.backendUsesPoints
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Theme.spacingLg
-        width: hintText.width + Theme.spacingLg * 2
-        height: hintText.height + Theme.spacingMd * 2
-        radius: Theme.c.maskDrawOverlay.radius
-        color: Theme.c.maskDrawOverlay.hintBackground
+        width: modeRow.implicitWidth + Theme.spacingMd * 2
+        height: modeRow.implicitHeight + Theme.spacingSm * 2
+        radius: Theme.c.manipContextBar.radius
+        color: Theme.c.manipContextBar.background
+        border.width: Theme.c.manipContextBar.borderWidth
+        border.color: Theme.c.manipContextBar.border
+        z: 95
 
-        Text {
-            id: hintText
+        MouseArea {
+            anchors.fill: parent
+        }
+
+        MaskModeChips {
+            id: modeRow
             anchors.centerIn: parent
-            text: EditorState.segmentation.backendUsesPoints
-                  ? (EditorState.segmentation.sessionPoints.length === 0
-                     ? qsTr("Click the object to select it · Right-click or Ctrl-click to exclude")
-                     : qsTr("Add points to refine · then press “Cut out through whole clip” in the Masking panel"))
-                  : (EditorState.segmentation.backends().length === 0
-                     ? qsTr("Install a cutout model in the Masking panel first")
-                     : qsTr("People are found automatically · press “Cut out people” in the Masking panel"))
-            color: Theme.c.maskDrawOverlay.hintForeground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+        }
+    }
+
+    Component {
+        id: touchBarComponent
+
+        TouchContextBar {
+            visible: root.aiActive && root.editorState.inside && EditorState.segmentation.backendUsesPoints
+            chips: []
+
+            MaskModeChips {
+                touch: true
+            }
         }
     }
 }
