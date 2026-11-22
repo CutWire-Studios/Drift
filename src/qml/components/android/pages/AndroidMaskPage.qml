@@ -3,7 +3,7 @@ import QtQuick.Controls.Basic
 import Drift
 // Picking a mask adds a Mask-kind adjustment to the clip the page was opened on; picking another
 // removes it and adds the new one to the same clip. The tool row draws one on the preview instead:
-// a shape, a polygon, a brush or an AI pick; what a tool creates counts as the page's mask, so it
+// a shape, a polygon, a brush or an AI pick, or tracks a point or surface on the clip; what a tool creates counts as the page's mask, so it
 // is replaced and cancelled like a picked one. Edit hands the preview back to the mask's handles.
 AndroidAddPage {
     id: root
@@ -22,6 +22,7 @@ AndroidAddPage {
         { id: "polygon", label: qsTr("Polygon"), draw: true },
         { id: "brush", label: qsTr("Brush"), draw: false },
         { id: "ai", label: qsTr("AI select"), draw: false },
+        { id: "tracker", label: qsTr("Track"), draw: false },
         { id: "", label: qsTr("Edit"), draw: true }
     ]
     readonly property bool aiRuntimeReady: Addons.runtimeAvailable()

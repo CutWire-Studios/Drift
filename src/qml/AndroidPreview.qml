@@ -116,7 +116,8 @@ Item {
                     shapePath: shapePathTool,
                     maskDraw: maskDrawTool,
                     maskBrush: maskBrushTool,
-                    maskAi: maskAiTool
+                    maskAi: maskAiTool,
+                    tracker: trackerTool
                 })
                 toolHost.companion: dropCompanion
                 toolHost.companionTools: ["transform", "mask"]
@@ -271,6 +272,14 @@ Item {
         id: maskAiTool
         MaskAiOverlay {
             touch: true
+        }
+    }
+
+    Component {
+        id: trackerTool
+        TrackerOverlay {
+            touch: true
+            canvas: viewport.canvas
         }
     }
 

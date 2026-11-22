@@ -2989,7 +2989,7 @@
       "bad": "$semantic.destructive",
       "userKey": "$semantic.accent",
       "region": "$semantic.primary",
-      "handle": "$semantic.primary",
+      "search": "$semantic.onMedia",
       "badgeBackground": "$semantic.surface.panel",
       "badgeForeground": "$semantic.foreground"
     },

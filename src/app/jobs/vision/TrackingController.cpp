@@ -78,7 +78,7 @@ constexpr quint64 kTrackStreamId = 0xA5'11'5C'A4'00'00'00'20ull;
 constexpr int kAnalysisWidth = 960;
 constexpr int kBackwardChunk = 16;
 constexpr int kMaxGapFrames = 5;
-constexpr int kTrailFrames = 15;
+constexpr int kTrailFrames = 10;
 constexpr int kMaxPoints = 4;
 constexpr int kMaxPathVertices = 64;
 // Frame timestamps are rarely whole microseconds, and a read lands on the frame at or before the
@@ -1789,12 +1789,19 @@ TrackingController::FrameView TrackingController::frameView(int trackIndex, int 
         out.points.append(entry);
 
         QVector<QPointF> trail;
+        QVector<int> offsets;
+        QVector<bool> keys;
         for (int k = -kTrailFrames; k <= kTrailFrames; ++k) {
             const auto near = nearestKey(point.samples, host->timelineToSourceUs(at + k * frame), tolerance);
-            if (near != point.samples.constEnd())
+            if (near != point.samples.constEnd()) {
                 trail.append(near->pos);
+                offsets.append(k);
+                keys.append(near->userKey);
+            }
         }
         out.trails.append(trail);
+        out.trailOffsets.append(offsets);
+        out.trailKeys.append(keys);
     }
 
     if (tracker->kind == MotionTracker::Kind::Planar) {

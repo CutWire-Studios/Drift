@@ -2153,7 +2153,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | trackerOverlay | bad | $semantic.destructive | $semantic.destructive |
 | trackerOverlay | userKey | $semantic.accent | $semantic.accent |
 | trackerOverlay | region | $semantic.primary | $semantic.primary |
-| trackerOverlay | handle | $semantic.primary | $semantic.primary |
+| trackerOverlay | search | $semantic.onMedia | $semantic.onMedia |
 | trackerOverlay | badgeBackground | $semantic.surface.panel | $semantic.surface.panel |
 | trackerOverlay | badgeForeground | $semantic.foreground | $semantic.foreground |
 | maskDrawOverlay | borderWidth | $metrics.borderWidth | $metrics.borderWidth |

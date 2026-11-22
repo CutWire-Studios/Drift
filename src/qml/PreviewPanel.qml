@@ -226,7 +226,9 @@ PanelFrame {
 
     Component {
         id: trackerTool
-        TrackerOverlay { }
+        TrackerOverlay {
+            canvas: panelViewport.canvas
+        }
     }
 
     // Built fresh each crop session, so the frame starts from the whole canvas every time.
