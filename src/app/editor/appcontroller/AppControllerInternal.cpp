@@ -768,20 +768,8 @@ drift::Mask maskFromMap(const QVariantMap &m)
     if (m.contains(QStringLiteral("mediaTimeBase")))
         mask.mediaTimeBase =
             drift::maskMediaTimeBaseFromString(m.value(QStringLiteral("mediaTimeBase")).toString());
-    const QVariantList points = m.value(QStringLiteral("points")).toList();
-    for (const QVariant &value : points) {
-        // The [x, y] pair form is what this map used to emit, so anything already sending it
-        // over MCP keeps working.
-        if (value.canConvert<QVariantMap>() && !value.canConvert<QVariantList>()) {
-            const QVariantMap point = value.toMap();
-            mask.points.append(QPointF(point.value(QStringLiteral("x")).toDouble(),
-                                       point.value(QStringLiteral("y")).toDouble()));
-            continue;
-        }
-        const QVariantList pair = value.toList();
-        if (pair.size() >= 2)
-            mask.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
-    }
+    // Plain [x, y] pairs and {x, y} maps still come in from older MCP clients; they become corners.
+    mask.vertices = maskVerticesFromVariant(m.value(QStringLiteral("points")).toList());
     return mask;
 }
 
@@ -1470,7 +1458,7 @@ void applyDefaultVisualLayout(drift::Clip &clip, int canvasW, int canvasH, doubl
             w = canvasW * 0.6;
             h = w / aspect;
         }
-        setClipFrameBox(clip, 0, 0, w, h);
+        setClipFrameBox(clip, (canvasW - w) / 2.0, (canvasH - h) / 2.0, w, h);
         return;
     }
     if (clip.type == drift::ClipType::Text) {
@@ -1481,9 +1469,9 @@ void applyDefaultVisualLayout(drift::Clip &clip, int canvasW, int canvasH, doubl
         setClipFrameBox(clip, 0, canvasH * 0.78, canvasW, canvasH * 0.18);
         return;
     }
-    // Stickers / generic images without metadata: modest top-left box.
+    // Stickers / generic images without metadata: a modest box on the canvas centre.
     const double side = qMin(canvasW, canvasH) * 0.25;
-    setClipFrameBox(clip, 0, 0, side, side);
+    setClipFrameBox(clip, (canvasW - side) / 2.0, (canvasH - side) / 2.0, side, side);
 }
 
 bool assetHasAudioStreams(const drift::Project &project, AssetLibrary *library, const QString &assetId)
@@ -1933,7 +1921,8 @@ QVariantList shapeContoursToVariant(const QVector<drift::ShapeContour> &contours
                                         {QStringLiteral("inY"), v.in.y()},
                                         {QStringLiteral("outX"), v.out.x()},
                                         {QStringLiteral("outY"), v.out.y()},
-                                        {QStringLiteral("smooth"), v.smooth}});
+                                        {QStringLiteral("smooth"), v.smooth()},
+                                        {QStringLiteral("mode"), drift::tangentModeToString(v.mode)}});
         }
         out.append(QVariantMap{{QStringLiteral("vertices"), vertices}, {QStringLiteral("closed"), contour.closed}});
     }
@@ -1950,8 +1939,16 @@ QVector<drift::ShapeContour> shapeContoursFromVariant(const QVariantList &list)
         for (const QVariant &vertex : map.value(QStringLiteral("vertices")).toList()) {
             const QVariantMap v = vertex.toMap();
             const auto num = [&v](const char *key) { return v.value(QLatin1String(key)).toDouble(); };
+            // The overlay's JS still edits `smooth`; a mode it did not touch is kept only while the two agree.
+            const bool smooth = v.value(QStringLiteral("smooth")).toBool();
+            drift::TangentMode mode = smooth ? drift::TangentMode::Mirrored : drift::TangentMode::Corner;
+            if (v.contains(QStringLiteral("mode"))) {
+                const drift::TangentMode given = drift::tangentModeFromString(v.value(QStringLiteral("mode")).toString());
+                if (drift::tangentModeIsSmooth(given) == smooth)
+                    mode = given;
+            }
             contour.vertices.append({QPointF(num("x"), num("y")), QPointF(num("inX"), num("inY")),
-                                     QPointF(num("outX"), num("outY")), v.value(QStringLiteral("smooth")).toBool()});
+                                     QPointF(num("outX"), num("outY")), mode});
         }
         if (!contour.vertices.isEmpty())
             out.append(contour);

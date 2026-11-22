@@ -4,6 +4,7 @@
 #include "app/bin/AssetLibrary.h"
 #include "app/bin/MediaBinController.h"
 #include "app/editor/AppController.h"
+#include "app/editor/AppControllerDetail.h"
 #include "app/editor/sessions/MaskEditSession.h"
 #include "app/editor/sessions/MaskStackModel.h"
 #include "app/jobs/vision/TrackingController.h"
@@ -157,7 +158,7 @@ QVector<QVector<QPointF>> strokeLoops(const BrushPreviewStroke &stroke, const QV
 // Writes `vertices` as the key at mask time `maskUs`. A key within half a frame of it is the same
 // key, so it is replaced rather than duplicated.
 void writePathKey(drift::Mask &mask, drift::TimeUs maskUs, drift::TimeUs halfFrameUs,
-                  const QVector<QPointF> &vertices)
+                  const QVector<drift::ShapeVertex> &vertices)
 {
     const auto candidate = mask.pathKeys.lowerBound(maskUs - halfFrameUs);
     if (candidate != mask.pathKeys.end() && qAbs(candidate.key() - maskUs) <= halfFrameUs)
@@ -165,7 +166,7 @@ void writePathKey(drift::Mask &mask, drift::TimeUs maskUs, drift::TimeUs halfFra
     else
         mask.pathKeys.insert(maskUs, vertices);
     if (mask.pathKeys.size() == 1)
-        mask.points = vertices;
+        mask.vertices = vertices;
 }
 
 const QStringList kMaskKeys{QStringLiteral("name"), QStringLiteral("op"), QStringLiteral("invert"),
@@ -281,6 +282,7 @@ MaskingController::MaskingController(AppController *app, QObject *parent)
 {
     m_brushPool.setMaxThreadCount(1);
     m_editSession = new MaskEditSession(app, this);
+    m_pathEdit = new PathEditSession(app, this);
     m_stackModel = new MaskStackModel(app, this);
 }
 
@@ -314,6 +316,66 @@ void MaskingController::setBrushOpacity(double opacity)
         return;
     m_brushOpacity = clamped;
     emit brushSettingsChanged();
+}
+
+void MaskingController::setBrushSmoothing(double smoothing)
+{
+    const double clamped = std::clamp(smoothing, 0.0, 1.0);
+    if (clamped == m_brushSmoothing)
+        return;
+    m_brushSmoothing = clamped;
+    emit brushSettingsChanged();
+}
+
+namespace {
+
+struct BrushPreset
+{
+    const char *id;
+    double size;
+    double hardness;
+};
+
+constexpr BrushPreset kBrushPresets[] = {
+    {"hard", 0.05, 1.0},
+    {"soft", 0.12, 0.2},
+    {"detail", 0.012, 0.9},
+};
+
+} // namespace
+
+QString MaskingController::brushPreset() const
+{
+    for (const BrushPreset &p : kBrushPresets) {
+        if (qFuzzyCompare(m_brushSize, p.size) && qFuzzyCompare(m_brushHardness, p.hardness))
+            return QString::fromLatin1(p.id);
+    }
+    return {};
+}
+
+QVariantList MaskingController::brushPresets() const
+{
+    const QStringList names = {tr("Hard"), tr("Soft"), tr("Detail")};
+    QVariantList out;
+    int i = 0;
+    for (const BrushPreset &p : kBrushPresets) {
+        out.append(QVariantMap{{QStringLiteral("id"), QString::fromLatin1(p.id)},
+                               {QStringLiteral("name"), names.at(i++)},
+                               {QStringLiteral("size"), p.size},
+                               {QStringLiteral("hardness"), p.hardness}});
+    }
+    return out;
+}
+
+void MaskingController::applyBrushPreset(const QString &id)
+{
+    for (const BrushPreset &p : kBrushPresets) {
+        if (id == QLatin1String(p.id)) {
+            setBrushSize(p.size);
+            setBrushHardness(p.hardness);
+            return;
+        }
+    }
 }
 
 void MaskingController::setBrushPressureSize(bool on)
@@ -692,11 +754,11 @@ QString MaskingController::moveMaskToEffectLayer(const QString &maskAdjustmentId
         }
     }
 
-    for (QPointF &p : mask.points)
-        p = canvasPoint(rest, p);
+    for (drift::ShapeVertex &v : mask.vertices)
+        v = drift::mapVertex(v, [&](const QPointF &p) { return canvasPoint(rest, p); });
     for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it) {
-        for (QPointF &p : it.value())
-            p = canvasPoint(host.timelineStart + it.key(), p);
+        for (drift::ShapeVertex &v : it.value())
+            v = drift::mapVertex(v, [&](const QPointF &p) { return canvasPoint(host.timelineStart + it.key(), p); });
     }
 
     layer.mask = mask;
@@ -1687,7 +1749,7 @@ void MaskingController::addPolygonMask(int trackIndex, int clipIndex, const QVar
 
     drift::Mask mask;
     mask.shape = drift::MaskShape::Freeform;
-    mask.points = verticesFrom(points);
+    mask.vertices = drift::appdetail::maskVerticesFromVariant(points);
 
     const drift::Project before = m_app->m_project;
     if (m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).type == drift::ClipType::Adjustment) {
@@ -1731,9 +1793,9 @@ void MaskingController::setMaskPathAnimated(int trackIndex, int clipIndex, bool 
     const drift::Project before = m_app->m_project;
     const drift::TimeUs maskUs = m_app->m_playheadUs - clip.timelineStart;
     if (animated) {
-        clip.mask.pathKeys.insert(maskUs, clip.mask.points);
+        clip.mask.pathKeys.insert(maskUs, clip.mask.vertices);
     } else {
-        clip.mask.points = clip.mask.resolvedAt(maskUs).points;
+        clip.mask.vertices = clip.mask.resolvedAt(maskUs).vertices;
         clip.mask.pathKeys.clear();
     }
 
@@ -1743,7 +1805,7 @@ void MaskingController::setMaskPathAnimated(int trackIndex, int clipIndex, bool 
 
 void MaskingController::setMaskPathKey(int trackIndex, int clipIndex, double atSeconds, const QVariantList &points)
 {
-    const QVector<QPointF> vertices = verticesFrom(points);
+    const QVector<drift::ShapeVertex> vertices = drift::appdetail::maskVerticesFromVariant(points);
     if (vertices.size() < 3 || !isPolygonAdjustment(trackIndex, clipIndex))
         return;
 
@@ -1759,7 +1821,7 @@ void MaskingController::setMaskPathKey(int trackIndex, int clipIndex, double atS
 void MaskingController::previewSetMaskPathKey(int trackIndex, int clipIndex, double atSeconds,
                                               const QVariantList &points)
 {
-    const QVector<QPointF> vertices = verticesFrom(points);
+    const QVector<drift::ShapeVertex> vertices = drift::appdetail::maskVerticesFromVariant(points);
     if (vertices.size() < 3 || !isPolygonAdjustment(trackIndex, clipIndex))
         return;
 
@@ -1786,7 +1848,7 @@ void MaskingController::removeMaskPathKey(int trackIndex, int clipIndex, double 
     const drift::Project before = m_app->m_project;
     // Deleting the last key would otherwise snap the shape back to the stale static points.
     if (clip.mask.pathKeys.size() == 1)
-        clip.mask.points = key.value();
+        clip.mask.vertices = key.value();
     clip.mask.pathKeys.erase(key);
 
     m_app->pushProjectEdit(before, tr("Delete shape key"));
@@ -1811,10 +1873,8 @@ void MaskingController::toggleMaskPathKeyAtPlayhead(const QString &clipId)
                 removeMaskPathKey(t, c, m_app->playheadSeconds());
                 return;
             }
-            QVariantList points;
-            for (const QPointF &p : clip.mask.resolvedAt(maskUs).points)
-                points.append(QVariantMap{{QStringLiteral("x"), p.x()}, {QStringLiteral("y"), p.y()}});
-            setMaskPathKey(t, c, m_app->playheadSeconds(), points);
+            setMaskPathKey(t, c, m_app->playheadSeconds(),
+                           drift::appdetail::maskVerticesToVariant(clip.mask.resolvedAt(maskUs).vertices));
             return;
         }
     }

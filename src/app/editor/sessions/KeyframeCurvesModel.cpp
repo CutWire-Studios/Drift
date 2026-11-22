@@ -4,7 +4,6 @@
 #include "app/editor/sessions/KeyframeRows.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
-#include "app/editor/sessions/KeyframeTimeView.h"
 
 #include <algorithm>
 #include <cmath>
@@ -33,6 +32,14 @@ void KeyframeCurvesModel::setSelection(KeyframeSelection *selection)
         return;
     m_selection = selection;
     emit selectionChanged();
+}
+
+void KeyframeCurvesModel::setExternalSeries(const QVariantList &series)
+{
+    m_external = true;
+    m_externalList = series;
+    rebuild();
+    emit externalSeriesChanged();
 }
 
 void KeyframeCurvesModel::setNormalize(bool normalize)
@@ -173,6 +180,19 @@ QVariantMap KeyframeCurvesModel::labelRange() const
 void KeyframeCurvesModel::rebuild()
 {
     m_base.clear();
+    if (m_external) {
+        m_base = seriesFromList(m_externalList);
+        for (int i = 0; i < m_base.size(); ++i) {
+            Series &s = m_base[i];
+            s.rowIndex = i;
+            s.ownMin = s.valueMin;
+            s.ownMax = s.valueMax;
+            s.fixedRange = hasFixedRange(s.prop, s.fixedRange);
+        }
+        applyRanges();
+        emit changed();
+        return;
+    }
     if (m_rows) {
         const QList<KeyframeRows::Row> &rows = m_rows->list();
         for (int i = 0; i < rows.size(); ++i) {
@@ -204,6 +224,7 @@ void KeyframeCurvesModel::rebuild()
                                                r.entry.value(QStringLiteral("max")).toDouble());
                 s.ownMin = s.valueMin = range.min;
                 s.ownMax = s.valueMax = range.max;
+                s.fixedRange = hasFixedRange(id, r.entry.value(QStringLiteral("hasRange")).toBool());
                 m_base.append(s);
             }
         }
@@ -231,7 +252,7 @@ void KeyframeCurvesModel::applyRanges()
         if (lock != m_lockedRanges.constEnd()) {
             lo = lock->min;
             hi = lock->max;
-        } else if (m_normalize) {
+        } else if (m_normalize || m_external) {
             lo = s.ownMin;
             hi = s.ownMax;
         }
@@ -307,11 +328,6 @@ void KeyframeCurvesModel::unlockRanges()
     emit changed();
 }
 
-double KeyframeCurvesModel::xFor(double seconds) const
-{
-    return m_rows && m_rows->timeView() ? m_rows->timeView()->xFor(seconds) : seconds;
-}
-
 double KeyframeCurvesModel::screenY(double value, int seriesIndex) const
 {
     if (seriesIndex < 0 || seriesIndex >= m_series.size())
@@ -326,167 +342,12 @@ double KeyframeCurvesModel::valueForY(double y, int seriesIndex) const
     return KeyframeCurves::valueForY(y, m_series.at(seriesIndex), graphHeight());
 }
 
-QVariantMap KeyframeCurvesModel::hitTest(double x, double y, double slop) const
-{
-    int bestSeries = -1;
-    int bestPoint = -1;
-    double bestDist = slop + 0.5;
-    bool bestFocused = false;
-    for (int s = 0; s < m_series.size(); ++s) {
-        const Series &entry = m_series.at(s);
-        const bool focused = isFocused(s);
-        for (int i = 0; i < entry.points.size(); ++i) {
-            const Point &p = entry.points.at(i);
-            const double d = std::hypot(xFor(p.seconds) - x, screenY(p.value, s) - y);
-            if (d < bestDist || (d <= bestDist && focused && !bestFocused)) {
-                bestDist = d;
-                bestFocused = focused;
-                bestSeries = s;
-                bestPoint = i;
-            }
-        }
-    }
-    if (bestSeries < 0) {
-        const double seconds = m_rows && m_rows->timeView() ? m_rows->timeView()->secondsFor(x) : x;
-        return {{QStringLiteral("row"), -1}, {QStringLiteral("dot"), QVariant()}, {QStringLiteral("refs"), QVariantList()},
-                {QStringLiteral("seconds"), seconds}, {QStringLiteral("entryIndex"), -1}};
-    }
-    const Series &entry = m_series.at(bestSeries);
-    const Point &p = entry.points.at(bestPoint);
-    const QVariantList refs{KeyframeRows::makeRef(entry.prop, p.seconds)};
-    return {{QStringLiteral("row"), entry.rowIndex},
-            {QStringLiteral("dot"), QVariantMap{{QStringLiteral("seconds"), p.seconds},
-                                                {QStringLiteral("refs"), refs},
-                                                {QStringLiteral("hold"), p.hold}}},
-            {QStringLiteral("refs"), refs},
-            {QStringLiteral("seconds"), p.seconds},
-            {QStringLiteral("value"), p.value},
-            {QStringLiteral("label"), entry.label},
-            {QStringLiteral("entryIndex"), bestSeries}};
-}
-
-QVariantList KeyframeCurvesModel::marqueeRefs(double x0, double x1, double y0, double y1, const QVariantList &base) const
-{
-    QVariantList refs = base;
-    for (int s = 0; s < m_series.size(); ++s) {
-        const Series &entry = m_series.at(s);
-        for (const Point &p : entry.points) {
-            const double px = xFor(p.seconds);
-            const double py = screenY(p.value, s);
-            if (px >= x0 && px <= x1 && py >= y0 && py <= y1)
-                refs.append(KeyframeRows::makeRef(entry.prop, p.seconds));
-        }
-    }
-    return refs;
-}
-
 double KeyframeCurvesModel::valueDelta(const QString &prop, double dy) const
 {
     const auto it = m_locked ? m_lockedRanges.constFind(prop) : m_lockedRanges.constEnd();
     if (it == m_lockedRanges.constEnd())
         return 0;
     return -dy / graphHeight() * (it->max - it->min);
-}
-
-QVariantList KeyframeCurvesModel::dragRefs(const QVariantList &refs, double dy) const
-{
-    QVariantList out;
-    for (const QVariant &r : refs) {
-        const QVariantMap m = r.toMap();
-        const QString prop = m.value(QStringLiteral("prop")).toString();
-        out.append(QVariantMap{{QStringLiteral("prop"), prop},
-                               {QStringLiteral("seconds"), m.value(QStringLiteral("seconds"))},
-                               {QStringLiteral("dv"), valueDelta(prop, dy)}});
-    }
-    return out;
-}
-
-QVariantMap KeyframeCurvesModel::handleAt(double x, double y, double radius) const
-{
-    const int fi = focusedIndex();
-    const Series *entry = focusedSeries();
-    if (!m_showHandles || !entry)
-        return {};
-    const QList<Point> points = sortedPoints(entry->points);
-    for (const Handle &h : KeyframeCurves::tangentHandles(points)) {
-        const Point &p = points.at(h.pointIndex);
-        const double dx = KeyframeCurves::handleSeconds(p, h.outgoing);
-        const double value = KeyframeCurves::handleValue(p, h.outgoing);
-        if (std::hypot(xFor(p.seconds + dx) - x, screenY(value, fi) - y) <= radius)
-            return {{QStringLiteral("entryIndex"), fi},
-                    {QStringLiteral("outgoing"), h.outgoing},
-                    {QStringLiteral("point"), toMap(p)},
-                    {QStringLiteral("dx"), dx},
-                    {QStringLiteral("value"), value}};
-    }
-    return {};
-}
-
-QVariantMap KeyframeCurvesModel::segmentAt(double x, double y, double slop) const
-{
-    KeyframeTimeView *view = m_rows ? m_rows->timeView() : nullptr;
-    if (!view)
-        return {};
-    const int fi = focusedIndex();
-    int bestSeries = -1;
-    int bestIndex = -1;
-    double bestSeconds = 0;
-    double bestDist = slop + 0.5;
-    const auto scan = [&](int s) {
-        const QList<Point> points = sortedPoints(m_series.at(s).points);
-        for (int i = 0; i + 1 < points.size(); ++i) {
-            const Point &a = points.at(i);
-            const Point &b = points.at(i + 1);
-            if (a.shaped() || b.seconds <= a.seconds)
-                continue;
-            const double xa = xFor(a.seconds);
-            const double xb = xFor(b.seconds);
-            if (x < xa - slop || x > xb + slop)
-                continue;
-            // The nearest point of the curve within `slop` px either side, so a steep stretch still hits.
-            for (double sx = std::max(xa, x - slop); sx <= std::min(xb, x + slop); sx += 1.0) {
-                const double seconds = view->secondsFor(sx);
-                const double d = std::hypot(sx - x, screenY(segmentValue(a, b, seconds), s) - y);
-                if (d < bestDist) {
-                    bestDist = d;
-                    bestSeries = s;
-                    bestIndex = i;
-                    bestSeconds = seconds;
-                }
-            }
-        }
-    };
-    // The focused curve wins whenever it is in reach, so a context curve crossing it is not grabbed.
-    if (fi >= 0)
-        scan(fi);
-    if (bestSeries < 0) {
-        for (int s = 0; s < m_series.size(); ++s)
-            if (s != fi)
-                scan(s);
-    }
-    if (bestSeries < 0)
-        return {};
-    const QList<Point> points = sortedPoints(m_series.at(bestSeries).points);
-    const Point &a = points.at(bestIndex);
-    const Point &b = points.at(bestIndex + 1);
-    return {{QStringLiteral("entryIndex"), bestSeries},
-            {QStringLiteral("t"), segmentParameter(a, b, bestSeconds)},
-            {QStringLiteral("a"), toMap(a)},
-            {QStringLiteral("b"), toMap(b)}};
-}
-
-QVariantMap KeyframeCurvesModel::moveHandle(const QVariantMap &point, bool outgoing, double dx, double value) const
-{
-    return toMap(withHandle(pointFromMap(point), outgoing, dx, value));
-}
-
-QVariantList KeyframeCurvesModel::deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
-                                                double dValue) const
-{
-    Point pa = pointFromMap(a);
-    Point pb = pointFromMap(b);
-    KeyframeCurves::deformSegment(pa, pb, t, dSeconds, dValue);
-    return {toMap(pa), toMap(pb)};
 }
 
 #include "moc_KeyframeCurvesModel.cpp"

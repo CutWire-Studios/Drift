@@ -470,10 +470,6 @@
         <translation>%1 조정</translation>
     </message>
     <message>
-        <source>Reset</source>
-        <translation>초기화</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>%1 초기화</translation>
     </message>
@@ -515,6 +511,10 @@
     <message>
         <source>Fade curve</source>
         <translation>페이드 곡선</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation type="unfinished">곡선</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -627,14 +627,6 @@
         <translation>텍스트 스타일</translation>
     </message>
     <message>
-        <source>Text settings</source>
-        <translation>텍스트 설정</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>텍스트 애니메이션</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -691,14 +683,6 @@
 </context>
 <context>
     <name>AndroidClipRangeBar</name>
-    <message>
-        <source>Pause</source>
-        <translation>일시정지</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>재생</translation>
-    </message>
     <message>
         <source>Seek</source>
         <translation>이동</translation>
@@ -808,6 +792,10 @@
 <context>
     <name>AndroidCropOverlay</name>
     <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
@@ -823,20 +811,16 @@
 <context>
     <name>AndroidCropPage</name>
     <message>
-        <source>Free</source>
-        <translation>자유</translation>
-    </message>
-    <message>
-        <source>Original</source>
-        <translation>원본</translation>
-    </message>
-    <message>
         <source>Clip</source>
         <translation>클립</translation>
     </message>
     <message>
         <source>Video</source>
         <translation>동영상</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished">수평 맞추기</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -928,18 +912,6 @@
         <translation>텍스트 추가</translation>
     </message>
     <message>
-        <source>Text style</source>
-        <translation>텍스트 스타일</translation>
-    </message>
-    <message>
-        <source>Text settings</source>
-        <translation>텍스트 설정</translation>
-    </message>
-    <message>
-        <source>Text animation</source>
-        <translation>텍스트 애니메이션</translation>
-    </message>
-    <message>
         <source>Animation</source>
         <translation>애니메이션</translation>
     </message>
@@ -1024,12 +996,16 @@
         <translation>타임라인이 비어 있습니다</translation>
     </message>
     <message>
-        <source>Import media or open the Media library to start editing.</source>
-        <translation>미디어를 가져오거나 미디어 라이브러리를 열어 편집을 시작하세요.</translation>
+        <source>Clips you add appear here as layers.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open Media</source>
-        <translation>미디어 열기</translation>
+        <source>Create a new folder here</source>
+        <translation type="unfinished">여기에 새 폴더 만들기</translation>
+    </message>
+    <message>
+        <source>Create an empty timeline and open it</source>
+        <translation type="unfinished">빈 타임라인을 만들고 엽니다</translation>
     </message>
 </context>
 <context>
@@ -1153,6 +1129,13 @@
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
         <translation>아직 아무것도 없습니다 — 저장한 프로젝트가 이 목록에 표시됩니다.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInfoButton</name>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1357,6 +1340,41 @@
     <message>
         <source>Marketplace</source>
         <translation>마켓플레이스</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMaskPage</name>
+    <message>
+        <source>Rectangle</source>
+        <translation type="unfinished">사각형</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">타원</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">다각형</translation>
+    </message>
+    <message>
+        <source>Brush</source>
+        <translation type="unfinished">브러시</translation>
+    </message>
+    <message>
+        <source>AI select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track</source>
+        <translation type="unfinished">트래킹</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">편집</translation>
+    </message>
+    <message>
+        <source>Needs AI Engine</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1836,6 +1854,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidMotionPage</name>
+    <message>
+        <source>Not an animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion settings apply to Lottie and SVG clips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidMyVideosTab</name>
     <message>
         <source>Video actions</source>
@@ -1868,6 +1897,18 @@
 <context>
     <name>AndroidPreview</name>
     <message>
+        <source>No media yet</source>
+        <translation type="unfinished">아직 미디어가 없습니다</translation>
+    </message>
+    <message>
+        <source>Add a video, photo or audio file to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Seek</source>
         <translation>이동</translation>
     </message>
@@ -1897,6 +1938,14 @@
     <message>
         <source>Quality: %1</source>
         <translation>화질: %1</translation>
+    </message>
+    <message>
+        <source>Hardware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Guides</source>
@@ -2001,8 +2050,8 @@
         <translation>동영상 크기 자르기</translation>
     </message>
     <message>
-        <source>Drag the preview edges to change what’s included</source>
-        <translation>미리보기 가장자리를 드래그하여 포함할 영역 변경</translation>
+        <source>Trim the frame to a smaller area</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -2019,6 +2068,14 @@
     <message>
         <source>Sync and switch between angles</source>
         <translation>각도 동기화 및 전환</translation>
+    </message>
+    <message>
+        <source>Notifications</source>
+        <translation type="unfinished">알림</translation>
+    </message>
+    <message>
+        <source>Recent messages and finished jobs</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -2158,10 +2215,10 @@
     </message>
 </context>
 <context>
-    <name>AndroidSpeedPage</name>
+    <name>AndroidSliderRow</name>
     <message>
-        <source>Speed curve</source>
-        <translation>속도 곡선</translation>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
     </message>
 </context>
 <context>
@@ -2226,10 +2283,30 @@
     </message>
 </context>
 <context>
-    <name>AndroidTextPage</name>
+    <name>AndroidTextTabs</name>
     <message>
-        <source>Edit text</source>
-        <translation>텍스트 편집</translation>
+        <source>Font</source>
+        <translation type="unfinished">글꼴</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">스타일</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation type="unfinished">레이아웃</translation>
+    </message>
+    <message>
+        <source>Tap to type text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2393,8 +2470,24 @@
         <translation>시작</translation>
     </message>
     <message>
+        <source>Trim start</source>
+        <translation type="unfinished">시작 부분 자르기</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>끝</translation>
+    </message>
+    <message>
+        <source>Trim end</source>
+        <translation type="unfinished">끝 부분 자르기</translation>
+    </message>
+    <message>
+        <source>%1 one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 one frame later</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2455,30 +2548,6 @@
     <message>
         <source>Untitled</source>
         <translation>제목 없음</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · 클립 %n개</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>변환</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidTransformParentFrame</name>
-    <message>
-        <source>Select %1</source>
-        <translation>%1 선택</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>변환</translation>
     </message>
 </context>
 <context>
@@ -2962,6 +3031,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Nudge selected keys up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps up in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge selected keys ten steps down in the curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rectangle mask tool</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2986,7 +3071,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Decrease brush hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Increase brush hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Brush: switch between paint and erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pen tool: add points to a path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert point between corner and smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point without keeping the curve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4184,6 +4289,10 @@
     <message>
         <source>Rotate clip</source>
         <translation>클립 회전</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
@@ -6071,6 +6180,14 @@
         <source>Remove from history</source>
         <translation>기록에서 제거</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">검색</translation>
+    </message>
+    <message>
+        <source>Close search</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AssetsPanel</name>
@@ -6737,6 +6854,10 @@
         <source>Remove audio effect</source>
         <translation>오디오 효과 제거</translation>
     </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
+    </message>
 </context>
 <context>
     <name>AudioEffectPresetCard</name>
@@ -6788,6 +6909,10 @@
         <translation>아직 오디오 효과가 없습니다</translation>
     </message>
     <message>
+        <source>Tap Browse audio effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
         <translation>Audio FX에서 프리셋을 이 클립으로 드래그하거나 프리셋 카드를 클릭하세요.</translation>
     </message>
@@ -6796,12 +6921,20 @@
         <translation>오디오 효과 찾아보기</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>시간 위치로 이동하고 값을 설정한 다음 다이아몬드를 클릭하여 키프레임을 추가하세요. 자동 키프레임이 켜져 있으면 슬라이더를 드래그해도 키프레임이 생성됩니다.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>자동 키프레임</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effect settings</source>
@@ -8141,6 +8274,29 @@
     </message>
 </context>
 <context>
+    <name>BrushSideSliders</name>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">크기</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation type="unfinished">불투명도</translation>
+    </message>
+    <message>
+        <source>Brush size</source>
+        <translation type="unfinished">브러시 크기</translation>
+    </message>
+    <message>
+        <source>Brush opacity</source>
+        <translation type="unfinished">브러시 불투명도</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <translation type="unfinished">%1 %</translation>
+    </message>
+</context>
+<context>
     <name>Camera3dPanel</name>
     <message>
         <source>Camera</source>
@@ -8330,6 +8486,29 @@
     <message>
         <source>Bounce</source>
         <translation>바운스</translation>
+    </message>
+</context>
+<context>
+    <name>ClipCropOverlay</name>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished">클립 자르기</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Show the whole source again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Leave the crop tool (Enter)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8936,7 +9115,26 @@
     </message>
 </context>
 <context>
+    <name>CropFrame</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Nudge crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CropOverlay</name>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished">캔버스 크롭</translation>
+    </message>
     <message>
         <source>Fit view</source>
         <translation>보기 맞춤</translation>
@@ -8971,6 +9169,21 @@
     <message>
         <source>Middle-drag to pan</source>
         <translation>가운데 버튼으로 드래그하여 패닝</translation>
+    </message>
+</context>
+<context>
+    <name>CropPresets</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">원본</translation>
+    </message>
+    <message>
+        <source>Thirds</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9016,8 +9229,12 @@
         <translation>입력 %1 → 출력 %2</translation>
     </message>
     <message>
-        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation>클릭하여 점을 추가합니다. 드래그하여 이동합니다. 더블 클릭하거나 바깥으로 드래그하여 제거합니다.</translation>
+        <source>Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9056,6 +9273,40 @@
     <message>
         <source>Bezier</source>
         <translation>베지어</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+</context>
+<context>
+    <name>CurveGraphView</name>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
+    </message>
+    <message>
+        <source>Reset view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10252,6 +10503,18 @@
         <translation>효과 검색</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
+    </message>
+    <message>
+        <source>Add adjustment layer</source>
+        <translation type="unfinished">보정 레이어 추가</translation>
+    </message>
+    <message>
+        <source>Import effect…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Adjustment layer</source>
         <translation>보정 레이어</translation>
     </message>
@@ -10570,12 +10833,20 @@
 <context>
     <name>EffectsAutoKeyHint</name>
     <message>
+        <source>Move to a time, set a value, then tap the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
         <translation>시간 위치로 이동하고 값을 설정한 다음 다이아몬드를 클릭하여 키프레임을 추가하세요. 자동 키프레임이 켜져 있으면 슬라이더를 드래그해도 키프레임이 생성됩니다.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
         <translation>자동 키프레임</translation>
+    </message>
+    <message>
+        <source>Tap a diamond to keyframe a value, or let Auto add one as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10715,6 +10986,10 @@
         <translation>효과 아래로 이동</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
+    </message>
+    <message>
         <source>Disable effect</source>
         <translation>효과 사용 안 함</translation>
     </message>
@@ -10820,6 +11095,10 @@
     <message>
         <source>No effects yet</source>
         <translation>아직 효과가 없습니다</translation>
+    </message>
+    <message>
+        <source>Tap Browse effects and pick a preset.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
@@ -11131,6 +11410,33 @@
     </message>
 </context>
 <context>
+    <name>ExportDialogSizeEstimate</name>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished">%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished">%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished">%1 GB</translation>
+    </message>
+    <message>
+        <source>Estimated size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>≈ %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimate — varies with content</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ExportDialogVideoSection</name>
     <message>
         <source>Saves what you see in the preview. Pick a size — the picture shape stays the same.</source>
@@ -11143,6 +11449,10 @@
     <message>
         <source>%1×%2. Vertical for TikTok, Reels and Shorts, wide for YouTube.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×%2</source>
+        <translation type="unfinished">%1×%2</translation>
     </message>
     <message>
         <source>Choose layout…</source>
@@ -11181,6 +11491,10 @@
         <translation>fps</translation>
     </message>
     <message>
+        <source>Above the project rate, extra frames come from the source footage, which keeps slowed clips smooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exporting above the project rate pulls extra frames from the source footage where it has them — this is what makes slowed clips look smooth. Where it doesn&apos;t, frames repeat.</source>
         <translation>프로젝트 프레임 속도보다 높은 속도로 내보내면 원본 영상에서 가능한 경우 추가 프레임을 가져옵니다 — 느려진 클립을 부드럽게 보이게 하는 방식입니다. 추가 프레임이 없으면 프레임을 반복합니다.</translation>
     </message>
@@ -11203,6 +11517,10 @@
     <message>
         <source>Constant Quality</source>
         <translation>고정 화질</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished">화질</translation>
     </message>
     <message>
         <source>Bitrate</source>
@@ -11966,12 +12284,16 @@
         <translation>이징 아웃</translation>
     </message>
     <message>
-        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>두 핸들을 드래그하여 3차 곡선의 모양을 만드세요. 양 끝은 고정되며 핸들은 상자 안에만 있을 수 있어 곡선이 스스로 접히지 않습니다.</translation>
+        <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself. Shift keeps a handle flat, Ctrl suspends snapping, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the middle points to shape the ramp (ends stay pinned). Double-click to add a point; Delete removes the selection.</source>
-        <translation>가운데 점을 드래그하여 램프 모양을 만듭니다(끝점은 고정됨). 더블 클릭하여 점을 추가하고, Delete 키를 누르면 선택 항목이 제거됩니다.</translation>
+        <source>Click the curve to add a point and drag the points to shape the ramp (ends stay pinned). Delete or double-click removes, drag an empty spot to select several, Esc cancels a drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -12640,6 +12962,10 @@
         <translation>수평 맞추기</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>시작 시점</translation>
     </message>
@@ -12972,6 +13298,10 @@
     <message>
         <source>Release to remove</source>
         <translation>놓아서 제거</translation>
+    </message>
+    <message>
+        <source>Move guide</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -13596,10 +13926,6 @@
         <translation>키프레임 지워짐</translation>
     </message>
     <message>
-        <source>Nudge keyframes</source>
-        <translation>키프레임 미세 이동</translation>
-    </message>
-    <message>
         <source>Move keyframes</source>
         <translation>키프레임 이동</translation>
     </message>
@@ -13749,8 +14075,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit keyframe curve</source>
-        <translation>키프레임 곡선 편집</translation>
+        <source>No keyframes on this clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (keyframes off)</source>
@@ -13853,13 +14179,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphKeyDot</name>
-    <message>
-        <source>Move keyframe</source>
-        <translation>키프레임 이동</translation>
-    </message>
-</context>
-<context>
     <name>KeyframeGraphLaneStatus</name>
     <message>
         <source>No keyframes</source>
@@ -13885,10 +14204,28 @@
     </message>
 </context>
 <context>
-    <name>KeyframeGraphTangentHandle</name>
+    <name>KeyframeInteraction</name>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform>%n개 키</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Move keyframes</source>
+        <translation type="unfinished">키프레임 이동</translation>
+    </message>
     <message>
         <source>Edit keyframe curve</source>
-        <translation>키프레임 곡선 편집</translation>
+        <translation type="unfinished">키프레임 곡선 편집</translation>
+    </message>
+    <message>
+        <source>Stretch keyframes</source>
+        <translation type="unfinished">키프레임 늘이기</translation>
+    </message>
+    <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished">키프레임 미세 이동</translation>
     </message>
 </context>
 <context>
@@ -13935,30 +14272,6 @@
     </message>
 </context>
 <context>
-    <name>KeyframesCurvesInteraction</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>키프레임 이동</translation>
-    </message>
-    <message>
-        <source>Edit keyframe curve</source>
-        <translation>키프레임 곡선 편집</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesInteractionSurface</name>
-    <message>
-        <source>Move keyframes</source>
-        <translation>키프레임 이동</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n key(s)</source>
-        <translation>
-            <numerusform>%n개 키</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
     <name>KeyframesPanel</name>
     <message>
         <source>Keyframe editor</source>
@@ -13987,13 +14300,6 @@
     <message>
         <source>This clip has no animatable properties</source>
         <translation>이 클립에는 애니메이션을 적용할 수 있는 속성이 없습니다</translation>
-    </message>
-</context>
-<context>
-    <name>KeyframesStretchBox</name>
-    <message>
-        <source>Stretch keyframes</source>
-        <translation>키프레임 늘이기</translation>
     </message>
 </context>
 <context>
@@ -14170,6 +14476,10 @@
     <message>
         <source>Masking</source>
         <translation type="unfinished">마스킹</translation>
+    </message>
+    <message>
+        <source>Path editing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Tracking</source>
@@ -15323,6 +15633,22 @@
 <context>
     <name>MaskAiOverlay</name>
     <message>
+        <source>Tap the object to select it. Switch to Exclude to mark what to leave out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click the object to select it. Right-click, Alt-click or X to exclude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add points to refine, then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically. Press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking object… %1%</source>
         <translation>개체 트래킹 중… %1%</translation>
     </message>
@@ -15339,51 +15665,59 @@
         <translation>선택한 클립 위로 재생 헤드를 이동하세요</translation>
     </message>
     <message>
-        <source>Click the object to select it · Right-click or Ctrl-click to exclude</source>
-        <translation>개체를 클릭하여 선택 · 우클릭 또는 Ctrl+클릭하여 제외</translation>
-    </message>
-    <message>
-        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
-        <translation>점을 추가하여 다듬은 후 · 마스킹 패널에서 “전체 클립 오려내기”를 누르세요</translation>
-    </message>
-    <message>
         <source>Install a cutout model in the Masking panel first</source>
         <translation>먼저 마스킹 패널에서 오려내기 모델을 설치하세요</translation>
-    </message>
-    <message>
-        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
-        <translation>사람이 자동으로 감지됩니다 · 마스킹 패널에서 “인물 오려내기”를 누르세요</translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>%1 %</source>
-        <translation>%1 %</translation>
-    </message>
-    <message>
-        <source>Drag to draw an outline, release to fill it · Right-drag or Alt to subtract</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click along an edge to place points · Right-click or Alt to subtract</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 points · Click the first point or Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click to select a region of similar colour · Shift adds, Alt or right-click subtracts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
-        <translation>페인트하여 추가 · 오른쪽 드래그 또는 %1(으)로 지우기 · [ ] 또는 Shift-드래그로 크기 조절 · Ctrl+스크롤로 확대/축소</translation>
-    </message>
-    <message>
         <source>Move the playhead over the selected clip</source>
         <translation>선택한 클립 위로 재생 헤드를 이동하세요</translation>
+    </message>
+    <message>
+        <source>Drag to draw an outline, release to fill it. Right-drag or Alt to subtract.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click along an edge to place points. Right-click or Alt to subtract.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 points. Click the first point or Enter to close, Backspace to undo, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to select a region of similar colour. Shift adds, Alt or right-click subtracts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint with one finger, or switch to Navigate to pan. Two fingers always zoom and pan.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add. Right-drag, Alt or %1 to subtract. [ ] sizes, Shift+[ ] sets hardness. Shift-drag or Alt+right-drag resizes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size %1 %   Hardness %2 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint</source>
+        <translation type="unfinished">페인트</translation>
+    </message>
+    <message>
+        <source>One finger paints. Two fingers always zoom and pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One finger pans the preview. A stylus still paints</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a video or image clip to paint a mask</source>
@@ -15401,16 +15735,12 @@
         <translation>선택한 클립 위로 재생 헤드를 이동하세요</translation>
     </message>
     <message>
-        <source>Click to place points. Click the first point or press Enter to close.</source>
-        <translation>점을 배치하려면 클릭하세요. 첫 번째 점을 클릭하거나 Enter 키를 눌러 닫습니다.</translation>
-    </message>
-    <message>
-        <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
-        <translation>점 %1개 · Enter 키로 닫기 · Backspace 키로 취소 · Esc 키로 취소</translation>
-    </message>
-    <message>
         <source>Drawing replaces this layer&apos;s mask</source>
         <translation>그리면 이 레이어의 마스크가 대체됩니다</translation>
+    </message>
+    <message>
+        <source>Drag on the picture to draw</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
@@ -15425,6 +15755,25 @@
     </message>
 </context>
 <context>
+    <name>MaskModeChips</name>
+    <message>
+        <source>Include</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to the mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take away from the mask. Alt or right-drag does this for one stroke</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MaskOverlay</name>
     <message>
         <source>Unlock aspect ratio</source>
@@ -15433,14 +15782,6 @@
     <message>
         <source>Lock aspect ratio</source>
         <translation>가로세로 비율 잠금</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation>점을 드래그하여 모양 변경 · 가장자리의 ○를 탭하여 점 추가 · 점을 길게 눌러 삭제</translation>
-    </message>
-    <message>
-        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation>점을 드래그하여 모양 변경 · 가장자리의 ○를 클릭하여 점 추가 · 점을 마우스 오른쪽 버튼으로 클릭하여 삭제</translation>
     </message>
 </context>
 <context>
@@ -15467,6 +15808,28 @@
     <message>
         <source>Feather</source>
         <translation>페더</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayResizeGrip</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 편집</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
+    </message>
+</context>
+<context>
+    <name>MaskOverlayRotateHandle</name>
+    <message>
+        <source>Edit %1</source>
+        <translation type="unfinished">%1 편집</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
     </message>
 </context>
 <context>
@@ -15501,6 +15864,18 @@
 </context>
 <context>
     <name>MaskingController</name>
+    <message>
+        <source>Hard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detail</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>마스크로 사용</translation>
@@ -15833,6 +16208,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 brush: %2 % size, %3 % hardness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Size</source>
         <translation>크기</translation>
     </message>
@@ -15855,6 +16234,14 @@
     <message>
         <source>Brush opacity</source>
         <translation>브러시 불투명도</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation type="unfinished">부드러움</translation>
+    </message>
+    <message>
+        <source>Brush smoothing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paint</source>
@@ -16884,6 +17271,18 @@
 <context>
     <name>MediaAssetsViewToolbar</name>
     <message>
+        <source>Switch to list view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to tree view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to grid view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Grid view</source>
         <translation>격자 보기</translation>
     </message>
@@ -17908,6 +18307,14 @@
         <source>No notifications yet.</source>
         <translation>아직 알림이 없습니다.</translation>
     </message>
+    <message>
+        <source>No notifications yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages about exports, downloads and errors show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
@@ -18159,6 +18566,157 @@
     <message>
         <source>Video Effects (none)</source>
         <translation>동영상 효과(없음)</translation>
+    </message>
+</context>
+<context>
+    <name>PathActionChips</name>
+    <message>
+        <source>Pen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+</context>
+<context>
+    <name>PathEditSession</name>
+    <message>
+        <source>Close path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bend segment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">점 추가</translation>
+    </message>
+    <message>
+        <source>Convert point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">점 삭제</translation>
+    </message>
+    <message>
+        <source>Change point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove point</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathEditor</name>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap for a corner point, drag for a smooth one. Tap the first point to close.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click or drag to extend the path. Enter or Esc ends it, Backspace removes the last point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Tap an edge to add a point, hold a point for more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag points and handles. Click an edge to add a point, Alt-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete heals.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished">선택한 클립 위로 재생 헤드를 이동하세요</translation>
+    </message>
+</context>
+<context>
+    <name>PathPointBar</name>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Heal</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PathPointModeRow</name>
+    <message>
+        <source>Point type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mirrored</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aligned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
     </message>
 </context>
 <context>
@@ -19890,6 +20448,10 @@ If playback stutters, try another.</source>
         <translation>사용자 지정</translation>
     </message>
     <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 초기화</translation>
+    </message>
+    <message>
         <source>Easing: %1 — click to change</source>
         <translation>이징: %1 — 변경하려면 클릭하세요</translation>
     </message>
@@ -20246,6 +20808,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Balanced</source>
         <translation>균형</translation>
+    </message>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">입력 %1 → 출력 %2</translation>
     </message>
 </context>
 <context>
@@ -23528,6 +24098,10 @@ If playback stutters, try another.</source>
         <translation>레이어 표시</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation type="unfinished">더 보기</translation>
+    </message>
+    <message>
         <source>Duplicate layer</source>
         <translation>레이어 복제</translation>
     </message>
@@ -24049,64 +24623,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Tail size</source>
         <translation>꼬리 크기</translation>
-    </message>
-</context>
-<context>
-    <name>ShapePathHintBar</name>
-    <message>
-        <source>Add points</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep drawing from the selected end of the path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove the segment joining the last point to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Join the last point back to the first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">완료</translation>
-    </message>
-</context>
-<context>
-    <name>ShapePathOverlay</name>
-    <message>
-        <source>Move the playhead over the selected clip</source>
-        <translation type="unfinished">선택한 클립 위로 재생 헤드를 이동하세요</translation>
-    </message>
-    <message>
-        <source>Drawing a path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Editing path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click for a corner point, drag for a smooth one. Shift snaps to 45 degrees. Click the first point to close, Enter to finish, Esc to cancel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag points and handles. Click a segment to add a point, double-click a point to switch corner and smooth, Alt-drag a handle to break it, Delete removes a point.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This path is keyframed: edits are stored as a key at the playhead.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24969,6 +25485,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Shot %1</source>
         <translation>샷 %1</translation>
+    </message>
+</context>
+<context>
+    <name>SourceLabCropOverlay</name>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
     </message>
 </context>
 <context>
@@ -25903,6 +26426,10 @@ If playback stutters, try another.</source>
         <translation>초기화</translation>
     </message>
     <message>
+        <source>Edit speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
         <translation>새 트랙에 복사본으로 적용되며 원본 클립은 그대로 유지됩니다.</translation>
     </message>
@@ -25943,6 +26470,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Split the clip to speed up only part of it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ramp</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26155,12 +26686,28 @@ If playback stutters, try another.</source>
         <translation>카메라 흔들림을 부드럽게 보정합니다. Drift가 클립을 한 번 스캔한 다음 흔들림 보정된 사본을 미디어 보관함에 렌더링하고 클립을 해당 사본으로 전환합니다. 부드러움 또는 삼각대 설정을 변경해도 적용하기 전까지는 미리보기가 업데이트되지 않습니다.</translation>
     </message>
     <message>
+        <source>Smooths camera shake with position keyframes. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooths camera shake by rendering a stabilized copy of the clip. Apply to update the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize</source>
         <translation>흔들림 보정</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>흔들림 보정된 사본을 렌더링하거나 희소 변형 키로 클립에 애니메이션을 적용합니다</translation>
+    </message>
+    <message>
+        <source>Smoothing is how many frames the smoother looks ahead and behind; higher values hide more shake but crop more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tripod mode locks the framing and crops more aggressively.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>
@@ -26427,6 +26974,10 @@ If playback stutters, try another.</source>
         <translation>설치된 스티커 팩이 없습니다</translation>
     </message>
     <message>
+        <source>Install the emoji pack, or import your own images with the upload button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Install the emoji pack to add stickers.</source>
         <translation>스티커를 추가하려면 이모지 팩을 설치하세요.</translation>
     </message>
@@ -26573,6 +27124,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SubtitleCueEdgeGrip</name>
+    <message>
+        <source>Adjust subtitle timing</source>
+        <translation type="unfinished">자막 타이밍 조정</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
@@ -26711,6 +27273,18 @@ If playback stutters, try another.</source>
         <translation>WebVTT 자막 (*.vtt)</translation>
     </message>
     <message>
+        <source>Import and export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Timestamps from the start of the video</source>
         <translation>동영상 시작부터의 타임스탬프</translation>
     </message>
@@ -26756,6 +27330,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
         <translation>자막을 추가하려면 이 클립 안의 시점으로 이동하세요</translation>
+    </message>
+    <message>
+        <source>Add subtitle at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead into this clip to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -27447,6 +28029,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Export text style</source>
         <translation>텍스트 스타일 내보내기</translation>
+    </message>
+    <message>
+        <source>Show built-in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show my styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My styles</source>
@@ -28685,6 +29275,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">변환</translation>
     </message>
     <message>
+        <source>Crop on canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilize…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -28939,6 +29533,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjust fade</source>
         <translation>페이드 조정</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1초</translation>
     </message>
     <message>
         <source>Fade out %1s</source>
@@ -29589,6 +30187,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineTransitionToffee</name>
+    <message>
+        <source>Resize transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to repeat the clip</source>
@@ -29601,6 +30210,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Drag to trim the end</source>
         <translation>드래그하여 끝 부분 자르기</translation>
+    </message>
+    <message>
+        <source>  →  </source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim clip</source>
@@ -29657,6 +30270,44 @@ If playback stutters, try another.</source>
     <message>
         <source>Dismiss</source>
         <translation>닫기</translation>
+    </message>
+</context>
+<context>
+    <name>TouchContextBar</name>
+    <message>
+        <source>Lock ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Constrain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Break handle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderBottomResize</name>
+    <message>
+        <source>Resize track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30062,6 +30713,17 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TrackHeaderResizeHandle</name>
+    <message>
+        <source>Resize track labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TrackHeaderRow</name>
     <message>
         <source>Turn transform on</source>
@@ -30106,8 +30768,52 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Nudge tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers need a video clip</source>
         <translation>트래커에는 비디오 클립이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Move tracking outline corner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize pattern box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize search box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tracking point</source>
+        <translation type="unfinished">트래킹 포인트 이동</translation>
+    </message>
+    <message>
+        <source>Corner %1   X %2 %   Y %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pattern %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X %1 %   Y %2 %   Box %3 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confidence %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tracker drives other clips. Remove it from the Tracking panel to choose what happens to their keys.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip on the timeline to track motion in it</source>
@@ -30122,12 +30828,28 @@ If playback stutters, try another.</source>
         <translation>미리보기에서 트래킹할 지점을 클릭하세요.</translation>
     </message>
     <message>
+        <source>Tap the feature to track on the preview.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to add to this tracker.</source>
         <translation>이 트래커에 추가할 지점을 클릭하세요.</translation>
     </message>
     <message>
+        <source>Tap the feature to add to this tracker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object the clip should follow.</source>
         <translation>클립이 따라갈 개체를 클릭하세요.</translation>
+    </message>
+    <message>
+        <source>Tap the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 corners · tap Done when you have four</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
@@ -30138,12 +30860,68 @@ If playback stutters, try another.</source>
         <translation>모서리 %1개 · Enter 완료 · Backspace 실행 취소 · Esc 취소</translation>
     </message>
     <message>
+        <source>Pick Point or Planar, then tap the feature to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a marker to correct it, then track from this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use Point or Planar in the Tracking panel to start a track</source>
         <translation>트래킹 패널에서 [포인트] 또는 [평면]을 사용하여 트래킹을 시작하세요</translation>
     </message>
     <message>
-        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
-        <translation>마커를 드래그하여 보정 · 트래킹 패널의 ◀ ▶를 눌러 트래킹</translation>
+        <source>Drag a marker to correct it · Right-click to re-track from here · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-track backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tracker</source>
+        <translation type="unfinished">트래커 삭제</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished">포인트</translation>
+    </message>
+    <message>
+        <source>Tap the feature to follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Planar</source>
+        <translation type="unfinished">평면</translation>
+    </message>
+    <message>
+        <source>Tap the corners of a flat surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Track back to the start</source>
+        <translation type="unfinished">시작 위치까지 뒤로 트래킹</translation>
+    </message>
+    <message>
+        <source>Track one frame back</source>
+        <translation type="unfinished">한 프레임 뒤로 트래킹</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">한 프레임 앞으로 트래킹</translation>
+    </message>
+    <message>
+        <source>Track to the end</source>
+        <translation type="unfinished">끝 위치까지 트래킹</translation>
     </message>
     <message>
         <source>Tracking… %1%</source>
@@ -30837,6 +31615,93 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TransformClipBox</name>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">클립 이동</translation>
+    </message>
+    <message>
+        <source>X %1   Y %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clip</source>
+        <translation type="unfinished">클립 크기 조정</translation>
+    </message>
+    <message>
+        <source>Rotate clip</source>
+        <translation type="unfinished">클립 회전</translation>
+    </message>
+    <message>
+        <source>Move anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform>%1 · 클립 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">변환</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGizmo</name>
+    <message>
+        <source>%1 %2 / %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rot %1 %2°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1 %2×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale %1×</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">로컬</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished">월드</translation>
+    </message>
+</context>
+<context>
+    <name>TransformGroupBox</name>
+    <message>
+        <source>Δ %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resize clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -30857,6 +31722,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Select</source>
         <translation>선택</translation>
+    </message>
+    <message>
+        <source>Move the playhead, set a value, then tap the diamond to keyframe it. Auto keyframes does this as you drag.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
@@ -31093,31 +31962,73 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>TransformOverlayLayerChip</name>
-    <message numerus="yes">
-        <source>%1 · %n clip(s)</source>
-        <translation>
-            <numerusform>%1 · 클립 %n개</numerusform>
-        </translation>
+    <name>TransformManip</name>
+    <message>
+        <source>Nudge clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Transform</source>
-        <translation>변환</translation>
+        <source>Multi-select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">이동</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">회전</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">크기 조정</translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">로컬</translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished">X</translation>
+    </message>
+    <message>
+        <source>Y</source>
+        <translation type="unfinished">Y</translation>
+    </message>
+    <message>
+        <source>Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Move clip in 3D</source>
+        <translation type="unfinished">3D에서 클립 이동</translation>
+    </message>
+    <message>
+        <source>Rotate clip in 3D</source>
+        <translation type="unfinished">3D에서 클립 회전</translation>
+    </message>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">클립 크기 조정</translation>
     </message>
 </context>
 <context>
-    <name>TransformOverlayParentChip</name>
+    <name>TransformParentFrame</name>
     <message>
         <source>Select %1</source>
-        <translation>%1 선택</translation>
+        <translation type="unfinished">%1 선택</translation>
     </message>
     <message>
         <source>Transform</source>
-        <translation>변환</translation>
+        <translation type="unfinished">변환</translation>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>이 클립을 움직이는 변환 레이어 선택(%1)</translation>
+        <translation type="unfinished">이 클립을 움직이는 변환 레이어 선택(%1)</translation>
     </message>
 </context>
 <context>
@@ -31131,6 +32042,10 @@ If playback stutters, try another.</source>
         <translation>
             <numerusform>트랙 %n개 포함</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Change transform span</source>
+        <translation type="unfinished">변환 범위 변경</translation>
     </message>
 </context>
 <context>
@@ -31163,6 +32078,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TransitionInspector</name>
     <message>
+        <source>Tap the + on the cut between two clips to add a transition.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hover the cut between two clips and click + to add a transition.</source>
         <translation>두 클립 사이의 컷 위로 마우스를 올리고 +를 클릭하여 전환을 추가하세요.</translation>
     </message>
@@ -31179,8 +32098,16 @@ If playback stutters, try another.</source>
         <translation>전환 추가…</translation>
     </message>
     <message>
+        <source>Overlap transition. Tap the type to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
         <translation>겹침 전환입니다. 전환 탭에서 다른 종류를 드래그하여 교체하세요.</translation>
+    </message>
+    <message>
+        <source>Transition to the next clip. Scrub across the cut to preview it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>
@@ -31193,6 +32120,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Type</source>
         <translation>유형</translation>
+    </message>
+    <message>
+        <source>A transition needs two clips next to each other on one track.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Duration</source>
@@ -32010,8 +32941,12 @@ If playback stutters, try another.</source>
         <translation>회전 단계</translation>
     </message>
     <message>
-        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
-        <translation>기즈모 드래그 시 이 단계 단위로 이동 및 회전합니다. Ctrl 키를 누르면 자유롭게 이동할 수 있습니다. 0으로 설정하면 단계를 끕니다.</translation>
+        <source>Scale step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags are free; hold Ctrl to move, turn and scale in these steps, and Shift for fine control. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Navigation</source>
@@ -32926,6 +33861,53 @@ If playback stutters, try another.</source>
     <message>
         <source>Unexpected reply from llama-server.</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::manip::CurveGraphModel</name>
+    <message>
+        <source>Release to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished">색조 %1° → %2</translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished">입력 %1 → 출력 %2</translation>
+    </message>
+    <message>
+        <source>Add point</source>
+        <translation type="unfinished">점 추가</translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished">점 삭제</translation>
+    </message>
+    <message>
+        <source>Smooth point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corner point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit curve</source>
+        <translation type="unfinished">곡선 편집</translation>
     </message>
 </context>
 <context>

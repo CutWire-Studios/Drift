@@ -34,7 +34,7 @@ Flow {
 
             width: Theme.controlHeightSm
             height: Theme.controlHeightSm
-            radius: width / 2
+            radius: Theme.radiusPill
             color: modelData.color
             border.width: selected ? Theme.c.settingsAccentSwatch.ringWidth : 0
             border.color: Theme.c.settingsAccentSwatch.ring

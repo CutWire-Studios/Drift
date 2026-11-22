@@ -18,8 +18,19 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
 
+        EmptyState {
+            x: Theme.pagePadding
+            y: Theme.pagePadding
+            width: scroll.width - Theme.pagePadding * 2
+            visible: !inspector.hasVector
+            glyph: Theme.icons.layers
+            title: qsTr("Not an animation")
+            hint: qsTr("Motion settings apply to Lottie and SVG clips.")
+        }
+
         VectorInspector {
             id: inspector
+            visible: hasVector
             x: Theme.pagePadding
             y: Theme.pagePadding
             width: scroll.width - Theme.pagePadding * 2

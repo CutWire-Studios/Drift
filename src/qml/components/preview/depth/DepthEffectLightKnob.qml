@@ -13,7 +13,7 @@ Rectangle {
     visible: knob.source.isLight
     width: knob.source.knobSize
     height: knob.source.knobSize
-    radius: width / 2
+    radius: Theme.radiusPill
     x: knob.source.hx * knob.frame.width - width / 2
     y: knob.source.hy * knob.frame.height - height / 2
     color: knob.source.values.color || Theme.c.depthEffectLightKnob.background

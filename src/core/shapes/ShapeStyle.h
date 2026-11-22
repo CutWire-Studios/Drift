@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/animation/Keyframe.h"
+#include "core/shapes/ShapeVertex.h"
 #include "core/text/TextShading.h"
 #include "core/base/Time.h"
 
@@ -68,26 +69,6 @@ enum class ShapeKind {
     Bookmark,
     Checkmark,
     XMark,
-};
-
-// in / out are tangent handles as offsets from p; both zero = a corner. `smooth` only records that
-// the handles are kept mirrored while editing, the outline never reads it.
-struct ShapeVertex
-{
-    QPointF p;
-    QPointF in;
-    QPointF out;
-    bool smooth = false;
-
-    bool operator==(const ShapeVertex &o) const = default;
-};
-
-struct ShapeContour
-{
-    QVector<ShapeVertex> vertices;
-    bool closed = true;
-
-    bool operator==(const ShapeContour &o) const = default;
 };
 
 QString shapeKindToString(ShapeKind kind);

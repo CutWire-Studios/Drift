@@ -96,7 +96,7 @@ ThemedToolTip {
             implicitHeight: pillText.implicitHeight + Theme.spacingXs * 2
             width: implicitWidth
             height: implicitHeight
-            radius: height / 2
+            radius: Theme.radiusPill
             color: Theme.c.themedToolTip.pillBackground
 
             Text {

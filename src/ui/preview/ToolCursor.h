@@ -7,7 +7,9 @@
 
 // Gives a QQuickItem a drawn cursor (crosshair plus a small badge for the tool) in place of a
 // Qt::CursorShape ("busy" is the wait cursor). An empty shape restores the item's default cursor. Shapes: rect, ellipse,
-// polygon, polygonClose, brush, aiInclude, aiExclude, trackPoint, trackPlanar.
+// polygon, polygonClose, brush, aiInclude, aiExclude, trackPoint, trackPlanar, penPlus, penClose,
+// convert, move, anchor, and the oriented "resize:<degrees>" (0 = a horizontal two-way arrow) and
+// "rotate:<degrees>".
 class ToolCursor : public QObject
 {
     Q_OBJECT

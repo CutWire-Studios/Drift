@@ -23,6 +23,7 @@ Popup {
     // Labelled commit on editing sheets, beside the X rather than instead of it: dismissing
     // and confirming are different answers, and one button makes you guess which you got.
     property string doneText: ""
+    property alias headerActions: header.actions
 
     signal doneRequested()
 

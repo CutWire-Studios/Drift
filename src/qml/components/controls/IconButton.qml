@@ -36,7 +36,8 @@ AbstractButton {
     // Small buttons keep their drawn size on a touchscreen; only the area that accepts a
     // finger grows, up to Theme.iconButtonSize. Zero with a pointer.
     property real touchHitPadding: Theme.touchInput
-                                   ? Math.max(0, (Theme.iconButtonSize - Math.min(width, height)) / 2)
+                                   ? Math.max(0, ((Theme.phone ? Theme.androidMinTouchTarget : Theme.iconButtonSize)
+                                                  - Math.min(width, height)) / 2)
                                    : 0
     containmentMask: touchHitPadding > 0 ? touchHitArea : null
 
@@ -51,10 +52,12 @@ AbstractButton {
     readonly property color _labelFg: active ? Theme.c.iconButton.labelForegroundActive : Theme.c.iconButton.labelForeground
 
     implicitWidth: hasLabel ? Math.ceil(labeledRow.implicitWidth + Theme.spacingMd * 2)
-                            : buttonSize
-    implicitHeight: buttonSize
+                            : _drawn
+    // The phone draws icon buttons at the visual size whatever a page asks for.
+    readonly property real _drawn: Theme.phone ? Math.min(buttonSize, Theme.androidIconButtonVisual) : buttonSize
+    implicitHeight: _drawn
     width: implicitWidth
-    height: buttonSize
+    height: _drawn
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
 
@@ -117,7 +120,7 @@ AbstractButton {
 
     contentItem: Item {
         implicitWidth: root.hasLabel ? labeledRow.implicitWidth : glyphOnly.implicitWidth
-        implicitHeight: root.buttonSize
+        implicitHeight: root._drawn
 
         IconGlyph {
             id: glyphOnly

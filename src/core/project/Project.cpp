@@ -20,11 +20,48 @@ namespace drift {
 
 namespace {
 
+// [x, y] for a corner, which is also exactly what files before format 32 wrote for a polygon point;
+// otherwise [x, y, inX, inY, outX, outY] with the tangent mode appended unless it is Corner.
+QJsonArray maskVertexToJson(const ShapeVertex &v)
+{
+    QJsonArray a{v.p.x(), v.p.y()};
+    if (v.in.isNull() && v.out.isNull() && v.mode == TangentMode::Corner)
+        return a;
+    a.append(v.in.x());
+    a.append(v.in.y());
+    a.append(v.out.x());
+    a.append(v.out.y());
+    if (v.mode != TangentMode::Corner)
+        a.append(tangentModeToString(v.mode));
+    return a;
+}
+
+QVector<ShapeVertex> maskVerticesFromJson(const QJsonArray &array)
+{
+    QVector<ShapeVertex> out;
+    out.reserve(array.size());
+    for (const QJsonValue &value : array) {
+        const QJsonArray a = value.toArray();
+        if (a.size() < 2)
+            continue;
+        ShapeVertex v;
+        v.p = QPointF(a.at(0).toDouble(), a.at(1).toDouble());
+        if (a.size() >= 6) {
+            v.in = QPointF(a.at(2).toDouble(), a.at(3).toDouble());
+            v.out = QPointF(a.at(4).toDouble(), a.at(5).toDouble());
+        }
+        if (a.size() >= 7)
+            v.mode = tangentModeFromString(a.at(6).toString());
+        out.append(v);
+    }
+    return out;
+}
+
 QJsonObject maskToJson(const Mask &m)
 {
     QJsonArray points;
-    for (const QPointF &pt : m.points)
-        points.append(QJsonArray{pt.x(), pt.y()});
+    for (const ShapeVertex &v : m.vertices)
+        points.append(maskVertexToJson(v));
 
     QJsonObject maskKeyframesJson;
     for (auto it = m.keyframes.constBegin(); it != m.keyframes.constEnd(); ++it) {
@@ -33,13 +70,13 @@ QJsonObject maskToJson(const Mask &m)
         maskKeyframesJson.insert(it.key(), keyframesToJson(it.value()));
     }
 
-    // One entry per shape key: [timeUs, [[x, y], ...]]. An array rather than an object because
+    // One entry per shape key: [timeUs, [vertex, ...]]. An array rather than an object because
     // the key is a time, and JSON object keys would force it through a string round trip.
     QJsonArray pathKeys;
     for (auto it = m.pathKeys.constBegin(); it != m.pathKeys.constEnd(); ++it) {
         QJsonArray shape;
-        for (const QPointF &pt : it.value())
-            shape.append(QJsonArray{pt.x(), pt.y()});
+        for (const ShapeVertex &v : it.value())
+            shape.append(maskVertexToJson(v));
         pathKeys.append(QJsonArray{qint64(it.key()), shape});
     }
 
@@ -115,12 +152,9 @@ Mask maskFromJson(const QJsonObject &o)
     m.mediaChannel = maskMediaChannelFromString(o.value(QStringLiteral("mediaChannel")).toString());
     m.mediaLoop = o.value(QStringLiteral("mediaLoop")).toBool(m.mediaLoop);
     m.mediaTimeBase = maskMediaTimeBaseFromString(o.value(QStringLiteral("mediaTimeBase")).toString());
-    const QJsonArray points = o.value(QStringLiteral("points")).toArray();
-    for (const QJsonValue &value : points) {
-        const QJsonArray pair = value.toArray();
-        if (pair.size() >= 2)
-            m.points.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
-    }
+    // Format 32 widened a vertex from [x, y] to the form maskVertexToJson writes. The corner form is
+    // unchanged, so a polygon from an older file reads as corner-only vertices with no migration pass.
+    m.vertices = maskVerticesFromJson(o.value(QStringLiteral("points")).toArray());
 
     const QJsonObject maskKeyframesJson = o.value(QStringLiteral("keyframes")).toObject();
     for (auto it = maskKeyframesJson.constBegin(); it != maskKeyframesJson.constEnd(); ++it)
@@ -130,13 +164,7 @@ Mask maskFromJson(const QJsonObject &o)
         const QJsonArray entry = value.toArray();
         if (entry.size() < 2)
             continue;
-        QVector<QPointF> shape;
-        for (const QJsonValue &pointValue : entry.at(1).toArray()) {
-            const QJsonArray pair = pointValue.toArray();
-            if (pair.size() >= 2)
-                shape.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
-        }
-        m.pathKeys.insert(TimeUs(entry.at(0).toInteger()), shape);
+        m.pathKeys.insert(TimeUs(entry.at(0).toInteger()), maskVerticesFromJson(entry.at(1).toArray()));
     }
 
     for (const QJsonValue &value : o.value(QStringLiteral("patches")).toArray()) {
@@ -994,7 +1022,7 @@ void detachClip(Clip &clip)
     clip.anchorZ.detachSharedData();
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
-    clip.mask.points.detach();
+    clip.mask.vertices.detach();
     clip.mask.pathKeys.detach();
     clip.mask.mediaPatches.detach();
     for (auto it = clip.mask.pathKeys.begin(); it != clip.mask.pathKeys.end(); ++it)
@@ -1727,6 +1755,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 32 made Freeform mask vertices bezier (handles and a tangent mode). A format 31 polygon
+    // point is already a valid corner vertex, so there is nothing to migrate; an older build would
+    // drop the handles and draw the curve as a polygon.
     // Version 31 replaced the top-left layout rect with a frame placed by its anchor
     // (migrateClipLayoutTo31 above). An older build would read every clip as sitting at the canvas
     // centre at full size.

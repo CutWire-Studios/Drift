@@ -57,6 +57,11 @@ Item {
         return false
     }
 
+    readonly property bool phone: Theme.touchInput && Theme.compact
+    // Phone fields sit beside their label instead of under it.
+    readonly property real inlineLabelWidth: Theme.phone ? Theme.phoneLabelWidth : 0
+    readonly property real labelSize: phone ? Theme.fontSizeSm : Theme.fontSizeXs
+
     height: contentCol.height
     implicitHeight: contentCol.height
 
@@ -102,17 +107,31 @@ Item {
 
     Component.onCompleted: refreshFields()
 
+    function transitionHint(includeBasic) {
+        const t = root.activeTransition
+        let line = !includeBasic ? "" : t.overlapping
+            ? (Theme.touchInput ? qsTr("Overlap transition. Tap the type to replace it.")
+                                : qsTr("Overlap transition. Drag another kind from Transitions to replace it."))
+            : (Theme.touchInput ? qsTr("Transition to the next clip. Scrub across the cut to preview it.")
+                                : qsTr("Transition to the next clip. Move across the cut to preview it."))
+        const h = t.handles || {}
+        if (!t.overlapping && (h.out === false || h.in === false))
+            line += " " + qsTr("One side has no media past the cut, so its sound fades through silence instead of crossfading.")
+        return line.trim()
+    }
+
     Column {
         id: contentCol
         width: root.width
-        spacing: Theme.spacingXl
+        spacing: Theme.phone ? Theme.spacingMd : Theme.spacingXl
 
         Text {
             width: parent.width
             wrapMode: Text.WordWrap
             visible: !root.hasActiveTransition && !root.canAddOutgoingTransition
             text: root.clipKind === "video" || root.clipKind === "shape" || root.clipKind === "text"
-                  ? qsTr("Hover the cut between two clips and click + to add a transition.")
+                  ? (Theme.touchInput ? qsTr("Tap the + on the cut between two clips to add a transition.")
+                                      : qsTr("Hover the cut between two clips and click + to add a transition."))
                   : qsTr("Transitions work between two clips on a video, shape, or text track.")
             color: Theme.c.transitionInspector.foregroundMuted
             font.family: Theme.fontFamily
@@ -136,6 +155,7 @@ Item {
             ThemedButton {
                 id: addTransitionButton
                 text: qsTr("Add transition…")
+                width: root.phone ? parent.width : implicitWidth
                 variant: "primary"
                 onClicked: {
                     const track = EditorState.selectedTrack
@@ -162,29 +182,24 @@ Item {
             Text {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                text: {
-                    const t = root.activeTransition
-                    let line = t.overlapping
-                        ? qsTr("Overlap transition. Drag another kind from Transitions to replace it.")
-                        : qsTr("Transition to the next clip. Move across the cut to preview it.")
-                    const h = t.handles || {}
-                    if (!t.overlapping && (h.out === false || h.in === false))
-                        line += " " + qsTr("One side has no media past the cut, so its sound fades through silence instead of crossfading.")
-                    return line
-                }
+                visible: !Theme.phone || text.length > 0
+                text: root.transitionHint(!Theme.phone)
                 color: Theme.c.transitionInspector.foregroundMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.labelSize
             }
 
-            Column {
+            Flow {
                 width: parent.width
                 spacing: 4
                 Text {
+                    width: root.phone ? root.inlineLabelWidth : implicitWidth
+                    height: root.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                     text: qsTr("Type")
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                 }
                 // A thumbnail picker instead of a name list: many kinds are only told apart by how they look.
                 Rectangle {
@@ -200,8 +215,8 @@ Item {
                     }
                     readonly property string strip: kindInfo.previewStripPath || ""
                     readonly property int frameCount: Math.max(1, kindInfo.previewFrames || 1)
-                    width: parent.width
-                    height: Theme.controlHeight * 1.6
+                    width: parent.width - root.inlineLabelWidth - (root.phone ? parent.spacing * 2 + typeInfo.width : 0)
+                    height: Theme.phone ? Theme.controlHeight : Theme.controlHeight * 1.6
                     radius: Theme.c.themedComboBox.radius
                     color: Theme.c.themedComboBox.background
                     border.width: kindMouse.containsMouse || kindButton.activeFocus
@@ -289,12 +304,20 @@ Item {
                         id: kindPicker
                     }
                 }
+
+                AndroidInfoButton {
+                    id: typeInfo
+                    hint: root.transitionHint(true) + " " + qsTr("A transition needs two clips next to each other on one track.")
+                }
             }
 
-            Column {
+            Flow {
                 width: parent.width
                 spacing: 4
                 Text {
+                    width: root.phone ? root.inlineLabelWidth : implicitWidth
+                    height: root.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                     text: qsTr("Duration")
                     SearchAnchor {
                         searchId: "transition-duration"
@@ -303,13 +326,13 @@ Item {
                     }
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                 }
                 ThemedNumberField {
                     id: transitionDurationField
                     to: 60
                     unit: "s"
-                    width: parent.width
+                    width: parent.width - root.inlineLabelWidth - (root.phone ? parent.spacing : 0)
                     decimals: 2
                     step: 0.05
                     from: 0.05
@@ -324,10 +347,13 @@ Item {
 
             // Remaps progress across the transition window. "Custom" hands off to the same
             // curve editor the clip fades use, scoped to this transition.
-            Column {
+            Flow {
                 width: parent.width
                 spacing: 4
                 Text {
+                    width: root.phone ? root.inlineLabelWidth : implicitWidth
+                    height: root.phone ? Theme.controlHeight : implicitHeight
+                    verticalAlignment: Text.AlignVCenter
                     text: qsTr("Curve")
                     SearchAnchor {
                         searchId: "transition-curve"
@@ -336,11 +362,11 @@ Item {
                     }
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
+                    font.pixelSize: root.labelSize
                 }
                 CurveField {
                     id: transitionCurveBox
-                    width: parent.width
+                    width: parent.width - root.inlineLabelWidth - (root.phone ? parent.spacing : 0)
                     domain: "fade"
                     curve: root.activeTransition.easingCurve || "linear"
                     handles: root.activeTransition.easingHandles || []
@@ -370,6 +396,7 @@ Item {
                     spacing: 4
 
                     Row {
+                        visible: !root.phone || !!trParamRow.paramData.isBoolean
                         width: parent.width
                         spacing: 8
                         Text {
@@ -389,10 +416,27 @@ Item {
                                   : Number(trParamSlider.value).toFixed(
                                         Math.abs(trParamRow.paramData.max - trParamRow.paramData.min) >= 10 ? 1 : 2)
                             color: Theme.c.transitionInspector.foreground
-                            font.family: Theme.monoFontFamily
-                            font.pixelSize: Theme.fontSizeXs
+                            font.family: root.phone ? Theme.fontFamily : Theme.monoFontFamily
+                            font.pixelSize: root.labelSize
                             anchors.verticalCenter: parent.verticalCenter
                         }
+                    }
+
+                    AndroidSliderRow {
+                        visible: root.phone && !trParamRow.paramData.isBoolean
+                        lockWhilePlaying: true
+                        label: trParamRow.paramData.label
+                        from: trParamRow.paramData.min
+                        to: trParamRow.paramData.max
+                        value: trParamRow.paramData.value
+                        valueFormatter: function (v) {
+                            return Number(v).toFixed(Math.abs(trParamRow.paramData.max - trParamRow.paramData.min) >= 10 ? 1 : 2)
+                        }
+                        onDragBegan: EditorState.beginPreviewDrag(qsTr("Edit transition"))
+                        onDragEnded: EditorState.commitPreviewDrag()
+                        onMoved: v => EditorState.previewSetTransitionParam(
+                                     root.transitionEditTrack, root.activeTransition.id,
+                                     trParamRow.paramData.key, v)
                     }
 
                     ThemedSwitch {
@@ -407,7 +451,7 @@ Item {
                         id: trParamSlider
                         lockWhilePlaying: true
                         label: trParamRow.paramData.label
-                        visible: !trParamRow.paramData.isBoolean
+                        visible: !root.phone && !trParamRow.paramData.isBoolean
                         width: parent.width
                         from: trParamRow.paramData.min
                         to: trParamRow.paramData.max
@@ -430,6 +474,7 @@ Item {
 
             ThemedButton {
                 text: qsTr("Remove transition")
+                width: root.phone ? parent.width : implicitWidth
                 variant: "destructive"
                 onClicked: EditorState.removeTransition(
                                root.transitionEditTrack, root.activeTransition.id)

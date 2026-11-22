@@ -56,7 +56,7 @@ Item {
                     visible: root.dirty
                     width: Theme.spacingMd
                     height: width
-                    radius: width / 2
+                    radius: Theme.radiusPill
                     color: Theme.c.sourceLabPanel.dirtyDot
                 }
             }

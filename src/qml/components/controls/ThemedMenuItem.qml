@@ -40,6 +40,7 @@ MenuItem {
 
         Row {
             id: row
+            anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingLg
             leftPadding: Theme.spacingLg
             rightPadding: Theme.spacingLg

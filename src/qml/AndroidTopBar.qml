@@ -93,7 +93,10 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingXs
 
+            // Bell and Extras only show when they have something to say; both are in the project
+            // sheet as well. Always shown, the six icons squeezed the project name down to "…".
             IconButton {
+                visible: Toasts.unreadCount > 0
                 buttonSize: Theme.androidIconButtonSize
                 iconSize: Theme.iconSizeLg
                 glyph: Theme.icons.bell
@@ -133,6 +136,7 @@ Item {
             }
 
             IconButton {
+                visible: !!ShellBridge.main?.addonAttentionNeeded
                 buttonSize: Theme.androidIconButtonSize
                 iconSize: Theme.iconSizeLg
                 glyph: Theme.icons.puzzle

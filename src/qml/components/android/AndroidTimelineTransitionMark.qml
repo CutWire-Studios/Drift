@@ -25,7 +25,7 @@ Item {
     readonly property var clips: panel.tracks[trackIndex].clips
     readonly property var leftClip: clips[leftClipIndex]
     readonly property var rightClip: clips[region.rightClip]
-    readonly property bool roomy: leftClip && rightClip
+    readonly property bool roomy: !!(leftClip && rightClip)
         && Math.min(leftClip.duration, rightClip.duration) * pxPerSecond
            >= Math.max(Theme.androidIconButtonSize, addW) * 1.5
     readonly property bool neighbourSelected: EditorState.selectionRevision >= 0
@@ -48,10 +48,7 @@ Item {
     readonly property real shownEnd:
         liveDuration < 0 || region.overlap ? region.end : shownStart + liveDuration
     readonly property real bodyW: Math.max(10, (shownEnd - shownStart) * pxPerSecond)
-    readonly property color fill: Qt.rgba(Theme.c.androidTimelineTransitionMark.background.r,
-                                          Theme.c.androidTimelineTransitionMark.background.g,
-                                          Theme.c.androidTimelineTransitionMark.background.b,
-                                          selected ? 1.0 : 0.9)
+    readonly property color fill: Qt.alpha(Theme.c.androidTimelineTransitionMark.background, selected ? Theme.c.androidTimelineTransitionMark.backgroundOpacitySelected : Theme.c.androidTimelineTransitionMark.backgroundOpacity)
 
     z: 10
     y: clipAreaTop
@@ -74,7 +71,7 @@ Item {
             anchors.bottomMargin: mark.bottomInset
             width: mark.addW
             height: mark.barH
-            radius: height / 2
+            radius: Theme.radiusPill
             color: Theme.c.androidTimelineTransitionMark.addBackground
             border.width: Theme.c.androidTimelineTransitionMark.addBorderWidth
             border.color: Theme.c.androidTimelineTransitionMark.addBorder
@@ -83,9 +80,9 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: -1
-                radius: height / 2
+                radius: Theme.radiusPill
                 color: "transparent"
-                border.width: 1
+                border.width: Theme.c.androidTimelineTransitionMark.outlineWidth
                 border.color: Theme.c.androidTimelineTransitionMark.outline
             }
 
@@ -123,37 +120,34 @@ Item {
         Rectangle {
             anchors.fill: parent
             anchors.margins: -1
-            radius: height / 2
+            radius: Theme.radiusPill
             color: "transparent"
-            border.width: 1
+            border.width: Theme.c.androidTimelineTransitionMark.outlineWidth
             border.color: Theme.c.androidTimelineTransitionMark.outline
         }
 
         Rectangle {
             id: body
             anchors.fill: parent
-            radius: height / 2
+            radius: Theme.radiusPill
             color: mark.fill
             border.width: mark.selected ? Theme.c.androidTimelineTransitionMark.borderWidthSelected
                                         : Theme.c.androidTimelineTransitionMark.borderWidth
-            border.color: Qt.rgba(Theme.c.androidTimelineTransitionMark.border.r,
-                                  Theme.c.androidTimelineTransitionMark.border.g,
-                                  Theme.c.androidTimelineTransitionMark.border.b,
-                                  mark.selected ? 1.0 : 0.75)
+            border.color: Qt.alpha(Theme.c.androidTimelineTransitionMark.border, mark.selected ? Theme.c.androidTimelineTransitionMark.borderOpacitySelected : Theme.c.androidTimelineTransitionMark.borderOpacity)
 
             TimelineTransitionChevrons {
                 anchors.fill: parent
                 anchors.leftMargin: mark.barH * 0.45
                 anchors.rightMargin: mark.barH * 0.45
                 visible: width >= mark.barH * 0.6
-                color: Qt.alpha(Theme.c.androidTimelineTransitionMark.chevron, 0.3)
+                color: Qt.alpha(Theme.c.androidTimelineTransitionMark.chevron, Theme.c.androidTimelineTransitionMark.chevronOpacity)
             }
 
             Rectangle {
                 anchors.centerIn: content
-                width: content.implicitWidth + 10
-                height: content.implicitHeight + 2
-                radius: height / 2
+                width: content.implicitWidth + Theme.c.androidTimelineTransitionMark.labelPaddingX
+                height: content.implicitHeight + Theme.c.androidTimelineTransitionMark.labelPaddingY
+                radius: Theme.radiusPill
                 color: mark.fill
                 visible: content.visible
             }

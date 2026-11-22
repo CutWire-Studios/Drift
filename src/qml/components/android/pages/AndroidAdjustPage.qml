@@ -38,7 +38,7 @@ Item {
         id: scroll
         anchors.fill: parent
         contentWidth: width
-        contentHeight: adjustColumn.height + Theme.pagePadding * 2
+        contentHeight: adjustColumn.height + Theme.spacingLg * 2
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
@@ -46,9 +46,9 @@ Item {
         Column {
             id: adjustColumn
             x: Theme.pagePadding
-            y: Theme.pagePadding
+            y: Theme.spacingLg
             width: scroll.width - Theme.pagePadding * 2
-            spacing: Theme.spacing2xl
+            spacing: Theme.spacingLg
             enabled: root.hasTarget
 
             Row {
@@ -83,38 +83,25 @@ Item {
                                    ? Theme.c.androidToolPage.foreground
                                    : Theme.c.androidToolPage.foregroundMuted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSizeXs
+                            font.pixelSize: Theme.fontSizeSm
                             font.weight: root.selectedIndex === index ? Font.Medium : Font.Normal
                         }
                     }
                 }
             }
 
-            ThemedSlider {
+            AndroidSliderRow {
                 id: adjustSlider
-                width: parent.width
                 label: root.selected.label
                 from: root.selected.from
                 to: root.selected.to
-                valueFormatter: function (v) { return Number(v).toFixed(2) }
-                Binding on value {
-                    when: !adjustSlider.pressed
-                    value: root.selectedValue
-                }
-                onPressedChanged: {
-                    if (pressed)
-                        root.colorState.beginEdit(qsTr("Adjust %1").arg(root.selected.label))
-                    else
-                        root.colorState.commitEdit()
-                }
-                onMoved: root.colorState.setParam(root.selected.key, value)
-            }
-
-            ThemedButton {
-                text: qsTr("Reset")
-                variant: "secondary"
-                enabled: Math.abs(root.selectedValue - root.selected.def) > 0.001
-                onClicked: {
+                value: root.selectedValue
+                resettable: true
+                resetEnabled: Math.abs(root.selectedValue - root.selected.def) > 0.001
+                onDragBegan: root.colorState.beginEdit(qsTr("Adjust %1").arg(root.selected.label))
+                onDragEnded: root.colorState.commitEdit()
+                onMoved: v => root.colorState.setParam(root.selected.key, v)
+                onResetRequested: {
                     root.colorState.beginEdit(qsTr("Reset %1").arg(root.selected.label))
                     root.colorState.setParam(root.selected.key, root.selected.def)
                     root.colorState.commitEdit()

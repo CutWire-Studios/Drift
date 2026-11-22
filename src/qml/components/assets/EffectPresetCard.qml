@@ -7,6 +7,7 @@ Column {
     id: root
     required property var modelData
     required property real cardSize
+    readonly property bool phone: Theme.touchInput && Theme.compact
     signal applyRequested(string effectId)
     signal deleteRequested(var preset)
     signal searchClearRequested()
@@ -150,7 +151,9 @@ Column {
             label: root.modelData.label
             thumbnail: root.thumb
             glyph: Theme.icons.wand
-            onLiftTapped: cardMenu.popup()
+            liftEnabled: !root.phone
+            onLiftTapped: root.phone ? root.applyRequested(root.modelData.id) : cardMenu.popup()
+            onHeld: if (root.phone) cardMenu.popup()
         }
 
         ThemedContextMenu {
@@ -199,6 +202,7 @@ Column {
         }
 
         AssetQuickAddButton {
+            visible: !root.phone
             z: 5
             anchors.right: parent.right
             anchors.bottom: parent.bottom

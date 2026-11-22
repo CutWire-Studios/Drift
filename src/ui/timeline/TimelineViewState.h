@@ -86,6 +86,18 @@ public:
         QColor gapOutline{255, 255, 255, 56};
         QColor keyframeMarker{Qt::white};
         QColor keyframeMarkerRim{0, 0, 0, 170};
+        QColor waveformBarBackground{0, 0, 0, 89};
+        QColor fadeFill{0, 0, 0, 97};
+        QColor fadeStroke{255, 255, 255, 230};
+        double disabledChipForegroundOpacity = 0.55;
+        double clipEdgeOpacity = 0.7255;
+        double effectDropTintOpacity = 0.28;
+        double rippleTintOpacity = 0.2;
+        double rippleOutlineOpacity = 0.9;
+        double waveformDividerOpacity = 0.5;
+        double clipEdgeWidth = 1.25;
+        double rippleOutlineWidth = 1.5;
+        double fadeStrokeWidth = 1.5;
         QString fontFamily;
         double fontSizeTiny = 9.6;
         double fontSizeXs = 11.52;

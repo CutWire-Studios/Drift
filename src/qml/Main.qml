@@ -1433,6 +1433,10 @@ ApplicationWindow {
     // Panels get the id first: they claim global ids (delete, selectAll, clearSelection, ...)
     // while engaged, and handle their own scoped ids.
     function dispatchAction(id) {
+        if (id === "clearSelection" && EditorState.drag.interacting) {
+            EditorState.drag.cancel()
+            return
+        }
         for (const handler of ShellBridge.actionHandlers) {
             if (handler.handleAction(id))
                 return
@@ -1445,6 +1449,11 @@ ApplicationWindow {
     // Returns whether the chord is bound to anything, which is what lets an arrow key be consumed.
     function dispatchChord(chord) {
         const globalId = EditorState.keymap.actionFor("global", chord)
+        // A drag in flight owns Esc, whichever item holds focus.
+        if (globalId === "clearSelection" && EditorState.drag.interacting) {
+            EditorState.drag.cancel()
+            return true
+        }
         let bound = globalId !== ""
         for (const handler of ShellBridge.actionHandlers) {
             const scopedId = handler.scope === "global" ? "" : EditorState.keymap.actionFor(handler.scope, chord)

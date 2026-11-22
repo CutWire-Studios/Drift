@@ -15,10 +15,10 @@ Rectangle {
 
     width: pillRow.width + 2
     height: 38
-    radius: height / 2
-    color: Qt.rgba(tint.r, tint.g, tint.b, 0.12)
+    radius: Theme.radiusPill
+    color: Qt.alpha(tint, Theme.c.mediaPreviewResolutionPill.tintOpacity)
     border.width: Theme.c.mediaPreviewResolutionPill.borderWidth
-    border.color: Qt.rgba(tint.r, tint.g, tint.b, 0.55)
+    border.color: Qt.alpha(tint, Theme.c.mediaPreviewResolutionPill.tintOpacityBorder)
 
     Row {
         id: pillRow

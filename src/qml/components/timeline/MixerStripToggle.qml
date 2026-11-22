@@ -31,12 +31,12 @@ AbstractButton {
         radius: Theme.c.mixerStripToggle.radius
         color: toggle.checked
                ? (toggle.tone === "active" ? Theme.c.mixerStripToggle.activeBackground
-                                           : Qt.rgba(Theme.c.mixerStripToggle.destructive.r, Theme.c.mixerStripToggle.destructive.g, Theme.c.mixerStripToggle.destructive.b, 0.16))
+                                           : Qt.alpha(Theme.c.mixerStripToggle.destructive, Theme.c.mixerStripToggle.destructiveOpacity))
                : (toggle.down ? Theme.c.mixerStripToggle.backgroundPressed : (toggle.hovered ? Theme.c.mixerStripToggle.backgroundHover : "transparent"))
         border.width: toggle.checked || toggle.visualFocus ? Theme.c.mixerStripToggle.borderWidth : 0
         border.color: toggle.visualFocus ? Theme.c.mixerStripToggle.borderFocus
                     : toggle.tone === "active" ? Theme.c.mixerStripToggle.activeBorder
-                    : Qt.rgba(Theme.c.mixerStripToggle.destructive.r, Theme.c.mixerStripToggle.destructive.g, Theme.c.mixerStripToggle.destructive.b, 0.45)
+                    : Qt.alpha(Theme.c.mixerStripToggle.destructive, Theme.c.mixerStripToggle.destructiveOpacityBorder)
 
         Behavior on color {
             ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }

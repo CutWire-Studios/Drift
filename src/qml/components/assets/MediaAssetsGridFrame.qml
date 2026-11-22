@@ -169,7 +169,7 @@ Rectangle {
         anchors.margins: 4
         width: addedLabel.implicitWidth + 10
         height: addedLabel.implicitHeight + 4
-        radius: 3
+        radius: Theme.c.mediaAssetsAddedBadge.radius
         color: Theme.c.mediaAssetsAddedBadge.background
 
         Text {

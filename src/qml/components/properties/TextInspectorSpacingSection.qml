@@ -9,13 +9,16 @@ CollapsibleSection {
     tooltip: qsTr("Line height, letter spacing, wrapping and bend")
     expanded: false
     visible: inspector.hasTextStyle
+    readonly property bool phone: Theme.touchInput && Theme.compact
 
-    Row {
+    Grid {
         width: parent.width
-        spacing: 8
+        columns: root.phone ? 1 : 2
+        columnSpacing: 8
+        rowSpacing: Theme.spacingMd
 
         PropertyKeyframeRow {
-            width: (parent.width - parent.spacing) / 2
+            width: root.phone ? parent.width : (parent.width - parent.columnSpacing) / 2
             propDef: inspector.textProp("lineHeight", qsTr("Line height"), 2)
             keyframeList: inspector.textKeyframes("lineHeight")
             useSlider: true
@@ -24,7 +27,7 @@ CollapsibleSection {
         }
 
         PropertyKeyframeRow {
-            width: (parent.width - parent.spacing) / 2
+            width: root.phone ? parent.width : (parent.width - parent.columnSpacing) / 2
             propDef: inspector.textProp("letterSpacing", qsTr("Letter spacing"), 1)
             keyframeList: inspector.textKeyframes("letterSpacing")
             useSlider: true
@@ -34,17 +37,19 @@ CollapsibleSection {
         }
     }
 
-    Row {
+    Grid {
         width: parent.width
-        spacing: 8
+        columns: root.phone ? 1 : 2
+        columnSpacing: 8
+        rowSpacing: Theme.spacingMd
 
         Column {
-            width: (parent.width - parent.spacing) / 2
+            width: root.phone ? parent.width : (parent.width - parent.columnSpacing) / 2
             spacing: 4
             Text {
                 text: qsTr("Wrapping")
                 color: Theme.c.textInspectorSpacingSection.foregroundMuted
-                font.pixelSize: Theme.fontSizeXs
+                font.pixelSize: root.phone ? Theme.fontSizeSm : Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
             ThemedToggleButton {
@@ -57,7 +62,7 @@ CollapsibleSection {
         }
 
         PropertyKeyframeRow {
-            width: (parent.width - parent.spacing) / 2
+            width: root.phone ? parent.width : (parent.width - parent.columnSpacing) / 2
             propDef: inspector.textProp("pathBend", qsTr("Bend"), 0)
             keyframeList: inspector.textKeyframes("pathBend")
             useSlider: true

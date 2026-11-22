@@ -15,7 +15,6 @@ Rectangle {
 
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    anchors.topMargin: Theme.spacingLg
     width: hintRow.width + Theme.spacing2xl
     height: hintRow.height + Theme.spacingLg
     radius: Theme.c.cropOverlayHint.radius

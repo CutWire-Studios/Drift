@@ -70,6 +70,7 @@ Item {
     }
 
     TapHandler {
+        margin: Theme.touchInput ? 18 : 0
         enabled: root.animated
         onTapped: root.toggled()
     }

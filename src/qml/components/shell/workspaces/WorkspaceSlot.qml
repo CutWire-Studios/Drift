@@ -52,20 +52,26 @@ Item {
     onFullscreenChanged: applyActive()
     Component.onCompleted: place()
 
-    Row {
+    // Scrolls rather than running past the slot when the tabs outgrow it.
+    ScrollStrip {
         id: tabStrip
         visible: root.tabbed
-        spacing: Theme.spacingSm
+        anchors.left: parent.left
+        anchors.right: parent.right
         height: root.tabbed ? Theme.controlHeightSm + Theme.spacingSm : 0
 
-        Repeater {
-            model: root.entries
-            ThemedChip {
-                required property var modelData
-                required property int index
-                text: root.pool.label(modelData.type)
-                selected: index === root.activeIndex
-                onClicked: root.activeIndex = index
+        Row {
+            spacing: Theme.spacingSm
+
+            Repeater {
+                model: root.entries
+                ThemedChip {
+                    required property var modelData
+                    required property int index
+                    text: root.pool.label(modelData.type)
+                    selected: index === root.activeIndex
+                    onClicked: root.activeIndex = index
+                }
             }
         }
     }

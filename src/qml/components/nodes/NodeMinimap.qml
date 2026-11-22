@@ -34,7 +34,7 @@ Item {
         anchors.fill: parent
         radius: Theme.c.nodeMinimap.radius
         color: Theme.c.nodeMinimap.background
-        border.width: 1
+        border.width: Theme.c.nodeMinimap.borderWidth
         border.color: Theme.c.nodeMinimap.border
     }
 
@@ -64,7 +64,7 @@ Item {
                 y: root.offY + (model.y - root.bounds.y) * root.mapScale
                 width: Math.max(2, model.width * root.mapScale)
                 height: Math.max(2, (item ? item.height : 40) * root.mapScale)
-                radius: 1
+                radius: Theme.c.nodeMinimap.nodeRadius
                 color: Theme.c.nodeMinimap.node
             }
         }
@@ -74,8 +74,8 @@ Item {
             y: root.offY + (root.view.y - root.bounds.y) * root.mapScale
             width: root.view.width * root.mapScale
             height: root.view.height * root.mapScale
-            color: Qt.alpha(Theme.c.nodeMinimap.viewport, 0.16)
-            border.width: 1.5
+            color: Qt.alpha(Theme.c.nodeMinimap.viewport, Theme.c.nodeMinimap.viewportOpacity)
+            border.width: Theme.c.nodeMinimap.viewportBorderWidth
             border.color: Theme.c.nodeMinimap.viewport
         }
     }

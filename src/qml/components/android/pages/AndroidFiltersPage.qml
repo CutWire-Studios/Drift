@@ -10,33 +10,21 @@ Item {
     property int clipIndex: -1
     property bool showBrowse: false
 
-    Row {
+    readonly property var tabList: [{ id: "applied", label: qsTr("Applied") }, { id: "browse", label: qsTr("Browse") }]
+
+    AssetSearchBar {
         id: chips
-        x: Theme.pagePadding
-        height: Theme.controlHeight
-        spacing: Theme.spacingSm
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Applied")
-            variant: "outline"
-            selected: !root.showBrowse
-            onClicked: root.showBrowse = false
-        }
-
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Browse")
-            variant: "outline"
-            selected: root.showBrowse
-            onClicked: root.showBrowse = true
-        }
+        visible: !root.showBrowse
+        width: parent.width
+        tabs: root.tabList
+        currentTabId: "applied"
+        searchEnabled: false
+        onTabSelected: tabId => root.showBrowse = tabId === "browse"
     }
 
     Flickable {
         id: appliedFlick
-        anchors.top: chips.bottom
-        anchors.topMargin: Theme.spacingSm
+        anchors.top: root.showBrowse ? parent.top : chips.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
@@ -57,13 +45,13 @@ Item {
     }
 
     EffectBrowser {
-        anchors.top: chips.bottom
-        anchors.topMargin: Theme.spacingSm
+        anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: Theme.pagePadding
-        anchors.rightMargin: Theme.pagePadding
         visible: root.showBrowse
+        headerTabs: root.tabList
+        headerTabId: "browse"
+        onHeaderTabSelected: tabId => root.showBrowse = tabId === "browse"
     }
 }

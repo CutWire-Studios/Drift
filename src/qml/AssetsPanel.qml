@@ -710,6 +710,12 @@ PanelFrame {
         }
     }
 
+    readonly property bool phoneHeaderActions: sheetMode && Theme.phone && assetsHeader.hasActions
+
+    function openNewFolder() {
+        newFolderDialog.open()
+    }
+
     function importMedia() {
         var urls = FileDialogs.openFiles(qsTr("Import Media"),
                                          [AssetLibrary.mediaNameFilter(),
@@ -985,7 +991,7 @@ PanelFrame {
                 readonly property bool searchBarTab: ["text", "stickers", "shapes", "effects", "templates",
                                                       "transitions", "sounds"].indexOf(tabId) >= 0
                 width: parent.width
-                height: (searchBarTab && !root.locked) || (root.sheetMode && !hasActions) ? 0 : Theme.panelHeaderHeight
+                height: (searchBarTab && !root.locked) || (root.sheetMode && (!hasActions || Theme.phone)) ? 0 : Theme.panelHeaderHeight
                 visible: height > 0
                 title: tabLabels[tabId]
                 showTitle: !root.sheetMode

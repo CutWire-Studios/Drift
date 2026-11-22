@@ -12,7 +12,7 @@ Rectangle {
     z: 4
     width: label.implicitWidth + Theme.spacingLg
     height: label.implicitHeight + Theme.spacingSm
-    radius: height / 2
+    radius: Theme.radiusPill
     color: Theme.c.sourceLabCompare.labelBackground
 
     Text {

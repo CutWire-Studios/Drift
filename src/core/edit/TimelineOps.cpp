@@ -505,7 +505,7 @@ Mask clipShapeMask(const QString &id, double hostW, double hostH)
         const double start = qDegreesToRadians(rotationDeg - 90.0);
         for (int i = 0; i < sides; ++i) {
             const double a = start + i * 2.0 * M_PI / sides;
-            mask.points.append(QPointF(0.5 + 0.5 * w * std::cos(a), 0.5 + 0.5 * h * std::sin(a)));
+            mask.vertices.append(ShapeVertex{QPointF(0.5 + 0.5 * w * std::cos(a), 0.5 + 0.5 * h * std::sin(a)), {}, {}, TangentMode::Corner});
         }
     };
 
@@ -539,7 +539,7 @@ Mask clipShapeMask(const QString &id, double hostW, double hostH)
         for (int i = 0; i < 10; ++i) {
             const double a = qDegreesToRadians(-90.0 + i * 36.0);
             const double r = i % 2 == 0 ? 1.0 : 0.4;
-            mask.points.append(QPointF(0.5 + 0.5 * w * r * std::cos(a), 0.5 + 0.5 * h * r * std::sin(a)));
+            mask.vertices.append(ShapeVertex{QPointF(0.5 + 0.5 * w * r * std::cos(a), 0.5 + 0.5 * h * r * std::sin(a)), {}, {}, TangentMode::Corner});
         }
     }
     return mask;

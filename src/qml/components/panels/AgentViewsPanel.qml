@@ -78,7 +78,7 @@ PanelFrame {
                 radius: Theme.c.agentViews.tileRadius
                 color: hover.hovered ? Theme.c.agentViews.tileHover : Theme.c.agentViews.tileBackground
                 border.color: Theme.c.agentViews.tileBorder
-                border.width: 1
+                border.width: Theme.c.agentViews.tileBorderWidth
                 clip: true
 
                 Image {

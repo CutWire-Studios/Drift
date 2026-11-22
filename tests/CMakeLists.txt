@@ -21,9 +21,11 @@ add_test(NAME Core COMMAND tst_core)
 qt_add_executable(tst_keyframeview
     tst_keyframeview.cpp
     ../src/app/editor/sessions/KeyframeCurves.cpp
+    ../src/app/editor/sessions/KeyframeInteraction.cpp
     ../src/app/editor/sessions/KeyframeRows.cpp
     ../src/app/editor/sessions/KeyframeSelection.cpp
-    ../src/app/editor/sessions/KeyframeTimeView.cpp)
+    ../src/app/editor/sessions/KeyframeTimeView.cpp
+    ../src/ui/manip/DragSession.cpp)
 target_include_directories(tst_keyframeview PRIVATE ../src)
 target_link_libraries(tst_keyframeview PRIVATE Qt6::Test Qt6::Core driftcore)
 add_test(NAME KeyframeView COMMAND tst_keyframeview)
@@ -72,6 +74,19 @@ qt_add_executable(tst_curveedit
 target_include_directories(tst_curveedit PRIVATE ../src)
 target_link_libraries(tst_curveedit PRIVATE Qt6::Test Qt6::Core driftengine)
 add_test(NAME CurveEdit COMMAND tst_curveedit)
+
+qt_add_executable(tst_manip
+    tst_manip.cpp
+    ../src/ui/manip/ManipModifiers.h
+    ../src/ui/manip/SnapService.cpp
+    ../src/ui/manip/DragSession.cpp
+    ../src/ui/manip/PathEditCore.cpp
+    ../src/ui/manip/StrokeSmoother.cpp
+    ../src/ui/manip/CurveGraphModel.cpp
+    ../src/ui/manip/ClipFrameMapper.cpp)
+target_include_directories(tst_manip PRIVATE ../src)
+target_link_libraries(tst_manip PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)
+add_test(NAME Manip COMMAND tst_manip)
 
 qt_add_executable(tst_colorwheel tst_colorwheel.cpp)
 target_include_directories(tst_colorwheel PRIVATE ../src)
@@ -310,6 +325,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/KeyframeSelection.cpp
     ../src/app/editor/sessions/KeyframeTimeView.cpp
     ../src/app/editor/sessions/MaskEditSession.cpp
+    ../src/app/editor/sessions/PathEditSession.cpp
     ../src/app/editor/sessions/MaskStackModel.cpp
     ../src/app/editor/sessions/MaskSelection.cpp
     ../src/app/editor/sessions/MaskingController.cpp
@@ -344,6 +360,9 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/audio/VoiceLibrary.cpp
     ../src/ui/preview/Outliner3dModel.cpp
     ../src/ui/preview/PreviewController.cpp
+    ../src/ui/manip/SnapService.cpp
+    ../src/ui/manip/DragSession.cpp
+    ../src/ui/manip/PathEditCore.cpp
     ../src/app/online/addons/AddonCatalog.cpp
     ../src/app/online/addons/AddonManager.cpp
     ../src/app/jobs/JobRegistry.cpp

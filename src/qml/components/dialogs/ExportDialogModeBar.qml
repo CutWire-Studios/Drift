@@ -2,10 +2,14 @@ import QtQuick
 import Drift
 
 Row {
+    id: bar
+    width: parent.width
     required property var dialog
     spacing: Theme.spacingMd
+    readonly property real chipWidth: Theme.touchInput && Theme.compact ? Math.floor((width - 2 * spacing) / 3) : -1
 
     ThemedToggleButton {
+        width: bar.chipWidth > 0 ? bar.chipWidth : implicitWidth
         text: qsTr("Video")
         checked: dialog.exportMode === "video"
         onClicked: {
@@ -18,6 +22,7 @@ Row {
     }
 
     ThemedToggleButton {
+        width: bar.chipWidth > 0 ? bar.chipWidth : implicitWidth
         text: qsTr("Audio")
         checked: dialog.exportMode === "audio"
         onClicked: {
@@ -30,6 +35,7 @@ Row {
     }
 
     ThemedToggleButton {
+        width: bar.chipWidth > 0 ? bar.chipWidth : implicitWidth
         text: qsTr("GIF")
         enabled: EditorState.exportGifAvailable()
         tooltip: enabled ? "" : qsTr("GIF encoder is not available in this build")

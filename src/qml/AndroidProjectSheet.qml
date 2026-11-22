@@ -63,7 +63,7 @@ AndroidBottomSheet {
         {
             id: "crop",
             label: qsTr("Crop video size"),
-            detail: qsTr("Drag the preview edges to change what’s included"),
+            detail: qsTr("Trim the frame to a smaller area"),
             icon: Theme.icons.crop
         },
         {
@@ -77,6 +77,12 @@ AndroidBottomSheet {
             label: qsTr("Multicam"),
             detail: qsTr("Sync and switch between angles"),
             icon: Theme.icons.shuffle
+        },
+        {
+            id: "notifications",
+            label: qsTr("Notifications"),
+            detail: qsTr("Recent messages and finished jobs"),
+            icon: Theme.icons.bell
         },
         {
             id: "extras",

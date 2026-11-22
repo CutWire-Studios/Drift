@@ -14,16 +14,16 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Theme.c.trackHeaderStateTint.locked
-        opacity: parent.locked ? 0.1 : 0
+        opacity: parent.locked ? Theme.c.trackHeaderStateTint.lockedOpacity : 0
     }
     Rectangle {
         anchors.fill: parent
         color: Theme.c.trackHeaderStateTint.hover
-        opacity: parent.hovered ? 0.05 : 0
+        opacity: parent.hovered ? Theme.c.trackHeaderStateTint.hoverOpacity : 0
     }
     Rectangle {
         anchors.fill: parent
         color: Theme.c.trackHeaderStateTint.selected
-        opacity: parent.selected ? 0.16 : 0
+        opacity: parent.selected ? Theme.c.trackHeaderStateTint.selectedOpacity : 0
     }
 }

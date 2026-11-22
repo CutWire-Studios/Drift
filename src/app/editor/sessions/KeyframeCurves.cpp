@@ -128,6 +128,7 @@ Series seriesFromMap(const QVariantMap &map)
     s.shown = map.value(QStringLiteral("shown"), true).toBool();
     s.valueMin = number(map, "valueMin", 0);
     s.valueMax = number(map, "valueMax", 1);
+    s.fixedRange = map.value(QStringLiteral("fixedRange")).toBool();
     s.ownMin = number(map, "ownMin", s.valueMin);
     s.ownMax = number(map, "ownMax", s.valueMax);
     return s;
@@ -151,7 +152,8 @@ QVariantMap toMap(const Series &s)
             {QStringLiteral("ownMin"), s.ownMin},
             {QStringLiteral("ownMax"), s.ownMax},
             {QStringLiteral("valueMin"), s.valueMin},
-            {QStringLiteral("valueMax"), s.valueMax}};
+            {QStringLiteral("valueMax"), s.valueMax},
+            {QStringLiteral("fixedRange"), s.fixedRange}};
 }
 
 QList<Series> seriesFromList(const QVariantList &list)
@@ -170,6 +172,14 @@ QVariantList toList(const QList<Series> &series)
     for (const Series &s : series)
         out.append(toMap(s));
     return out;
+}
+
+bool hasFixedRange(const QString &id, bool hasRange)
+{
+    return hasRange || id == QLatin1String("opacity") || id == QLatin1String("volume")
+           || id == QLatin1String("rotation") || id == QLatin1String("mask.rotation")
+           || id == QLatin1String("mask.x") || id == QLatin1String("mask.y") || id == QLatin1String("mask.w")
+           || id == QLatin1String("mask.h");
 }
 
 Range valueRange(const QString &id, const QList<Point> &points, double base, bool hasRange, double min,
@@ -357,19 +367,6 @@ void keepSmooth(Point &p, bool outgoingMoved)
 }
 
 } // namespace
-
-Point withHandle(Point p, bool outgoing, double dx, double value)
-{
-    if (outgoing) {
-        p.outDx = std::max(0.0, dx);
-        p.outDy = value - p.value;
-    } else {
-        p.inDx = std::min(0.0, dx);
-        p.inDy = value - p.value;
-    }
-    keepSmooth(p, outgoing);
-    return p;
-}
 
 namespace {
 

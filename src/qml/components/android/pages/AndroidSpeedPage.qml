@@ -14,31 +14,22 @@ Item {
         id: scroll
         anchors.fill: parent
         contentWidth: width
-        contentHeight: speedColumn.height + Theme.pagePadding * 2
+        contentHeight: inspector.height + Theme.pagePadding * 2
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
 
-        Column {
-            id: speedColumn
+        SpeedFadeInspector {
+            id: inspector
             x: Theme.pagePadding
             y: Theme.pagePadding
             width: scroll.width - Theme.pagePadding * 2
-            spacing: Theme.spacing2xl
-
-            SpeedFadeInspector {
-                width: speedColumn.width
-            }
-
-            ThemedButton {
-                text: qsTr("Speed curve")
-                variant: "secondary"
-                onClicked: {
-                    const track = root.trackIndex
-                    const clip = root.clipIndex
-                    root.scaffold.apply()
-                    ShellBridge.main.openSpeedCurve(track, clip)
-                }
+            rampHandled: true
+            onRampRequested: {
+                const track = root.trackIndex
+                const clip = root.clipIndex
+                root.scaffold.apply()
+                ShellBridge.main.openSpeedCurve(track, clip)
             }
         }
     }

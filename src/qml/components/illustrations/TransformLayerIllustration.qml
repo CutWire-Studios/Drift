@@ -41,7 +41,7 @@ Item {
             ShapePath {
                 id: _qt_node6_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.muted, 0.18)
+                fillColor: Qt.alpha(Theme.c.illustration.muted, Theme.c.transformLayerIllustration.mutedOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 6 28 Q 6 27.1716 6.58579 26.5858 Q 7.17157 26 8 26 L 152 26 Q 152.828 26 153.414 26.5858 Q 154 27.1716 154 28 L 154 40 Q 154 40.8284 153.414 41.4142 Q 152.828 42 152 42 L 8 42 Q 7.17157 42 6.58579 41.4142 Q 6 40.8284 6 40 L 6 28 " }
@@ -59,7 +59,7 @@ Item {
             ShapePath {
                 id: _qt_node9_path_fill_stroke
                 strokeColor: "transparent"
-                fillColor: Qt.alpha(Theme.c.illustration.muted, 0.18)
+                fillColor: Qt.alpha(Theme.c.illustration.muted, Theme.c.transformLayerIllustration.mutedOpacity)
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M 6 52 Q 6 51.1716 6.58579 50.5858 Q 7.17157 50 8 50 L 152 50 Q 152.828 50 153.414 50.5858 Q 154 51.1716 154 52 L 154 64 Q 154 64.8284 153.414 65.4142 Q 152.828 66 152 66 L 8 66 Q 7.17157 66 6.58579 65.4142 Q 6 64.8284 6 64 L 6 52 " }
@@ -127,7 +127,7 @@ Item {
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
                 miterLimit: 0
-                fillColor: "#00000000"
+                fillColor: "transparent"
                 fillRule: ShapePath.WindingFill
                 pathHints: ShapePath.PathQuadratic | ShapePath.PathNonIntersecting | ShapePath.PathNonOverlappingControlPointTriangles
                 PathSvg { path: "M -6 -1 Q -6 -2.24264 -5.12132 -3.12132 Q -4.24264 -4 -3 -4 L 71 -4 Q 72.2426 -4 73.1213 -3.12132 Q 74 -2.24264 74 -1 L 74 45 Q 74 46.2426 73.1213 47.1213 Q 72.2426 48 71 48 L -3 48 Q -4.24264 48 -5.12132 47.1213 Q -6 46.2426 -6 45 L -6 -1 " }

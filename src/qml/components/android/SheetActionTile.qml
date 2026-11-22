@@ -15,7 +15,8 @@ AbstractButton {
     property bool toggle: false
 
     hoverEnabled: true
-    implicitHeight: Theme.androidMinTouchTarget + Theme.spacing3xl + Theme.spacingLg
+    implicitHeight: Theme.phone ? Theme.androidControlHeight + Theme.spacing3xl + Theme.spacingMd
+                                    : Theme.androidMinTouchTarget + Theme.spacing3xl + Theme.spacingLg
 
     Accessible.role: root.toggle ? Accessible.CheckBox : Accessible.Button
     Accessible.name: root.label

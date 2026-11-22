@@ -76,7 +76,7 @@ Item {
                 anchors.centerIn: parent
                 width: root.horizontal ? 2 : Math.min(32, parent.width)
                 height: root.horizontal ? Math.min(32, parent.height) : 2
-                radius: 1
+                radius: Theme.radiusPill
                 color: grab.pressed || grab.containsMouse ? Theme.accent : Theme.panelBorder
             }
 

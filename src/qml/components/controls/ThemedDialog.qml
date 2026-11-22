@@ -192,7 +192,7 @@ Dialog {
 
     header: Item {
         id: dialogHeader
-        implicitHeight: root.title.length > 0 ? 44 : 0
+        implicitHeight: root.title.length > 0 ? (Theme.touchInput && Theme.compact ? Theme.androidMinTouchTarget : 44) : 0
         width: root.width
         visible: root.title.length > 0
 
@@ -222,7 +222,8 @@ Dialog {
     footer: Item {
         id: dialogFooter
         visible: root.showFooter
-        implicitHeight: visible ? 56 : 0
+        readonly property bool phone: Theme.touchInput && Theme.compact
+        implicitHeight: visible ? (phone ? Theme.androidMinTouchTarget + 2 * Theme.spacingLg : 56) : 0
         width: root.width
 
         Rectangle {
@@ -235,12 +236,17 @@ Dialog {
         }
 
         Row {
+            id: footerRow
             anchors.right: parent.right
             anchors.rightMargin: Theme.spacing2xl
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingLg
+            readonly property int shown: (root.showReject ? 1 : 0) + (root.showAccept ? 1 : 0)
+            readonly property real phoneWidth: shown > 0 ? Math.floor((root.width - 2 * Theme.spacing2xl - (shown - 1) * spacing) / shown) : 0
 
             ThemedButton {
+                width: dialogFooter.phone ? footerRow.phoneWidth : implicitWidth
+                height: dialogFooter.phone ? Theme.androidMinTouchTarget : implicitHeight
                 visible: root.showReject
                 text: root.rejectText
                 variant: root.rejectVariant
@@ -249,6 +255,8 @@ Dialog {
 
             ThemedButton {
                 id: acceptButton
+                width: dialogFooter.phone ? footerRow.phoneWidth : implicitWidth
+                height: dialogFooter.phone ? Theme.androidMinTouchTarget : implicitHeight
                 visible: root.showAccept
                 text: root.acceptText
                 variant: root.acceptVariant

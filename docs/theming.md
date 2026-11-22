@@ -12,6 +12,10 @@ A document is deep-merged in this order, then references are resolved:
 2. `semantic` — roles (`surface.app`, `foreground`, `clip.audio`, …) that point at the palette or at other semantic tokens.
 3. `components` — one group per visual component. The group name is the QML file basename in lowerCamel (`ThemedButton.qml` → `themedButton`, `SettingsThemeEntry.qml` → `settingsThemeEntry`). `appWindow` and `androidMain` are the shell exceptions.
 4. `metrics`, `typography`, `motion` — numbers and font tokens. Control heights are `{ pointer, touch }`.
+
+### Fonts
+
+`typography.fontFamily` is the UI font and `typography.monoFontFamily` the fixed-width one (timecodes, logs). Each is an installed family name, case-insensitive, or a generic `sans-serif` / `serif` / `monospace`. An empty or missing `fontFamily` means the bundled Inter UI. A family that is not installed is logged (`theme: typography.fontFamily "…" is not installed`) and falls back: `fontFamily` to Inter UI, `monoFontFamily` to the system fixed-width font. Fonts from a fonts addon count once it is installed. QML reads the checked values as `ThemeManager.fontFamily` / `ThemeManager.monoFontFamily` through `Theme.fontFamily` / `Theme.monoFontFamily`.
 5. `window` — translucency request (below).
 
 `extends` names another theme (usually `dark` or `light`). The base is merged underneath this file. Missing keys fall through. `exportTheme` writes the fully resolved document with `extends` omitted, which is the starting point for a theme that should not track future built-in edits.
@@ -147,7 +151,6 @@ Slots (the `slot` string on each `ThemeSlot`):
 - TimelineToolbarBackground
 - ToastCardBackground
 - TrackHeaderRowBackground
-- TransformOverlayResizeGrip
 
 ## Finding a component's tokens
 

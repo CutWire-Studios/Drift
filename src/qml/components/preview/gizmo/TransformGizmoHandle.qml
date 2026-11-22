@@ -13,7 +13,8 @@ Item {
     readonly property color ink: hot ? Theme.c.transformGizmoHandle.hot : handleItem.host.colorFor(modelData.id)
     readonly property real lineWidth: (hot ? Theme.c.transformGizmoHandle.strokeWidthHot : Theme.c.transformGizmoHandle.strokeWidth) * (handleItem.host.touch ? 1.25 : 1)
     // While one handle is dragged the others step back, so the one in use reads clearly.
-    opacity: handleItem.host.dragging === "" || hot ? 1 : Theme.c.transformGizmoHandle.opacity
+    // An axis that lines up with the view direction fades out (and cannot be picked) as well.
+    opacity: (handleItem.host.dragging === "" || hot ? 1 : Theme.c.transformGizmoHandle.opacity) * modelData.alpha
 
     // The far half of a ring, behind the clip.
     Repeater {

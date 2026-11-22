@@ -17,6 +17,7 @@ Item {
     signal began()
     signal changed(string channel, string json)
     signal ended()
+    signal cancelled()
 
     readonly property var channels: hueMode ? ["hue", "sat", "lum"] : ["master", "r", "g", "b"]
     readonly property var channelNames: hueMode
@@ -38,6 +39,8 @@ Item {
     readonly property real handleRadius: Theme.touchInput ? 8 : 5
     implicitWidth: 240
     readonly property bool hasSelection: plot.selected >= 0
+    property bool barOpen: false
+    property point typingAt: Qt.point(0, 0)
     implicitHeight: hint.y + hint.height
 
     Item {
@@ -66,7 +69,7 @@ Item {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         height: 2
-                        radius: 1
+                        radius: Theme.radiusPill
                         color: root.channelColors?.[tab.modelData] ?? "transparent"
                         opacity: tab.selected ? 1 : 0.4
                     }
@@ -85,15 +88,45 @@ Item {
         }
     }
 
+    // The region past the plot where releasing a dragged point deletes it, shown while one is dragged.
+    Item {
+        id: deleteZone
+        visible: plot.deleteZoneVisible
+        x: frame.x - frame.width * 0.25
+        y: frame.y - frame.height * 0.25
+        width: frame.width * 1.5
+        height: frame.height * 1.5
+        readonly property real opacityNow: plot.deleteZoneActive ? Theme.c.curveGraph.deleteZoneActiveOpacity
+                                                                  : Theme.c.curveGraph.deleteZoneOpacity
+
+        Repeater {
+            model: [
+                { x: 0, y: 0, w: 1, h: 0.1667 },
+                { x: 0, y: 0.8333, w: 1, h: 0.1667 },
+                { x: 0, y: 0.1667, w: 0.1667, h: 0.6667 },
+                { x: 0.8333, y: 0.1667, w: 0.1667, h: 0.6667 }
+            ]
+            delegate: Rectangle {
+                required property var modelData
+                x: modelData.x * deleteZone.width
+                y: modelData.y * deleteZone.height
+                width: modelData.w * deleteZone.width
+                height: modelData.h * deleteZone.height
+                color: Theme.c.curveGraph.deleteZone
+                opacity: deleteZone.opacityNow
+            }
+        }
+    }
+
     Rectangle {
         id: frame
         y: tabs.height + (root.showTabs ? Theme.spacingMd : 0)
         width: parent.width
         height: width
-        radius: Theme.c.fadeCurvePlotFrame.radius
-        color: Theme.c.fadeCurvePlotFrame.background
-        border.width: Theme.c.fadeCurvePlotFrame.borderWidth
-        border.color: Theme.c.fadeCurvePlotFrame.border
+        radius: Theme.c.curveGraph.radius
+        color: Theme.c.curveGraph.background
+        border.width: Theme.c.curveGraph.borderWidth
+        border.color: Theme.c.curveGraph.border
 
         Image {
             anchors.fill: parent
@@ -113,17 +146,37 @@ Item {
             channel: root.channel
             hueMode: root.hueMode
             channelColors: root.channelColors
-            gridColor: Theme.c.fadeCurveCanvas.grid
-            gridOpacity: Theme.c.fadeCurveCanvas.gridOpacity
-            gridLineWidth: Theme.c.fadeCurveCanvas.gridLineWidth
-            curveLineWidth: Theme.c.fadeCurveCanvas.curveLineWidth
-            dimLineWidth: Theme.c.fadeCurveCanvas.handleLineWidth
+            gridColor: Theme.c.curveGraph.grid
+            gridOpacity: Theme.c.curveGraph.gridOpacity
+            gridLineWidth: Theme.c.curveGraph.gridWidth
+            curveLineWidth: Theme.c.curveGraph.curveWidth
+            dimLineWidth: Theme.c.curveGraph.armWidth
             handleRadius: root.handleRadius
-            pointBackground: Theme.c.fadeCurveWindow.pointBackground
-            knobBorderWidth: Theme.c.fadeCurveWindow.knobBorderWidth
+            pointBackground: Theme.c.manipHandle.background
+            knobBorderWidth: Theme.c.manipHandle.borderWidth
+            deleteColor: Theme.c.curveGraph.deleteZone
+            deleteOpacity: Theme.c.curveGraph.deleteZoneActiveOpacity
             onBegan: root.began()
             onChanged: (channel, json) => root.changed(channel, json)
             onEnded: root.ended()
+            onCancelled: root.cancelled()
+            onContextRequested: (index, pos) => root.barOpen = true
+            onEntryRequested: (seed) => {
+                root.typingAt = plot.graph.toPx(plot.selectedPoint.x, plot.selectedPoint.y)
+                hud.beginEntry(seed)
+            }
+        }
+
+        LiveReadout {
+            id: hud
+            visible: plot.dragging || entering
+            text: plot.hudText
+            pointer: plot.dragging ? plot.pointer : root.typingAt
+            touch: false
+            editable: !Theme.touchInput
+            unit: plot.graph.entryUnit
+            onApplied: (text, value) => plot.applyTyped(value)
+            onEntryFinished: plot.forceActiveFocus()
         }
     }
 
@@ -144,13 +197,25 @@ Item {
         font.pixelSize: Theme.fontSizeXs
     }
 
+    CurveGraphPointBar {
+        visible: root.barOpen
+        graph: plot.graph
+        backendName: "color"
+        anchors.horizontalCenter: frame.horizontalCenter
+        anchors.bottom: frame.bottom
+        anchors.bottomMargin: Theme.spacingSm
+        z: 95
+        onDismissed: root.barOpen = false
+    }
+
     Text {
         id: hint
         y: readout.y + readout.height + Theme.spacingXs
         width: parent.width
         wrapMode: Text.WordWrap
         opacity: plot.pointCount <= 2 ? 1 : 0
-        text: qsTr("Click to add a point. Drag to move it. Double-click or drag it off to remove.")
+        text: Theme.touchInput ? qsTr("Tap to add a point. Drag to move it. Hold a point for more, or drag it off the plot to remove.")
+                               : qsTr("Click to add a point. Drag to move it. Double-click, Delete or drag it off to remove. Esc cancels a drag.")
         color: Theme.mutedForeground
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
