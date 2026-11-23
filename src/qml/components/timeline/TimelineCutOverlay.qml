@@ -6,8 +6,9 @@ Item {
     id: cutOverlay
 
     property var panel
-    visible: panel.timelineTool !== ""
-    enabled: panel.timelineTool !== ""
+    // Slip is a drag on the clips themselves, so the overlay (which eats every press) steps aside.
+    visible: panel.timelineTool !== "" && panel.timelineTool !== "slip"
+    enabled: panel.timelineTool !== "" && panel.timelineTool !== "slip"
     x: 0
     y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
     width: parent.width

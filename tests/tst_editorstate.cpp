@@ -26,6 +26,7 @@
 #include "app/bin/MediaBinController.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "ui/preview/PreviewController.h"
+#include "ui/imageproviders/slipframe/SlipFrameUrl.h"
 #include "ui/preview/Outliner3dModel.h"
 #include <QKeyEvent>
 #include <QtTest>
@@ -353,6 +354,12 @@ private slots:
     void commitTrimWithoutMovementLeavesNoUndoStep();
     void trimmingCarriesTheLinkedAudioPartner();
     void previewTrimMatchesTheCommittedTrim();
+    void previewSlipMatchesCommit();
+    void slipDeltaForDragFollowsThePointer();
+    void previewSlipRefusesWhatSlipRefuses();
+    void previewSlipFrameUrls();
+    void slipFrameIdRoundTrips();
+    void slipToolShortcut();
     void compositorStreamsTakeTurns();
     void movedClipDoesNotSnapToItsOwnEdges();
     void snapTargetsStillIncludeOtherClips();
@@ -9195,6 +9202,284 @@ void EditorStateTest::previewTrimMatchesTheCommittedTrim()
         }
     }
 }
+
+namespace {
+// A 10 s video asset, one video clip on track 0 (source 3-6 s at 2 s on the timeline) and, with
+// link 1 (strict) or 2 (loose), an audio partner of the same shape on track 1.
+void buildSlipProject(AppController &state, int link = 0)
+{
+    drift::MediaAsset media;
+    media.id = QStringLiteral("slip-media");
+    media.name = QStringLiteral("shot.mp4");
+    media.kind = drift::MediaKind::Video;
+    media.path = QStringLiteral("/nonexistent/shot.mp4");
+    media.durationUs = drift::secondsToUs(10.0);
+    state.project()->addAsset(media);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    const auto make = [&](drift::ClipType type, const QString &id) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = type;
+        clip.assetId = media.id;
+        clip.path = media.path;
+        clip.srcIn = drift::secondsToUs(3.0);
+        clip.srcOut = drift::secondsToUs(6.0);
+        clip.timelineStart = drift::secondsToUs(2.0);
+        clip.timelineDuration = drift::secondsToUs(3.0);
+        if (link != 0)
+            clip.linkId = QStringLiteral("link-1");
+        clip.linkLoose = link == 2;
+        return clip;
+    };
+    state.project()->tracks()[0].clips.append(make(drift::ClipType::Video, QStringLiteral("v1")));
+    if (link != 0)
+        state.project()->tracks()[1].clips.append(make(drift::ClipType::Audio, QStringLiteral("a1")));
+}
+} // namespace
+
+void EditorStateTest::previewSlipMatchesCommit()
+{
+    // The drag shows previewSlipClip's answer and the release applies slipClip's through
+    // commitSlipClip: the same computation, so the clip must not jump when the button comes up.
+    const QList<double> deltas = {-100.0, -1.0, 0.0, 0.5, 2.0, 100.0};
+    for (int link : {0, 1, 2}) {
+        for (double delta : deltas) {
+            AssetLibrary library;
+            AppController state(&library);
+            buildSlipProject(state, link);
+            const QString label = QStringLiteral("link=%1 delta=%2").arg(link).arg(delta);
+
+            const QVariantMap p = state.previewSlipClip(0, 0, delta);
+            QVERIFY2(p.value(QStringLiteral("ok")).toBool(), qPrintable(label));
+            QCOMPARE(p.value(QStringLiteral("follow")).toBool(), link == 1);
+            QCOMPARE(p.value(QStringLiteral("start")).toDouble(), 2.0);
+            QCOMPARE(p.value(QStringLiteral("duration")).toDouble(), 3.0);
+            // A preview changes nothing.
+            QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::secondsToUs(3.0));
+
+            const int steps = state.undoHistory().size();
+            const QVariantMap r = state.commitSlipClip(0, 0, delta);
+            QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(label));
+            const drift::Clip &after = state.project()->tracks().at(0).clips.at(0);
+            QCOMPARE(drift::usToSeconds(after.srcIn), p.value(QStringLiteral("inPoint")).toDouble());
+            QCOMPARE(drift::usToSeconds(after.srcOut), p.value(QStringLiteral("outPoint")).toDouble());
+            QCOMPARE(r.value(QStringLiteral("applied")).toDouble(), p.value(QStringLiteral("applied")).toDouble());
+            QCOMPARE(r.value(QStringLiteral("limit")).toInt(), p.value(QStringLiteral("limit")).toInt());
+            QCOMPARE(after.timelineStart, drift::secondsToUs(2.0));
+            QCOMPARE(after.timelineDuration, drift::secondsToUs(3.0));
+            const bool moved = p.value(QStringLiteral("applied")).toDouble() != 0.0;
+            QCOMPARE(state.undoHistory().size(), steps + (moved ? 1 : 0));
+            if (link != 0) {
+                const drift::Clip &audio = state.project()->tracks().at(1).clips.at(0);
+                // Strict partners slip with the clip; a loose one stays put.
+                QCOMPARE(audio.srcIn == after.srcIn, link == 1 || !moved);
+            }
+        }
+    }
+}
+
+void EditorStateTest::slipDeltaForDragFollowsThePointer()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    buildSlipProject(state);
+    state.project()->setFps(30);
+    drift::Clip &clip = state.project()->tracks()[0].clips[0];
+    QCOMPARE(state.slipDeltaForDrag(0, 0, 1.0), -1.0);
+    QCOMPARE(state.slipDeltaForDrag(0, 0, -1.0), 1.0);
+    // Under half a frame of drag is no slip.
+    QCOMPARE(state.slipDeltaForDrag(0, 0, 0.01), 0.0);
+
+    // 2x: srcOut-srcIn is twice the timeline length.
+    clip.speed = 2.0;
+    clip.timelineDuration = drift::secondsToUs(1.5);
+    QCOMPARE(state.slipDeltaForDrag(0, 0, 1.0), -2.0);
+
+    // Reversed: the picture still follows the pointer, so the source moves the other way.
+    clip.speed = 1.0;
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    clip.reverse = true;
+    QCOMPARE(state.slipDeltaForDrag(0, 0, 1.0), 1.0);
+    clip.reverse = false;
+
+    // Looped at 2x: the effective speed, whatever the range and length.
+    clip.speed = 2.0;
+    clip.timelineDuration = drift::secondsToUs(9.0);
+    clip.loop = true;
+    QVERIFY(clip.loops());
+    QCOMPARE(state.slipDeltaForDrag(0, 0, 1.0), -2.0);
+
+    // A ramp uses the average rate.
+    clip.loop = false;
+    clip.speed = 1.0;
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    clip.speedCurve.setPoints({{0.0, 1.0}, {1.0, 2.0}});
+    QVERIFY(clip.hasSpeedCurve());
+    clip.syncDurationFromSpeedCurve();
+    const double rate = drift::usToSeconds(clip.srcOut - clip.srcIn) / drift::usToSeconds(clip.timelineDuration);
+    QVERIFY(qAbs(state.slipDeltaForDrag(0, 0, 1.0) + rate) < 1e-9);
+}
+
+void EditorStateTest::previewSlipRefusesWhatSlipRefuses()
+{
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        state.project()->tracks().clear();
+        state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+        drift::Clip text;
+        text.id = QStringLiteral("t1");
+        text.type = drift::ClipType::Text;
+        text.timelineDuration = drift::secondsToUs(2.0);
+        state.project()->tracks()[0].clips.append(text);
+        const QVariantMap p = state.previewSlipClip(0, 0, 1.0);
+        QVERIFY(!p.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(p.value(QStringLiteral("reason")).toString(), QStringLiteral("no_media"));
+        const int steps = state.undoHistory().size();
+        const QVariantMap r = state.commitSlipClip(0, 0, 1.0);
+        QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(state.lastMessage(), QStringLiteral("Only video, audio and composite clips can be slipped"));
+        QCOMPARE(state.undoHistory().size(), steps);
+    }
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        buildSlipProject(state);
+        state.project()->tracks()[0].locked = true;
+        const QVariantMap p = state.previewSlipClip(0, 0, 1.0);
+        QVERIFY(!p.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(p.value(QStringLiteral("reason")).toString(), QStringLiteral("locked"));
+        const int steps = state.undoHistory().size();
+        state.commitSlipClip(0, 0, 1.0);
+        QCOMPARE(state.lastMessage(), QStringLiteral("Track is locked"));
+        QCOMPARE(state.undoHistory().size(), steps);
+        QCOMPARE(state.project()->tracks().at(0).clips.at(0).srcIn, drift::secondsToUs(3.0));
+    }
+    {
+        // Stopping at the media's end is a success with a message.
+        AssetLibrary library;
+        AppController state(&library);
+        buildSlipProject(state);
+        const QVariantMap r = state.commitSlipClip(0, 0, 100.0);
+        QVERIFY(r.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(r.value(QStringLiteral("limit")).toInt(), 1);
+        QCOMPARE(state.lastMessage(), QStringLiteral("Reached the end of the media"));
+    }
+}
+
+void EditorStateTest::previewSlipFrameUrls()
+{
+    const QString scheme = QStringLiteral("image://slipframe/");
+    AssetLibrary library;
+    AppController state(&library);
+    buildSlipProject(state, 1);
+    state.project()->setFps(30);
+
+    QVariantMap p = state.previewSlipClip(0, 0, 1.0);
+    QVERIFY(p.value(QStringLiteral("ok")).toBool());
+    const QString first = p.value(QStringLiteral("firstFrameUrl")).toString();
+    const QString last = p.value(QStringLiteral("lastFrameUrl")).toString();
+    QVERIFY(first.startsWith(scheme));
+    QVERIFY(last.startsWith(scheme));
+    drift::SlipFrameRequest req;
+    QVERIFY(drift::parseSlipFrameId(first.mid(scheme.size()), &req));
+    QCOMPARE(req.sourceUs, drift::secondsToUs(4.0)); // the new srcIn
+    QCOMPARE(req.path, QStringLiteral("/nonexistent/shot.mp4"));
+    QVERIFY(drift::parseSlipFrameId(last.mid(scheme.size()), &req));
+    QVERIFY(qAbs(req.sourceUs - drift::secondsToUs(7.0)) <= drift::secondsToUs(1.0 / 30.0) + 1);
+
+    // Reversed, the clip starts on the source's later end.
+    state.project()->tracks()[0].clips[0].reverse = true;
+    p = state.previewSlipClip(0, 0, 1.0);
+    QVERIFY(drift::parseSlipFrameId(p.value(QStringLiteral("firstFrameUrl")).toString().mid(scheme.size()), &req));
+    QVERIFY(qAbs(req.sourceUs - drift::secondsToUs(7.0)) <= drift::secondsToUs(1.0 / 30.0) + 1);
+    // The captions name the source time of the frame each url shows: later media first.
+    QVERIFY(qAbs(p.value(QStringLiteral("firstFrameSourceSeconds")).toDouble() - 7.0) <= 1.0 / 30.0 + 1e-6);
+    QVERIFY(qAbs(p.value(QStringLiteral("lastFrameSourceSeconds")).toDouble() - 4.0) <= 1.0 / 30.0 + 1e-6);
+
+    // The clip's crop and straighten angle ride along.
+    state.project()->tracks()[0].clips[0].sourceFrame = QRectF(0.25, 0.1, 0.5, 0.8);
+    state.project()->tracks()[0].clips[0].sourceFrameAngle = 3.5;
+    p = state.previewSlipClip(0, 0, 1.0);
+    QVERIFY(drift::parseSlipFrameId(p.value(QStringLiteral("firstFrameUrl")).toString().mid(scheme.size()), &req));
+    QCOMPARE(req.frame, QRectF(0.25, 0.1, 0.5, 0.8));
+    QCOMPARE(req.angle, 3.5);
+    state.project()->tracks()[0].clips[0].sourceFrame = QRectF(0, 0, 1, 1);
+    state.project()->tracks()[0].clips[0].sourceFrameAngle = 0.0;
+
+    // Audio has no picture.
+    p = state.previewSlipClip(1, 0, 1.0);
+    QVERIFY(p.value(QStringLiteral("ok")).toBool());
+    QVERIFY(p.value(QStringLiteral("firstFrameUrl")).toString().isEmpty());
+    QVERIFY(p.value(QStringLiteral("lastFrameUrl")).toString().isEmpty());
+
+    // So does a composite (it has no path).
+    state.project()->tracks()[0].clips[0].type = drift::ClipType::Composite;
+    state.project()->tracks()[0].clips[0].path.clear();
+    p = state.previewSlipClip(0, 0, 0.0);
+    QVERIFY(p.value(QStringLiteral("ok")).toBool());
+    QVERIFY(p.value(QStringLiteral("firstFrameUrl")).toString().isEmpty());
+}
+
+void EditorStateTest::slipFrameIdRoundTrips()
+{
+    const QString scheme = QStringLiteral("image://slipframe/");
+    const QStringList paths = {
+        QStringLiteral("/tmp/a b/clip.mp4"), QStringLiteral("/tmp/a&b.mp4"), QStringLiteral("/tmp/a#b.mp4"),
+        QStringLiteral("/tmp/a?b.mp4"),      QStringLiteral("/tmp/100%25.mp4"), QStringLiteral("/tmp/a+b.mp4"),
+        QStringLiteral("/tmp/niño.mp4"), QStringLiteral("/tmp/%2F.mp4"),
+        QString::fromUtf8("/tmp/日本語/クリップ.mp4"),
+    };
+    for (const QString &path : paths) {
+        const QString url = drift::slipFrameUrl(path, 1234567, 90, 1);
+        QVERIFY2(url.startsWith(scheme), qPrintable(path));
+        drift::SlipFrameRequest req;
+        // QML hands the provider the url's path and query after QUrl has decoded it to Unicode.
+        const QString id = QUrl(url).toString(QUrl::RemoveScheme | QUrl::RemoveAuthority).mid(1);
+        QVERIFY2(drift::parseSlipFrameId(id, &req), qPrintable(path));
+        QCOMPARE(req.path, path);
+        QCOMPARE(req.sourceUs, drift::TimeUs{1234567});
+        QCOMPARE(req.rotation, 90);
+        QCOMPARE(req.salt, 1);
+    }
+    drift::SlipFrameRequest req;
+    QVERIFY(!drift::parseSlipFrameId(QString(), &req));
+    QVERIFY(!drift::parseSlipFrameId(QStringLiteral("f"), &req));
+    QVERIFY(!drift::parseSlipFrameId(QStringLiteral("f?us=1"), &req));
+    QVERIFY(!drift::parseSlipFrameId(QStringLiteral("f?path=x"), &req));
+    QVERIFY(!drift::parseSlipFrameId(QStringLiteral("f?path=x&us=abc"), &req));
+    QVERIFY(!drift::parseSlipFrameId(QStringLiteral("f?path=&us=1"), &req));
+}
+
+void EditorStateTest::slipToolShortcut()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestSlipTool"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("shortcuts"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("shortcuts"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    QCOMPARE(state.shortcutFor(QStringLiteral("slipTool")), QStringLiteral("Y"));
+    int slipActions = 0;
+    int usingY = 0;
+    for (const QVariant &v : state.actions()) {
+        const QString id = v.toMap().value(QStringLiteral("id")).toString();
+        slipActions += id == QLatin1String("slipTool") ? 1 : 0;
+        usingY += state.shortcutFor(id) == QLatin1String("Y") ? 1 : 0;
+    }
+    QCOMPARE(slipActions, 1);
+    QCOMPARE(usingY, 1);
+}
+
 
 
 

@@ -20,11 +20,12 @@ enum class TimelineCursorKind {
     TrackResizeH,
     TrackResizeV,
     Pan,
+    Slip,
 };
 
 // QML-facing names: "move", "moveActive", "blade", "trimStartTool", "trimEndTool", "trimIn",
 // "trimOut", "fadeIn", "fadeOut", "transitionResize", "transitionMove", "playheadScrub",
-// "trackReorder", "trackResizeH", "trackResizeV", "pan".
+// "trackReorder", "trackResizeH", "trackResizeV", "pan", "slip".
 bool timelineCursorKindFromName(const QString &name, TimelineCursorKind *kind);
 
 // heightPx only matters for TrimIn/TrimOut, which span the clip. Cached per (kind, height, dpr).

@@ -69,6 +69,7 @@ class TimelineTrackItem : public QQuickItem
     Q_PROPERTY(QObject *haptics READ haptics WRITE setHaptics NOTIFY servicesChanged)
     Q_PROPERTY(QAbstractItemModel *activeClips READ activeClips CONSTANT)
     Q_PROPERTY(bool dragging READ dragging NOTIFY draggingChanged)
+    Q_PROPERTY(bool slipTool READ slipTool WRITE setSlipTool NOTIFY slipToolChanged)
     // Touch only: a clip is picked up (held, or being dragged). The panel stops panning for it.
     Q_PROPERTY(bool lifted READ lifted NOTIFY draggingChanged)
     Q_PROPERTY(bool lastPressTouch READ lastPressTouch NOTIFY lastPressTouchChanged)
@@ -102,6 +103,8 @@ public:
     void setHaptics(QObject *haptics);
     QAbstractItemModel *activeClips() const { return m_activeClips; }
     bool dragging() const { return m_drag.moving; }
+    bool slipTool() const { return m_slipTool; }
+    void setSlipTool(bool on);
     bool lifted() const;
     bool lastPressTouch() const { return m_lastPressTouch; }
     QPointF dragPointer() const { return m_drag.pointer; }
@@ -129,6 +132,14 @@ signals:
     void dragPointerChanged();
     void lastPressTouchChanged();
     void hoverToolTipChanged();
+    void slipToolChanged();
+
+    // The slip tool's drag (also Alt+drag on a selected clip): the media slides under the clip.
+    // dxPixels is the pointer's x minus the press x, in item pixels.
+    void slipStarted(int clipIndex);
+    void slipUpdated(int clipIndex, qreal dxPixels);
+    void slipFinished(int clipIndex, qreal dxPixels, bool moved);
+    void slipCanceled(int clipIndex);
 
     // Body gestures that need the panel's policy (landing preview, cross-track drop rules).
     // Rects are the dragged clip's, in this item's coordinates.
@@ -203,6 +214,7 @@ private:
         bool rightButton = false;
         bool touch = false; // this press came from a finger (or the touch-only Android timeline)
         bool menuOpened = false;
+        bool slipping = false; // a slip drag owns this press
         int clipIndex = -1;
         QString clipId;
         QRectF pressRect;
@@ -271,6 +283,7 @@ private:
     QPointer<AppController> m_editor;
     QPointer<AssetLibrary> m_assets;
     QPointer<QObject> m_haptics;
+    bool m_slipTool = false;
     ActiveClipsModel *m_activeClips = nullptr;
     int m_trackIndex = -1;
     QString m_trackType;

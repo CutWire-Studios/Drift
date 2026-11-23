@@ -1218,6 +1218,8 @@ qt_add_executable(drift
     src/ui/imageproviders/segment/SegmentImageProvider.cpp
     src/ui/imageproviders/clippreview/ClipPreviewImageProvider.h
     src/ui/imageproviders/clippreview/ClipPreviewImageProvider.cpp
+    src/ui/imageproviders/slipframe/SlipFrameImageProvider.h
+    src/ui/imageproviders/slipframe/SlipFrameImageProvider.cpp
     src/ui/imageproviders/TextStylePreviewImageProvider.h
     src/ui/imageproviders/TextStylePreviewImageProvider.cpp
     src/ui/imageproviders/ShapePreviewImageProvider.h
@@ -1319,6 +1321,8 @@ target_sources(driftapp PRIVATE
     src/ui/imageproviders/segment/SegmentImageStore.cpp
     src/playback/preview/ClipPreviewImageStore.h
     src/playback/preview/ClipPreviewImageStore.cpp
+    src/ui/imageproviders/slipframe/SlipFrameUrl.h
+    src/ui/imageproviders/slipframe/SlipFrameUrl.cpp
     src/ui/imageproviders/multicam/MulticamImageProvider.h
     src/ui/imageproviders/multicam/MulticamImageProvider.cpp
     src/ui/imageproviders/multicam/MulticamImageStore.h
@@ -1931,6 +1935,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/PreviewToolHost.qml
         src/qml/components/preview/InlineTextEditor.qml
         src/qml/components/preview/PreviewOsd.qml
+        src/qml/components/preview/SlipFramesOverlay.qml
         src/qml/components/preview/PreviewOptionsMenu.qml
         src/qml/components/preview/PreviewTransportBar.qml
         src/qml/components/preview/modes/Preview2DMode.qml
@@ -2354,6 +2359,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineWorkAreaOverlay.qml
         src/qml/components/timeline/TimelineWorkAreaEdge.qml
         src/qml/components/timeline/TimelineTrimHandle.qml
+        src/qml/components/timeline/TimelineSlipGesture.qml
         src/qml/components/timeline/TimelineTrimGrip.qml
         src/qml/components/timeline/TimelineTransitionRegion.qml
         src/qml/components/timeline/TimelineTransitionToffee.qml

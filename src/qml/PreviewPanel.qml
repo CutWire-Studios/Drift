@@ -92,6 +92,11 @@ PanelFrame {
             interacting: panelViewport.toolHost.interacting
             held: root.previewFullscreen && (bottomHover.hovered || scrubSlider.pressed)
         }
+
+        SlipFramesOverlay {
+            anchors.fill: parent
+            z: 3
+        }
     }
 
     // Shown while the grade is bypassed, so the picture is not taken for the graded one.

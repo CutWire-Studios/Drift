@@ -52,6 +52,11 @@ QtObject {
     signal maskingCancelRequested()
     // A brush stroke is being dragged; Escape must not drop the tool and its overlay mid-stroke.
     property bool brushStrokeActive: false
+    // The slip drag's new first and last frames, for the program monitor; null when no slip is being dragged.
+    property var slipFrames: null
+    // A slip drag is under way; Escape and the tool keys cancel it (slipCancelRequested).
+    property bool slipDragActive: false
+    signal slipCancelRequested()
     // Armed by the Tracking panel; the tracker overlay consumes the next click.
     property string trackerPlaceMode: ""
     // The tracker an "addPoint" click extends.

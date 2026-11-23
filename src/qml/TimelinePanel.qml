@@ -20,6 +20,7 @@ PanelFrame {
     //   "split"     Blade — click a clip to split it (toolbar scissors / B)
     //   "trimStart"  click a clip to drop everything left of the cut line
     //   "trimEnd"    click a clip to drop everything right of the cut line
+    //   "slip"      drag a clip to change which part of its media it shows (toolbar / Y)
     // While a cut tool is active, hovering the timeline shows a red dashed
     // virtual playhead; trim tools also tint the doomed side of the clip.
     property string timelineTool: ""
@@ -1677,7 +1678,7 @@ PanelFrame {
                         height: Math.max(root.totalTracksHeightCached + Theme.trackGap,
                                          flick.height - flick.headerHeight)
                         z: 0
-                        enabled: root.timelineTool === ""
+                        enabled: root.timelineTool === "" || root.timelineTool === "slip"
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         // CapCut: empty-space drag is marquee, not flick-scroll. A finger has no
                         // marquee: the same drag pans the timeline instead, so only a real

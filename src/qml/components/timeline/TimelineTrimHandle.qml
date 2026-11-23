@@ -143,8 +143,10 @@ Rectangle {
         // selected clip — the one actually showing trim handles — arms them.
         // A clip too narrow to show handles has no trim; mid-gesture the shrinking clip must not
         // pull the area out from under the drag.
+        // In slip mode an edge press belongs to the track item (it slips), not to a trim.
         enabled: (owner.width >= Theme.clipControlsMinWidth || active)
                  && (!owner.touchMode || owner.showTrimHandles)
+                 && owner.panel.timelineTool !== "slip"
 
         // Last position this edge was actually committed at, in whole pixels. A high-polling
         // mouse delivers several positionChanged per frame, and each one used to mutate the

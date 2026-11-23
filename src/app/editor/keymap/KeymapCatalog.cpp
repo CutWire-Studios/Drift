@@ -151,6 +151,7 @@ const QList<ActionDef> kActions = {
     {"recordVoiceover", QT_TRANSLATE_NOOP("AppController", "Start/stop voiceover recording"), "tracks"},
     {"selectTool", QT_TRANSLATE_NOOP("AppController", "Select tool"), "tools"},
     {"bladeTool", QT_TRANSLATE_NOOP("AppController", "Cut tool"), "tools"},
+    {"slipTool", QT_TRANSLATE_NOOP("AppController", "Slip tool"), "tools"},
     {"zoomIn", QT_TRANSLATE_NOOP("AppController", "Zoom in"), "view"},
     {"zoomOut", QT_TRANSLATE_NOOP("AppController", "Zoom out"), "view"},
     {"zoomToFit", QT_TRANSLATE_NOOP("AppController", "Zoom timeline to fit project"), "view"},

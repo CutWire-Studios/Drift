@@ -78,6 +78,24 @@ Item {
             if (typeof area.panel.setScrollLocked === "function")
                 area.panel.setScrollLocked(renderer.lifted)
         }
+        // The slip tool is desktop-only: AndroidTimeline has no timelineTool, so this stays false.
+        slipTool: !!area.panel && area.panel.timelineTool === "slip"
+        onSlipStarted: (i) => slip.begin(i)
+        onSlipUpdated: (i, dx) => slip.update(dx)
+        onSlipFinished: (i, dx, moved) => {
+            if (moved)
+                slip.update(dx)
+            slip.finish(moved)
+        }
+        onSlipCanceled: slip.cancel()
+    }
+
+    TimelineSlipGesture {
+        id: slip
+        anchors.fill: parent
+        panel: area.panel
+        renderer: renderer
+        trackIndex: area.trackIndex
     }
 
     // Same decision tree the per-clip delegate ran on release, with the indices captured at press.

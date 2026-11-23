@@ -718,6 +718,16 @@ void TimelineTrackItem::setHaptics(QObject *haptics)
     emit servicesChanged();
 }
 
+void TimelineTrackItem::setSlipTool(bool on)
+{
+    if (m_slipTool == on)
+        return;
+    m_slipTool = on;
+    if (!on)
+        unsetCursor();
+    emit slipToolChanged();
+}
+
 bool TimelineTrackItem::lifted() const
 {
     return (m_drag.moving || m_drag.armed) && m_drag.touch;
@@ -1964,7 +1974,9 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
     // treating it as dead left a finger-wide strip at each end of every clip that did nothing.
     const bool touchEdgeOfUnselected = touch && index >= 0
                                        && zone != Zone::None && !isSelected(index);
-    if (index < 0 || (zone != Zone::Body && !touchEdgeOfUnselected) || !m_editor || !m_viewState) {
+    const bool slipToolPress = m_slipTool && !touch && event->button() == Qt::LeftButton;
+    if (index < 0 || (zone != Zone::Body && !touchEdgeOfUnselected && !slipToolPress) || !m_editor
+        || !m_viewState) {
         event->ignore();
         return;
     }
@@ -1992,6 +2004,20 @@ void TimelineTrackItem::mousePressEvent(QMouseEvent *event)
         updateActiveSet();
         m_drag.pressed = false;
         emit contextMenuRequested(index);
+        event->accept();
+        return;
+    }
+
+    // The slip tool works on any clip; Alt+drag slips a clip that is already selected.
+    const bool altSlip = !touch && event->button() == Qt::LeftButton && wasSelected
+                         && (event->modifiers() & Qt::AltModifier);
+    if (slipToolPress || altSlip) {
+        // Like the select tool, leave the selection alone in multi-select mode.
+        if (!wasSelected && !m_viewState->multiSelectActive())
+            m_editor->selectClip(m_trackIndex, index);
+        m_drag.slipping = true;
+        setKeepMouseGrab(true);
+        emit slipStarted(index);
         event->accept();
         return;
     }
@@ -2074,6 +2100,17 @@ void TimelineTrackItem::mouseMoveEvent(QMouseEvent *event)
         event->accept();
         return;
     }
+    if (m_drag.slipping) {
+        const qreal dx = mapFromScene(event->scenePosition()).x() - m_drag.pressItemPos.x();
+        if (!m_drag.didDrag && std::abs(dx) <= 2.0) {
+            event->accept();
+            return;
+        }
+        m_drag.didDrag = true;
+        emit slipUpdated(m_drag.clipIndex, dx);
+        event->accept();
+        return;
+    }
     const QPointF delta = mapFromScene(event->scenePosition()) - m_drag.pressItemPos;
     if (!m_drag.moving) {
         const bool pastThreshold = std::abs(delta.x()) > 2.0 || std::abs(delta.y()) > 2.0;
@@ -2109,6 +2146,13 @@ void TimelineTrackItem::finishPress(bool canceled)
 {
     const DragState drag = m_drag;
     m_drag = DragState{};
+    if (drag.slipping) {
+        setKeepMouseGrab(false);
+        if (canceled)
+            emit slipCanceled(drag.clipIndex);
+        scheduleRebuild();
+        return;
+    }
     m_longPress.stop();
     setKeepMouseGrab(false);
     setKeepTouchGrab(false);
@@ -2166,6 +2210,16 @@ void TimelineTrackItem::mouseReleaseEvent(QMouseEvent *event)
 {
     if (!m_drag.pressed) {
         event->ignore();
+        return;
+    }
+    if (m_drag.slipping) {
+        const qreal dx = mapFromScene(event->scenePosition()).x() - m_drag.pressItemPos.x();
+        const DragState drag = m_drag;
+        m_drag = DragState{};
+        setKeepMouseGrab(false);
+        emit slipFinished(drag.clipIndex, dx, drag.didDrag);
+        scheduleRebuild();
+        event->accept();
         return;
     }
     if (m_drag.moving)
@@ -2233,7 +2287,9 @@ void TimelineTrackItem::setHovered(const QString &clipId, bool body, const QPoin
             narrow = m_viewState && visual.rect.width() < m_viewState->styleValues().clipControlsMinWidth;
     }
     const qreal dpr = window() ? window()->devicePixelRatio() : 1.0;
-    if (body && !m_drag.pressed && !narrow)
+    if ((m_slipTool && !clipId.isEmpty()) || m_drag.slipping)
+        setCursor(timelineCursor(TimelineCursorKind::Slip, 0, dpr));
+    else if (body && !m_drag.pressed && !narrow)
         setCursor(timelineCursor(TimelineCursorKind::Move, 0, dpr));
     else if (m_drag.moving)
         setCursor(timelineCursor(TimelineCursorKind::MoveActive, 0, dpr));

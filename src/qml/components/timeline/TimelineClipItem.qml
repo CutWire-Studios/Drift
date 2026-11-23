@@ -132,6 +132,7 @@ Item {
     // fades live in the toolbar's Fade sheet: a dot a finger can hit sits right next to the trim
     // handle, and one of the two always got grabbed instead of the other.
     readonly property bool timelineFadeHandles: trackType !== "subtitle" && !touchMode
+                                                 && panel.timelineTool !== "slip"
 
     // Four ToolTips — each a Popup — existed on every clip in the project for the sake of the
     // one clip the pointer is actually over. Gated on the clip being touched at all; each
@@ -190,6 +191,7 @@ Item {
 
     // Below the width floor the whole clip is a move target; trim it after zooming in.
     readonly property bool showTrimHandles: selected && !pinnedToClip && width >= Theme.clipControlsMinWidth
+                                             && panel.timelineTool !== "slip"
     readonly property real minDurationSeconds: Math.max(
         1.0 / Math.max(1, EditorState.projectFile.projectFps()),
         Theme.clipMinWidth / panel.pxPerSecond)
