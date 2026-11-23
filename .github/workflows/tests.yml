@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 env:
-  QT_VERSION: "6.10.3"
+  QT_VERSION: "6.11.1"
   QT_MODULES: >-
     qtmultimedia
     qtimageformats

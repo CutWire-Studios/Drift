@@ -6,6 +6,13 @@ qt_add_executable(tst_mediaprobe tst_mediaprobe.cpp)
 target_link_libraries(tst_mediaprobe PRIVATE Qt6::Test driftengine)
 add_test(NAME MediaProbe COMMAND tst_mediaprobe)
 
+qt_add_executable(tst_ffmpegabi tst_ffmpegabi.cpp)
+target_link_libraries(tst_ffmpegabi PRIVATE Qt6::Test Qt6::Multimedia FFmpeg::FFmpeg)
+if(WIN32)
+    target_link_libraries(tst_ffmpegabi PRIVATE psapi)
+endif()
+add_test(NAME FFmpegAbi COMMAND tst_ffmpegabi)
+
 qt_add_executable(tst_core tst_core.cpp)
 target_include_directories(tst_core PRIVATE ../src)
 target_link_libraries(tst_core PRIVATE Qt6::Test driftcore)

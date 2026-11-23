@@ -53,7 +53,7 @@ env:
     -DDRIFT_CHANNEL=${{ inputs.channel }}
     -DDRIFT_BUILD_ID=${{ inputs.build_id }}
     ${{ inputs.channel == 'nightly' && '-DDRIFT_UPDATE_FEED_URL=' || '' }}
-  QT_VERSION: "6.10.3"
+  QT_VERSION: "6.11.1"
   # Drift needs Quick, QuickControls2, QuickEffects, Widgets, OpenGL, Network, Concurrent and Test
   # (qtbase + qtdeclarative, both in the base install); qtmultimedia is the only extra it links.
   # qtimageformats is for the import side: without it webp/tiff stills cannot be added to a project.
@@ -580,7 +580,7 @@ jobs:
           # Disabled: vcpkg's skia[gl] is unsupported on arm64-windows.
           # - arch: arm64
           #   runner: windows-11-arm
-          #   # Native arm64 host kit: Qt 6.10 ships win64_msvc2022_arm64 for windows_arm64, so
+          #   # Native arm64 host kit: Qt 6.11 ships win64_msvc2022_arm64 for windows_arm64, so
           #   # moc/rcc/qmlcachegen run natively and no desktop host Qt (autodesktop) is needed.
           #   qt_host: windows_arm64
           #   qt_arch: win64_msvc2022_arm64

@@ -28,7 +28,7 @@ concurrency:
 env:
   CCACHE_VERSION: "4.14.2"
   # Same pins as package.yml; keep them in sync.
-  QT_VERSION: "6.10.3"
+  QT_VERSION: "6.11.1"
   QT_MODULES: >-
     qtmultimedia
     qtimageformats
