@@ -13,6 +13,7 @@
 #include "app/color/ColorController.h"
 #include "app/editor/BlendPreviewController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/capture/CaptureController.h"
 #include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/render/BakeController.h"
 #include "app/jobs/vision/DepthController.h"
@@ -619,6 +620,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_depth = new DepthController(this, this);
     m_bakes = new BakeController(this, this);
     m_denoise = new DenoiseController(this, this);
+    m_capture = new CaptureController(this, this);
     m_audioAlign = new AudioAlignController(this, this);
     m_color = new ColorController(this, this);
     m_blendPreview = new BlendPreviewController(this, this);

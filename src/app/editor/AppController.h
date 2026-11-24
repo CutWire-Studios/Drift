@@ -50,6 +50,7 @@ class TeleprompterController;
 class ColorController;
 class BlendPreviewController;
 class DenoiseController;
+class CaptureController;
 class AudioAlignController;
 class DepthController;
 class BakeController;
@@ -100,6 +101,7 @@ class AppController : public QObject
     friend class DepthController;
     friend class BakeController;
     friend class DenoiseController;
+    friend class CaptureController;
     friend class AudioAlignController;
     friend class ColorController;
     friend class BlendPreviewController;
@@ -131,6 +133,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/color/ColorController.h")
     Q_MOC_INCLUDE("app/editor/BlendPreviewController.h")
     Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
+    Q_MOC_INCLUDE("app/jobs/capture/CaptureController.h")
     Q_MOC_INCLUDE("app/jobs/audio/AudioAlignController.h")
     Q_MOC_INCLUDE("app/jobs/vision/DepthController.h")
     Q_MOC_INCLUDE("app/jobs/render/BakeController.h")
@@ -180,6 +183,7 @@ class AppController : public QObject
     Q_PROPERTY(BakeController *bakes READ bakes CONSTANT)
     // Noise removal for a clip's audio. QML: EditorState.denoise.
     Q_PROPERTY(DenoiseController *denoise READ denoise CONSTANT)
+    Q_PROPERTY(CaptureController *capture READ capture CONSTANT)
     // Silence removal and audio sync. QML: EditorState.audioAlign.
     Q_PROPERTY(AudioAlignController *audioAlign READ audioAlign CONSTANT)
     // Colour grade, finishing effects and looks. QML: EditorState.color.
@@ -413,6 +417,7 @@ public:
     DepthController *depth() const { return m_depth; }
     BakeController *bakes() const { return m_bakes; }
     DenoiseController *denoise() const { return m_denoise; }
+    CaptureController *capture() const { return m_capture; }
     AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
     BlendPreviewController *blendPreview() const { return m_blendPreview; }
@@ -2754,6 +2759,7 @@ protected:
     DepthController *m_depth = nullptr;
     BakeController *m_bakes = nullptr;
     DenoiseController *m_denoise = nullptr;
+    CaptureController *m_capture = nullptr;
     AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
     BlendPreviewController *m_blendPreview = nullptr;

@@ -1480,6 +1480,8 @@ target_sources(driftapp PRIVATE
     src/app/jobs/render/BakeController.cpp
     src/app/jobs/render/BakeFingerprint.h
     src/app/jobs/render/BakeFingerprint.cpp
+    src/app/jobs/capture/CaptureController.h
+    src/app/jobs/capture/CaptureController.cpp
     src/app/jobs/audio/DenoiseController.h
     src/app/jobs/audio/DenoiseController.cpp
     src/app/jobs/audio/AudioAlignController.h
