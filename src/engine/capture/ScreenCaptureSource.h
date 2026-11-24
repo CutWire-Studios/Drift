@@ -71,4 +71,8 @@ signals:
 // yet, should disable screen recording in its UI rather than offer a button that cannot work.
 std::unique_ptr<ScreenCaptureSource> makeScreenCaptureSource(QObject *parent = nullptr);
 
+// The camera source, or null when no camera is connected. Separate from the screen factory
+// because the two answer different questions: a machine can have one and not the other.
+std::unique_ptr<ScreenCaptureSource> makeCameraCaptureSource(QObject *parent = nullptr);
+
 } // namespace drift

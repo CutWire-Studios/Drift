@@ -1,10 +1,19 @@
 #include "engine/capture/ScreenCaptureSource.h"
 
+#include "engine/capture/CameraCaptureSource.h"
+
 #if defined(Q_OS_LINUX) && defined(DRIFT_WITH_PORTAL_CAPTURE)
 #include "engine/capture/PortalScreenCapture.h"
 #endif
 
 namespace drift {
+
+std::unique_ptr<ScreenCaptureSource> makeCameraCaptureSource(QObject *parent)
+{
+    if (!CameraCaptureSource::available())
+        return nullptr;
+    return std::make_unique<CameraCaptureSource>(parent);
+}
 
 std::unique_ptr<ScreenCaptureSource> makeScreenCaptureSource(QObject *parent)
 {
