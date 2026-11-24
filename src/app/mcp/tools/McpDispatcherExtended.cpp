@@ -3467,7 +3467,8 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                    {QStringLiteral("cameras"), QJsonArray::fromVariantList(capture->cameras())},
                    {QStringLiteral("audioInputs"),
                     QJsonArray::fromVariantList(capture->audioInputs())},
-                   {QStringLiteral("systemAudioInput"), capture->systemAudioInput()}});
+                   {QStringLiteral("systemAudioInput"), capture->systemAudioInput()},
+                   {QStringLiteral("systemAudio"), capture->systemAudioAvailable()}});
     }
 
     if (tool == QLatin1String("record_screen")) {
@@ -3480,7 +3481,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const int fps = args.contains(QStringLiteral("fps"))
                             ? int(jsonNumber(args.value(QStringLiteral("fps")), 30))
                             : 30;
-        if (!capture->recordScreen(argString(args, QStringLiteral("audio_input")), fps))
+        const bool systemAudio = jsonBool(args.value(QStringLiteral("system_audio")));
+        if (systemAudio && !capture->systemAudioAvailable()) {
+            return err("unsupported",
+                       QStringLiteral("This system cannot record its own sound. Record a "
+                                      "microphone from list_capture_devices instead."));
+        }
+        if (!capture->recordScreen(argString(args, QStringLiteral("audio_input")), fps,
+                                   systemAudio))
             return err("failed", QStringLiteral("Could not start the screen recording."));
         // Said here rather than left to the agent to infer: on Wayland nothing is recorded until
         // somebody answers the compositor's dialog, and an agent cannot.

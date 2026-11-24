@@ -748,10 +748,11 @@ PanelFrame {
         return inputs.length > 0 ? inputs[0].id : ""
     }
 
-    function recordScreen() {
+    function recordScreen(systemAudio) {
         // No screen picker of our own: on Wayland the compositor shows its share dialog and
         // ignores anything we nominated, so asking first would make the user choose twice.
-        if (!EditorState.capture.recordScreen(root.defaultAudioInputId(), 30))
+        const mic = systemAudio ? "" : root.defaultAudioInputId()
+        if (!EditorState.capture.recordScreen(mic, 30, systemAudio === true))
             return
         if (EditorState.capture.platformChoosesScreen())
             Toasts.info(qsTr("Choose what to share in the dialog your desktop shows."))
@@ -1039,7 +1040,8 @@ PanelFrame {
                 onImportFilesRequested: root.importMedia()
                 onImportFolderRequested: root.importFolder()
                 onCollectMediaRequested: root.collectMedia()
-                onRecordScreenRequested: root.recordScreen()
+                onRecordScreenRequested: root.recordScreen(false)
+                onRecordScreenWithSystemAudioRequested: root.recordScreen(true)
                 onRecordCameraRequested: root.recordCamera()
             }
 

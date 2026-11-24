@@ -47,16 +47,27 @@ public:
 
     Q_INVOKABLE QVariantList cameras() const;
     Q_INVOKABLE QVariantList audioInputs() const;
-    // The audio input that records the computer's own sound, or empty when the platform lists
-    // none — which is the usual answer. See CaptureDevices::audioInputs.
+    // The audio input that records the computer's own sound through Qt's device list, or empty
+    // when it lists none — which is the usual answer, since Qt hides monitor sources. Prefer
+    // systemAudioAvailable(), which goes to the platform directly.
     Q_INVOKABLE QString systemAudioInput() const;
+    // Whether Drift can record what the computer is playing. On Linux this reads the default
+    // sink's monitor from PipeWire, which needs no consent dialog, unlike the screen.
+    Q_INVOKABLE bool systemAudioAvailable() const;
 
     // Starts recording. `audioInputId` empty records no sound. False, with a message on the app's
     // status line, when the recording could not be started at all; a failure that only surfaces
     // once the platform answers arrives through failed() instead.
-    Q_INVOKABLE bool recordScreen(const QString &audioInputId = QString(), int fps = 30);
+    //
+    // `systemAudio` records what the computer is playing instead of a microphone. The two are
+    // exclusive, not mixable: the file carries one audio track, and two capture devices run on
+    // independent clocks that would have to be resampled against each other to stay in step. Use
+    // the existing voiceover recording for a commentary over a recording with system sound.
+    Q_INVOKABLE bool recordScreen(const QString &audioInputId = QString(), int fps = 30,
+                                  bool systemAudio = false);
     Q_INVOKABLE bool recordCamera(const QString &cameraId = QString(),
-                                  const QString &audioInputId = QString(), int fps = 30);
+                                  const QString &audioInputId = QString(), int fps = 30,
+                                  bool systemAudio = false);
 
     // Stops and keeps the recording, importing it into the bin.
     Q_INVOKABLE void stop();

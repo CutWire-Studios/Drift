@@ -1090,6 +1090,8 @@ add_library(driftengine STATIC
     src/engine/encode/writers/MatteWriter.cpp
     src/engine/encode/proxies/ProxyNaming.h
     src/engine/encode/proxies/ProxyNaming.cpp
+    src/engine/capture/SystemAudioSource.h
+    src/engine/capture/SystemAudioSource.cpp
     src/engine/capture/CaptureDevices.h
     src/engine/capture/CaptureDevices.cpp
     src/engine/capture/CameraCaptureSource.h
@@ -1164,7 +1166,9 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND DRIFT_WITH_PORTAL_CAPTURE)
     if(Qt6DBus_FOUND AND TARGET PkgConfig::PipeWire)
         target_sources(driftengine PRIVATE
             src/engine/capture/PortalScreenCapture.h
-            src/engine/capture/PortalScreenCapture.cpp)
+            src/engine/capture/PortalScreenCapture.cpp
+            src/engine/capture/PipeWireAudioSource.h
+            src/engine/capture/PipeWireAudioSource.cpp)
         target_link_libraries(driftengine PRIVATE Qt6::DBus PkgConfig::PipeWire)
         target_compile_definitions(driftengine PRIVATE DRIFT_WITH_PORTAL_CAPTURE)
         message(STATUS "Screen recording: xdg-desktop-portal + PipeWire ${PipeWire_VERSION}")

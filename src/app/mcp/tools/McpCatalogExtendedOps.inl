@@ -1335,7 +1335,8 @@
         { "list_capture_devices", "media", "Cameras and microphones available to record",
           "What this machine can record from: {screen, camera, platformChoosesScreen, "
           "cameras:[{id, description, isDefault}], audioInputs:[{id, description, isDefault, "
-          "loopback}], systemAudioInput}. `screen` false means there is no screen-capture backend "
+          "loopback}], systemAudioInput, systemAudio}. `screen` false means there is no "
+          "screen-capture backend "
           "here at all. `platformChoosesScreen` true means the desktop shows its own share picker "
           "and a person has to answer it — see record_screen. `systemAudioInput` is usually empty: "
           "recording the machine's own sound needs a loopback device that most systems do not "
@@ -1351,6 +1352,10 @@
           "than waiting or retrying. Returns {started}; poll capture_status.",
           objectSchema({{QStringLiteral("audio_input"),
                          stringProp(QStringLiteral("Audio input id from list_capture_devices"))},
+                        {QStringLiteral("system_audio"),
+                         boolProp(QStringLiteral("Record what the computer is playing instead of a "
+                                                 "microphone. Exclusive with audio_input: the file "
+                                                 "holds one audio track."))},
                         {QStringLiteral("fps"),
                          integerProp(QStringLiteral("Frames per second, 1-120, default 30"))}}) },
         { "record_camera", "media", "Record the webcam to a file in the bin",

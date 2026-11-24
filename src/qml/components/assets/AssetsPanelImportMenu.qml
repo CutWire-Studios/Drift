@@ -11,6 +11,7 @@ ThemedContextMenu {
     signal importFolderRequested()
     signal collectMediaRequested()
     signal recordScreenRequested()
+    signal recordScreenWithSystemAudioRequested()
     signal recordCameraRequested()
 
     implicitWidth: 220
@@ -31,6 +32,7 @@ ThemedContextMenu {
 
     ThemedMenuSeparator {
         visible: recordScreenItem.visible || recordCameraItem.visible
+                 || recordScreenAudioItem.visible
         height: visible ? implicitHeight : 0
     }
 
@@ -49,6 +51,20 @@ ThemedContextMenu {
         onTriggered: root.recordScreenRequested()
     }
 
+    // Separate item rather than a setting, because which sound a recording wants is decided per
+    // take: a tutorial wants the app's sound, a talking head wants the microphone. The file holds
+    // one audio track, so it is one or the other.
+    ThemedMenuItem {
+        id: recordScreenAudioItem
+        visible: EditorState.capture.screenAvailable()
+                 && EditorState.capture.systemAudioAvailable()
+        height: visible ? implicitHeight : 0
+        text: qsTr("Record Screen with Computer Sound…")
+        icon.name: Theme.icons.monitor
+        enabled: !EditorState.capture.recording
+        onTriggered: root.recordScreenWithSystemAudioRequested()
+    }
+
     ThemedMenuItem {
         id: recordCameraItem
         visible: EditorState.capture.cameraAvailable()
@@ -61,6 +77,7 @@ ThemedContextMenu {
 
     ThemedMenuSeparator {
         visible: recordScreenItem.visible || recordCameraItem.visible
+                 || recordScreenAudioItem.visible
         height: visible ? implicitHeight : 0
     }
 

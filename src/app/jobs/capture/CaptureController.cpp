@@ -7,6 +7,7 @@
 #include "engine/capture/CaptureWriter.h"
 #include "engine/capture/RecordingLocation.h"
 #include "engine/capture/ScreenCaptureSource.h"
+#include "engine/capture/SystemAudioSource.h"
 
 #include <QAudioDevice>
 #include <QAudioFormat>
@@ -50,6 +51,7 @@ struct CaptureController::Impl
     std::unique_ptr<QAudioSource> audio;
     QIODevice *audioDevice = nullptr;
     QAudioFormat audioFormat;
+    std::unique_ptr<drift::SystemAudioSource> systemAudio;
 
     QString path;
     QString statusText;
@@ -76,6 +78,10 @@ struct CaptureController::Impl
     QString resolveOutputPath(const QString &kind);
 
     bool startAudio(const QString &audioInputId);
+    bool startSystemAudio();
+    // Shared by the screen and camera paths: open the writer at the size the source reported and
+    // start whichever audio was asked for.
+    void beginWriting(const QSize &size, const QString &audioInputId, bool wantSystemAudio);
     void pullAudio();
     void teardown();
     void finishRecording();
@@ -145,6 +151,74 @@ bool CaptureController::Impl::startAudio(const QString &audioInputId)
     return true;
 }
 
+bool CaptureController::Impl::startSystemAudio()
+{
+    systemAudio = drift::makeSystemAudioSource(owner);
+    if (!systemAudio)
+        return false;
+    QObject::connect(systemAudio.get(), &drift::SystemAudioSource::samples, owner,
+                     [this](const QVector<float> &interleaved) {
+                         if (!writerOpen || !writer || interleaved.isEmpty())
+                             return;
+                         QString error;
+                         writer->writeAudio(interleaved.constData(),
+                                            interleaved.size() / kAudioChannels, &error);
+                     });
+    QObject::connect(systemAudio.get(), &drift::SystemAudioSource::failed, owner,
+                     [this](const QString &message) {
+                         // Not fatal: the picture is still being recorded, and losing the take
+                         // over a sound device would be worse than losing the sound.
+                         app->setLastMessage(message, QStringLiteral("warning"));
+                     });
+    QString error;
+    if (!systemAudio->start(kAudioRate, kAudioChannels, &error)) {
+        systemAudio.reset();
+        return false;
+    }
+    return true;
+}
+
+void CaptureController::Impl::beginWriting(const QSize &size, const QString &audioInputId,
+                                           bool wantSystemAudio)
+{
+    drift::CaptureWriter::Settings settings;
+    // Rounded down to even: a monitor or a camera can report an odd dimension, and H.264's
+    // half-resolution chroma planes refuse it.
+    settings.size = QSize(size.width() - size.width() % 2, size.height() - size.height() % 2);
+    settings.fps = fps;
+    settings.audio = wantSystemAudio || !audioInputId.isEmpty();
+    settings.audioSampleRate = kAudioRate;
+    settings.audioChannels = kAudioChannels;
+
+    writer = std::make_unique<drift::CaptureWriter>();
+    QString error;
+    if (!writer->open(path, settings, &error)) {
+        writer.reset();
+        if (source)
+            source->stop();
+        recording = false;
+        emit owner->recordingChanged();
+        app->setLastMessage(error, QStringLiteral("error"));
+        emit owner->failed(error);
+        return;
+    }
+    writerOpen = true;
+
+    if (wantSystemAudio) {
+        if (!startSystemAudio()) {
+            app->setLastMessage(tr("The computer's sound could not be recorded, so this "
+                                   "recording has no audio."),
+                                QStringLiteral("warning"));
+        }
+    } else if (!audioInputId.isEmpty() && !startAudio(audioInputId)) {
+        // Not fatal: a picture with no sound beats refusing the take outright.
+        app->setLastMessage(tr("That microphone could not be opened, so this recording has no "
+                               "sound."),
+                            QStringLiteral("warning"));
+    }
+    setStatus(tr("Recording"));
+}
+
 void CaptureController::Impl::pullAudio()
 {
     if (!audioDevice || !writerOpen || !writer)
@@ -204,6 +278,10 @@ void CaptureController::Impl::teardown()
         audio.reset();
     }
     audioDevice = nullptr;
+    if (systemAudio) {
+        systemAudio->stop();
+        systemAudio.reset();
+    }
     if (source) {
         source->stop();
         source.reset();
@@ -324,7 +402,13 @@ QString CaptureController::systemAudioInput() const
     return drift::CaptureDevices::firstLoopbackInput();
 }
 
-bool CaptureController::recordScreen(const QString &audioInputId, int fps)
+bool CaptureController::systemAudioAvailable() const
+{
+    // Built and dropped: whether a sound server is reachable is a property of the session.
+    return drift::makeSystemAudioSource() != nullptr;
+}
+
+bool CaptureController::recordScreen(const QString &audioInputId, int fps, bool systemAudio)
 {
     if (d->recording) {
         d->app->setLastMessage(tr("A recording is already running."), QStringLiteral("warning"));
@@ -356,35 +440,8 @@ bool CaptureController::recordScreen(const QString &audioInputId, int fps)
 
     // Connected before start, because the portal can answer — or be cancelled — immediately.
     connect(d->source.get(), &drift::ScreenCaptureSource::started, this,
-            [this, audioInputId](const QSize &size) {
-                drift::CaptureWriter::Settings settings;
-                // Rounded down to even: a monitor can report an odd height, and H.264 refuses it.
-                settings.size = QSize(size.width() - size.width() % 2,
-                                      size.height() - size.height() % 2);
-                settings.fps = d->fps;
-                settings.audio = !audioInputId.isEmpty();
-                settings.audioSampleRate = kAudioRate;
-                settings.audioChannels = kAudioChannels;
-
-                d->writer = std::make_unique<drift::CaptureWriter>();
-                QString error;
-                if (!d->writer->open(d->path, settings, &error)) {
-                    d->writer.reset();
-                    d->source->stop();
-                    d->recording = false;
-                    emit recordingChanged();
-                    d->app->setLastMessage(error, QStringLiteral("error"));
-                    emit failed(error);
-                    return;
-                }
-                d->writerOpen = true;
-                if (settings.audio && !d->startAudio(audioInputId)) {
-                    // Not fatal: a picture with no sound beats refusing the take outright.
-                    d->app->setLastMessage(tr("That microphone could not be opened, so this "
-                                              "recording has no sound."),
-                                           QStringLiteral("warning"));
-                }
-                d->setStatus(tr("Recording"));
+            [this, audioInputId, systemAudio](const QSize &size) {
+                d->beginWriting(size, audioInputId, systemAudio);
             });
     connect(d->source.get(), &drift::ScreenCaptureSource::frame, this,
             [this](const QImage &image, drift::TimeUs timestampUs) {
@@ -423,7 +480,8 @@ bool CaptureController::recordScreen(const QString &audioInputId, int fps)
     return true;
 }
 
-bool CaptureController::recordCamera(const QString &cameraId, const QString &audioInputId, int fps)
+bool CaptureController::recordCamera(const QString &cameraId,
+                                     const QString &audioInputId, int fps, bool systemAudio)
 {
     if (d->recording) {
         d->app->setLastMessage(tr("A recording is already running."), QStringLiteral("warning"));
@@ -453,33 +511,8 @@ bool CaptureController::recordCamera(const QString &cameraId, const QString &aud
     request.outputPath = d->path;
 
     connect(d->source.get(), &drift::ScreenCaptureSource::started, this,
-            [this, audioInputId](const QSize &size) {
-                drift::CaptureWriter::Settings settings;
-                settings.size = QSize(size.width() - size.width() % 2,
-                                      size.height() - size.height() % 2);
-                settings.fps = d->fps;
-                settings.audio = !audioInputId.isEmpty();
-                settings.audioSampleRate = kAudioRate;
-                settings.audioChannels = kAudioChannels;
-
-                d->writer = std::make_unique<drift::CaptureWriter>();
-                QString error;
-                if (!d->writer->open(d->path, settings, &error)) {
-                    d->writer.reset();
-                    d->source->stop();
-                    d->recording = false;
-                    emit recordingChanged();
-                    d->app->setLastMessage(error, QStringLiteral("error"));
-                    emit failed(error);
-                    return;
-                }
-                d->writerOpen = true;
-                if (settings.audio && !d->startAudio(audioInputId)) {
-                    d->app->setLastMessage(tr("That microphone could not be opened, so this "
-                                              "recording has no sound."),
-                                           QStringLiteral("warning"));
-                }
-                d->setStatus(tr("Recording"));
+            [this, audioInputId, systemAudio](const QSize &size) {
+                d->beginWriting(size, audioInputId, systemAudio);
             });
     connect(d->source.get(), &drift::ScreenCaptureSource::frame, this,
             [this](const QImage &image, drift::TimeUs timestampUs) {
