@@ -4017,6 +4017,8 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const drift::GpuEffectDef
     program->setUniformValue("u_time", timeSec);
     const float frameRate = aux && aux->frameRate > 0 ? float(aux->frameRate) : 30.f;
     program->setUniformValue("u_frameRate", frameRate);
+    const std::array<float, 4> content = aux ? aux->contentRect : std::array<float, 4>{0.f, 0.f, 1.f, 1.f};
+    program->setUniformValue("u_contentRect", QVector4D(content[0], content[1], content[2], content[3]));
     // Rounded, so a time a hair under k / fps still lands on frame k.
     program->setUniformValue("u_frameIndex", int(std::floor(double(timeUs) * frameRate / 1'000'000.0 + 0.5)));
     // Integer microseconds for hash-stable glitch effects that mirror CPU seeding.

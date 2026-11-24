@@ -736,6 +736,9 @@ struct PipelineAux
     // For "previousOutput" packages: the effect's result one frame ago, 0 for none (the first
     // frame, or after a seek), which binds transparent.
     GLuint prevOutput = 0;
+    // Where the clip's own frame sits in the target, as uv x0, y0, x1, y1: the whole target unless
+    // a "padding" effect has grown it.
+    std::array<float, 4> contentRect{0.f, 0.f, 1.f, 1.f};
 };
 
 // Upload an audio param's 512x2 RGBA8 analysis (AudioFrame::rgba) into the texture kept under `key`.

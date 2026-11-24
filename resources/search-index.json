@@ -201,6 +201,14 @@
       "needs": []
     },
     {
+      "id": "color-qualifier",
+      "target": "panel:color#tab=3/color-qualifier",
+      "context": "ColorPanel",
+      "source": "Qualifier",
+      "keywords": "qualifier hsl key secondary select matte mask isolate hue saturation luminance range",
+      "needs": []
+    },
+    {
       "id": "color-film-grain",
       "target": "panel:color#tab=4/color-film-grain",
       "context": "ColorPanel",

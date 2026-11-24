@@ -291,6 +291,14 @@ add_test(NAME Engine COMMAND tst_engine)
 drift_copy_effects(tst_engine)
 drift_copy_transitions(tst_engine)
 
+qt_add_executable(tst_effectshaders tst_effectshaders.cpp)
+target_include_directories(tst_effectshaders PRIVATE ../src)
+target_link_libraries(tst_effectshaders PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine driftcore)
+target_compile_definitions(tst_effectshaders PRIVATE
+    DRIFT_TEST_EFFECTS_DIR="${CMAKE_SOURCE_DIR}/effects"
+    DRIFT_TEST_TRANSITIONS_DIR="${CMAKE_SOURCE_DIR}/transitions")
+add_test(NAME EffectShaders COMMAND tst_effectshaders)
+
 if(DRIFT_WITH_SKIA)
     qt_add_executable(tst_skia tst_skia.cpp)
     target_include_directories(tst_skia PRIVATE ../src)
