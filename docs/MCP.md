@@ -786,6 +786,21 @@ Lua API and the shader contract are in [procedural.md](procedural.md), which is 
 
 Create, update and delete are not undoable. `layer3d` is ignored on a procedural clip, as on a model clip: it is always a 3D layer.
 
+### Generators and scripted text
+
+`list_generators` lists the built-in generator clips (solid colour, gradient, noise, colour bars, grid,
+checkerboard, countdown leader, particle emitter) with their params, and the particle presets (confetti,
+fireworks, sparks, snow, rain, smoke, magic dust, bubbles). `add_generator({id, at?, track?, duration?,
+seed?, name?, params?})` places one (`{id, track, index, kind}`), `set_generator({clip, params?, seed?})`
+changes static params, and `set_keyframe` on `proc.<key>` animates them (colours per channel, points per
+axis: `proc.emitter.x`). Particles are simulated from the clip start on a fixed 1/60 s step, so a scrub and
+an export agree. The countdown's number takes the clip's text style (`set_text`).
+
+`list_text_scripts` and `set_text_script({clip, script?|preset?})` make a text clip's words the result of a Lua
+script run for every frame (timecode burn-in, counters, tickers, clocks). The script reads `ctx` and the
+helpers `timecode`, `lerp`, `ease`, `pad`, `commas`, in the procedural sandbox; a failing script returns
+`error` and the clip draws nothing.
+
 ### Custom effects
 
 Agents can write new GPU video effects, transitions and audio effects. Each one is an ordinary user

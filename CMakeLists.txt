@@ -628,6 +628,10 @@ add_library(driftcore STATIC
     src/core/project/sources/Model3dSource.cpp
     src/core/project/sources/ProceduralSource.h
     src/core/project/sources/ProceduralSource.cpp
+    src/core/project/sources/GeneratorKinds.h
+    src/core/project/sources/GeneratorKinds.cpp
+    src/core/text/TextScriptPresets.h
+    src/core/text/TextScriptPresets.cpp
     src/core/project/sources/PdfSource.h
     src/core/project/sources/PdfSource.cpp
     src/core/base/ZipArchive.h
@@ -784,6 +788,8 @@ add_library(driftprocedural STATIC
     src/engine/procedural/ProceduralSceneCache.cpp
     src/engine/procedural/ProceduralDiagnostics.h
     src/engine/procedural/ProceduralDiagnostics.cpp
+    src/engine/procedural/TextScript.h
+    src/engine/procedural/TextScript.cpp
 )
 target_include_directories(driftprocedural PUBLIC src)
 target_link_libraries(driftprocedural PUBLIC drift_lua)
@@ -927,6 +933,8 @@ add_library(driftengine STATIC
     src/engine/packages/assets/EmojiTable.cpp
     src/engine/render2d/text/TextLayout.h
     src/engine/render2d/text/TextLayout.cpp
+    src/engine/render2d/generators/ParticleSim.h
+    src/engine/render2d/generators/ParticleSim.cpp
     src/engine/render2d/vector/VectorClipRenderer.h
     src/engine/render2d/vector/VectorClipRenderer.cpp
     src/engine/render2d/vector/VectorInspect.h
@@ -969,6 +977,8 @@ add_library(driftengine STATIC
     src/engine/color/ScopeAnalysis.h
     src/engine/color/ScopeAnalysis.cpp
     src/engine/compositor/FrameCompositor.h
+    src/engine/compositor/ScriptedText.h
+    src/engine/compositor/ScriptedText.cpp
     src/engine/compositor/FrameCompositor.cpp
     src/engine/compositor/SourceFrameCrop.h
     src/engine/compositor/SourceFrameCrop.cpp
@@ -1204,6 +1214,8 @@ if(DRIFT_WITH_SKIA)
         src/engine/render2d/skia/SkiaShading.cpp
         src/engine/render2d/shapes/SkiaShapePainter.h
         src/engine/render2d/shapes/SkiaShapePainter.cpp
+        src/engine/render2d/generators/SkiaGeneratorPainter.h
+        src/engine/render2d/generators/SkiaGeneratorPainter.cpp
         src/engine/render2d/text/fonts/SkiaFonts.h
         src/engine/render2d/text/fonts/SkiaFonts.cpp
         src/engine/render2d/text/fonts/SkiaFontCollection.h
@@ -2069,6 +2081,8 @@ qt_add_qml_module(drift
         src/qml/components/properties/Transform3dInspector.qml
         src/qml/components/properties/PdfInspector.qml
         src/qml/components/properties/ProceduralInspector.qml
+        src/qml/components/properties/GeneratorInspector.qml
+        src/qml/components/properties/TextInspectorScriptSection.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/properties/FacePropPicker.qml
@@ -2161,6 +2175,8 @@ qt_add_qml_module(drift
         src/qml/components/assets/SoundEffectDialog.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
+        src/qml/components/assets/GeneratorsTab.qml
+        src/qml/components/assets/GeneratorCard.qml
         src/qml/components/assets/AssetSearchBar.qml
         src/qml/components/assets/AssetDragSource.qml
         src/qml/components/assets/MasksTab.qml

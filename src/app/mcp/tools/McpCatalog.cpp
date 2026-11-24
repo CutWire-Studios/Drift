@@ -1743,7 +1743,7 @@ QStringList toolboxNames()
             QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
             QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice"),
-            QStringLiteral("procedural")};
+            QStringLiteral("procedural"), QStringLiteral("generators")};
 }
 
 QStringList undoExemptOps()
@@ -2051,6 +2051,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
         {"procedural", "Procedural 3D clips: Lua-built scenes with your own GLSL shaders. Read the guide, write packages into My Procedurals, try them with evaluate_procedural, place them as clips and animate their params with proc.<key> keyframes."},
+        {"generators", "Built-in generator clips: solid colour, gradient, noise, colour bars, grid, checkerboard, countdown leader and the particle emitter (confetti, fireworks, sparks, snow, rain, smoke, magic dust, bubbles). Place with add_generator, animate params with proc.<key> keyframes."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon). Teleprompter script for a self-recorded voice-over."},
     };
 

@@ -29,7 +29,9 @@ namespace drift {
 // Vector is a Lottie animation or SVG document, Model3d a glTF binary and Pdf a PDF; like Image and Shape
 // they have no media file behind their source range, so they are synthetic and unbounded.
 // Composite plays a nested timeline (Project::sequenceTracks(sequenceId)) as its source.
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Pdf, Composite, Procedural };
+// Generator is a built-in synthetic picture (solid, gradient, noise, test pattern, countdown,
+// particles); its kind and parameters live in `procedural` (see GeneratorKinds.h).
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Pdf, Composite, Procedural, Generator };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
@@ -96,13 +98,15 @@ struct Clip
     // copy: "intro" -> "intro.2" (numberCopiedLabels).
     QString label;
     QString textContent;
+    // Text clips: a Lua script that returns the text for each frame. Empty = textContent is shown as is.
+    QString textScript;
     TextStyle textStyle; // meaningful when type == Text or Subtitle
     QList<SubtitleCue> subtitleCues; // only meaningful when type == Subtitle
     ShapeStyle shapeStyle; // only meaningful when type == Shape
     VectorSource vector;   // only meaningful when type == Vector
     Model3dSource model3d; // only meaningful when type == Model3d
     PdfSource pdf;         // only meaningful when type == Pdf
-    ProceduralSource procedural; // only meaningful when type == Procedural
+    ProceduralSource procedural; // only meaningful when type == Procedural or Generator (packageId is the kind id)
     // Nested timeline this clip plays: set on a Composite clip and on the Audio companion that
     // "Separate audio" splits off it.
     QString sequenceId;

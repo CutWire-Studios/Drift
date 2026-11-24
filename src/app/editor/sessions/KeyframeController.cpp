@@ -11,6 +11,7 @@
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/procedurals/ProceduralCatalog.h"
+#include "core/project/sources/GeneratorKinds.h"
 
 #include <QOpenGLContext>
 #include <QSet>
@@ -226,6 +227,15 @@ QVariantList KeyframeController::animatableProperties(int track, int clip) const
                 continue;
             rows << specRow(QStringLiteral("proc.%1").arg(spec.key), spec, QStringLiteral("proc"),
                             package.displayName);
+        }
+    }
+    if (target.type == drift::ClipType::Generator) {
+        if (const drift::GeneratorKind *kind = drift::generatorKind(target.procedural.packageId)) {
+            for (const drift::EffectParamSpec &spec : kind->parameters) {
+                if (spec.isFilePath() || spec.isClip() || spec.isSampler())
+                    continue;
+                rows << specRow(QStringLiteral("proc.%1").arg(spec.key), spec, QStringLiteral("proc"), kind->label);
+            }
         }
     }
     if (target.type == drift::ClipType::Pdf) {

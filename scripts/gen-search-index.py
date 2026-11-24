@@ -109,6 +109,7 @@ INSPECTOR_PREFIXES = (
     ("PdfInspector", "pdf"),
     ("Model3DInspector", "model3d"),
     ("ProceduralInspector", "procedural"),
+    ("GeneratorInspector", "generator"),
     ("VectorInspector", "vector"),
 )
 

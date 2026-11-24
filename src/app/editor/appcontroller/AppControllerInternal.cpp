@@ -839,6 +839,7 @@ bool isSyntheticTimelineClip(drift::ClipType type)
            || type == drift::ClipType::Shape || type == drift::ClipType::Image
            || type == drift::ClipType::Vector || type == drift::ClipType::Model3d
            || type == drift::ClipType::Pdf || type == drift::ClipType::Procedural
+           || type == drift::ClipType::Generator
            || type == drift::ClipType::Adjustment;
 }
 
@@ -953,13 +954,22 @@ bool parsePdfProp(const drift::Clip &clip, const QString &prop, QString *key)
     return true;
 }
 
+QList<drift::EffectParamSpec> proceduralSpecsFor(const drift::Clip &clip)
+{
+    if (clip.type == drift::ClipType::Generator) {
+        const drift::GeneratorKind *kind = drift::generatorKind(clip.procedural.packageId);
+        return kind ? kind->parameters : QList<drift::EffectParamSpec>{};
+    }
+    return proceduralForId(clip.procedural.packageId).parameters;
+}
+
 bool parseProceduralProp(const drift::Clip &clip, const QString &prop, QString *key)
 {
-    if (clip.type != drift::ClipType::Procedural || !prop.startsWith(QLatin1String("proc.")))
+    if ((clip.type != drift::ClipType::Procedural && clip.type != drift::ClipType::Generator)
+        || !prop.startsWith(QLatin1String("proc.")))
         return false;
     const QString candidate = prop.mid(5);
-    const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
-    for (const drift::EffectParamSpec &spec : package.parameters) {
+    for (const drift::EffectParamSpec &spec : proceduralSpecsFor(clip)) {
         if (spec.key == candidate) {
             if (spec.isText() || spec.isVec2() || spec.isRegion())
                 return false;

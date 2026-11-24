@@ -167,6 +167,14 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
     case ClipType::Procedural:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("procedural");
         break;
+    case ClipType::Generator:
+        caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
+             << QStringLiteral("generator");
+        caps << QStringLiteral("effectable");
+        // The countdown's number is drawn with the clip's text style.
+        if (clip.procedural.packageId == QLatin1String("gen.countdown"))
+            caps << QStringLiteral("textStyled");
+        break;
     case ClipType::Adjustment:
         break;
     }
@@ -356,7 +364,7 @@ bool clipAcceptsPreviewTransform(const drift::Clip &clip)
     return clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Image
            || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Model3d
            || clip.type == drift::ClipType::Pdf || clip.type == drift::ClipType::Procedural
-           || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
+           || clip.type == drift::ClipType::Generator || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
            || clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite
            || (clip.type == drift::ClipType::Adjustment
                && clip.adjustmentKind == drift::AdjustmentKind::Transform);
@@ -1113,6 +1121,24 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
                                {QStringLiteral("params"), params},
                                {QStringLiteral("packageMissing"), !package.valid}});
     }
+    if (clip.type == drift::ClipType::Generator) {
+        const drift::GeneratorKind *kind = drift::generatorKind(clip.procedural.packageId);
+        QVariantList params;
+        if (kind) {
+            for (const drift::EffectParamSpec &spec : kind->parameters) {
+                params.append(paramSpecToMap(spec, clip.procedural.parameters, clip.procedural.paramKeyframes,
+                                             QStringLiteral("proc."), clip.timelineStart));
+            }
+        }
+        map.insert(QStringLiteral("generator"),
+                   QVariantMap{{QStringLiteral("kindId"), clip.procedural.packageId},
+                               {QStringLiteral("kindName"), kind ? kind->label : QString()},
+                               {QStringLiteral("description"), kind ? kind->description : QString()},
+                               {QStringLiteral("seed"), clip.procedural.seed},
+                               {QStringLiteral("params"), params}});
+    }
+    if (clip.type == drift::ClipType::Text && !clip.textScript.isEmpty())
+        map.insert(QStringLiteral("textScript"), clip.textScript);
     return map;
 }
 

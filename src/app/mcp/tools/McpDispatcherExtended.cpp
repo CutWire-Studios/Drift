@@ -29,6 +29,8 @@
 #include "core/text/TextLook.h"
 #include "app/mcp/tools/McpEffectAuthoring.h"
 #include "app/mcp/tools/McpProceduralAuthoring.h"
+#include "core/project/sources/GeneratorKinds.h"
+#include "core/text/TextScriptPresets.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/tools/McpMarket.h"
 
@@ -4317,6 +4319,148 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return procedural::source(m_controller, args);
     if (tool == QLatin1String("delete_procedural"))
         return procedural::remove(m_controller, args);
+    if (tool == QLatin1String("list_generators")) {
+        QJsonArray kinds;
+        for (const drift::GeneratorKind &kind : drift::generatorKinds()) {
+            QJsonArray params;
+            for (const drift::EffectParamSpec &spec : kind.parameters) {
+                QJsonObject p{{QStringLiteral("key"), spec.key},
+                              {QStringLiteral("label"), spec.label},
+                              {QStringLiteral("type"), spec.typeName()}};
+                if (spec.isColor()) {
+                    p.insert(QStringLiteral("default"), spec.defaultColorHex);
+                } else if (spec.isVec2()) {
+                    p.insert(QStringLiteral("min"), spec.min);
+                    p.insert(QStringLiteral("max"), spec.max);
+                    p.insert(QStringLiteral("default"), QJsonArray{spec.defaultX, spec.defaultY});
+                } else if (spec.isFilePath()) {
+                    p.insert(QStringLiteral("default"), spec.defaultString);
+                } else {
+                    p.insert(QStringLiteral("min"), spec.min);
+                    p.insert(QStringLiteral("max"), spec.max);
+                    p.insert(QStringLiteral("default"), spec.defaultValue);
+                    if (!spec.options.isEmpty())
+                        p.insert(QStringLiteral("options"), QJsonArray::fromStringList(spec.options));
+                }
+                params.append(p);
+            }
+            kinds.append(QJsonObject{{QStringLiteral("id"), kind.id},
+                                     {QStringLiteral("name"), kind.label},
+                                     {QStringLiteral("category"), kind.category},
+                                     {QStringLiteral("description"), kind.description},
+                                     {QStringLiteral("defaultDuration"), kind.defaultDurationSec},
+                                     {QStringLiteral("params"), params}});
+        }
+        QJsonArray presets;
+        for (const drift::GeneratorPreset &preset : drift::generatorPresets()) {
+            presets.append(QJsonObject{{QStringLiteral("id"), preset.id},
+                                       {QStringLiteral("name"), preset.label},
+                                       {QStringLiteral("kind"), preset.kindId},
+                                       {QStringLiteral("duration"), preset.durationSec}});
+        }
+        return QJsonObject{{QStringLiteral("generators"), kinds}, {QStringLiteral("presets"), presets}};
+    }
+    if (tool == QLatin1String("add_generator")) {
+        const QString id = argString(args, QStringLiteral("id"));
+        if (id.isEmpty())
+            return err("bad_args", QStringLiteral("id required - call list_generators"));
+        if (!drift::generatorKind(id) && !drift::generatorPreset(id))
+            return err("not_found", QStringLiteral("No generator or preset %1 - call list_generators").arg(id));
+        const double at = args.contains(QStringLiteral("at"))
+                              ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
+                              : m_controller->playheadSeconds();
+        QVariantMap opts;
+        for (const char *key : {"duration", "seed", "name", "params"}) {
+            if (args.contains(QLatin1String(key)))
+                opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
+        }
+        const QVariantMap reply = m_controller->addGeneratorClip(
+            id, args.contains(QStringLiteral("track")) ? jsonInt(args.value(QStringLiteral("track")), -1) : -1, at, opts);
+        if (!reply.value(QStringLiteral("ok")).toBool())
+            return err("bad_args", reply.value(QStringLiteral("error")).toString());
+        QJsonObject out = QJsonObject::fromVariantMap(reply);
+        out.insert(QStringLiteral("n"), 1);
+        return out;
+    }
+    if (tool == QLatin1String("set_generator")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const drift::Clip clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+        if (clip.type != drift::ClipType::Generator)
+            return err("type_mismatch", QStringLiteral("clip is not a generator clip"));
+        const drift::GeneratorKind *kind = drift::generatorKind(clip.procedural.packageId);
+        if (!kind)
+            return err("not_found", QStringLiteral("unknown generator kind %1").arg(clip.procedural.packageId));
+        const QJsonObject params = args.value(QStringLiteral("params")).toObject();
+        for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+            const drift::EffectParamSpec *spec = nullptr;
+            for (const drift::EffectParamSpec &candidate : kind->parameters) {
+                if (candidate.key == it.key() || it.key().startsWith(candidate.key + QLatin1Char('.'))) {
+                    spec = &candidate;
+                    break;
+                }
+            }
+            if (!spec)
+                return err("bad_args", QStringLiteral("%1 has no param \"%2\" - see list_generators").arg(kind->id, it.key()));
+            bool ok = false;
+            if (spec->isColor()) {
+                ok = m_controller->setProceduralColorParam(ref.track, ref.clip, spec->key, it.value().toString());
+            } else if (spec->isVec2()) {
+                const bool isX = it.key().endsWith(QLatin1String(".x"));
+                const bool isY = it.key().endsWith(QLatin1String(".y"));
+                if (!isX && !isY)
+                    return err("bad_args", QStringLiteral("%1 is a point: set %1.x and %1.y").arg(spec->key));
+                const QMap<QString, QVariant> &stored = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).procedural.parameters;
+                const double x = isX ? it.value().toDouble() : stored.value(spec->key + QLatin1String(".x"), spec->defaultX).toDouble();
+                const double y = isY ? it.value().toDouble() : stored.value(spec->key + QLatin1String(".y"), spec->defaultY).toDouble();
+                ok = m_controller->setProceduralVec2Param(ref.track, ref.clip, spec->key, x, y);
+            } else if (spec->isFilePath()) {
+                ok = m_controller->setProceduralTextParam(ref.track, ref.clip, spec->key, it.value().toString());
+            } else {
+                const double v = it.value().isBool() ? (it.value().toBool() ? 1.0 : 0.0) : it.value().toDouble();
+                ok = m_controller->setProceduralParam(ref.track, ref.clip, spec->key, v);
+            }
+            if (!ok)
+                return err("bad_args", QStringLiteral("could not set %1").arg(it.key()));
+        }
+        if (args.contains(QStringLiteral("seed")))
+            m_controller->setProceduralSeed(ref.track, ref.clip, jsonInt(args.value(QStringLiteral("seed"))));
+        return QJsonObject{{QStringLiteral("ok"), true}, {QStringLiteral("n"), 1}};
+    }
+    if (tool == QLatin1String("list_text_scripts")) {
+        QJsonArray list;
+        for (const drift::TextScriptPreset &preset : drift::textScriptPresets()) {
+            list.append(QJsonObject{{QStringLiteral("id"), preset.id},
+                                    {QStringLiteral("name"), preset.label},
+                                    {QStringLiteral("script"), preset.script}});
+        }
+        return QJsonObject{{QStringLiteral("presets"), list}};
+    }
+    if (tool == QLatin1String("set_text_script")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        QString script = args.value(QStringLiteral("script")).toString();
+        const QString presetId = argString(args, QStringLiteral("preset"));
+        if (!presetId.isEmpty()) {
+            const drift::TextScriptPreset *preset = drift::textScriptPreset(presetId);
+            if (!preset)
+                return err("not_found", QStringLiteral("No text script preset %1 - call list_text_scripts").arg(presetId));
+            script = preset->script;
+        }
+        if (!args.contains(QStringLiteral("script")) && presetId.isEmpty())
+            return err("bad_args", QStringLiteral("script or preset required (an empty script switches scripting off)"));
+        if (!m_controller->setTextScript(ref.track, ref.clip, script))
+            return err("type_mismatch", QStringLiteral("clip is not a text clip"));
+        const QVariantMap status = m_controller->textScriptStatus(ref.track, ref.clip);
+        QJsonObject out{{QStringLiteral("ok"), status.value(QStringLiteral("error")).toString().isEmpty()},
+                        {QStringLiteral("n"), 1},
+                        {QStringLiteral("text"), status.value(QStringLiteral("text")).toString()}};
+        if (!status.value(QStringLiteral("error")).toString().isEmpty())
+            out.insert(QStringLiteral("error"), status.value(QStringLiteral("error")).toString());
+        return out;
+    }
     if (tool == QLatin1String("add_procedural"))
         return procedural::add(m_controller, args);
     if (tool == QLatin1String("evaluate_procedural")) {

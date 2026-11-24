@@ -4,6 +4,7 @@
 #include "app/editor/AppControllerDetail.h"
 #include "app/bin/AssetLibrary.h"
 #include "core/text/animation/TextAnimationPreset.h"
+#include "core/project/sources/GeneratorKinds.h"
 
 #include "app/mcp/McpDetail.h"
 
@@ -201,6 +202,8 @@ bool parsePdfProp(const drift::Clip &clip, const QString &prop, QString *key);
 // A procedural param is addressed as "proc.<key>" ("proc.speed"); colour, vec2 and region params
 // animate per channel ("proc.tint.r", "proc.origin.x") like an effect's.
 bool parseProceduralProp(const drift::Clip &clip, const QString &prop, QString *key);
+// The parameter schema behind clip.procedural: the package's for a Procedural clip, the kind's for a Generator.
+QList<drift::EffectParamSpec> proceduralSpecsFor(const drift::Clip &clip);
 
 void clearClipPose3d(drift::Clip &clip);
 

@@ -1547,6 +1547,23 @@ public:
     Q_INVOKABLE bool setProceduralColorParam(int trackIndex, int clipIndex, const QString &key,
                                              const QString &value);
     Q_INVOKABLE bool setProceduralSeed(int trackIndex, int clipIndex, int seed);
+    // Built-in generator clips: solid, gradient, noise, test patterns, countdown, particles. `id` is a
+    // kind id ("gen.noise") or a preset id ("particles.confetti"). opts: duration (seconds), seed (int),
+    // name, params (map keyed like the clip's "proc.<key>" keyframe properties, e.g. {"emitter.x": 0.3}).
+    Q_INVOKABLE QVariantMap addGeneratorClip(const QString &id, int trackIndex, double atSeconds,
+                                             const QVariantMap &opts = {});
+    // The kinds and presets the Generators tab lists: [{id, label, category, description, kindId, preset}].
+    Q_INVOKABLE QVariantList generatorCatalog() const;
+    Q_INVOKABLE QVariantList generatorCategories() const;
+    // A Generator clip's text params (the particle sprite's image path or emoji).
+    Q_INVOKABLE bool setProceduralTextParam(int trackIndex, int clipIndex, const QString &key, const QString &value);
+    // Scripted text: a Lua script on a Text clip that returns the text for every frame. An empty
+    // script switches it back to the typed text.
+    Q_INVOKABLE bool setTextScript(int trackIndex, int clipIndex, const QString &script);
+    // {script, text, error}: the script and what it says at the playhead (or the clip start when the
+    // playhead is elsewhere). `error` is empty when it runs.
+    Q_INVOKABLE QVariantMap textScriptStatus(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QVariantList textScriptPresets() const;
     // What the last render of the clip reported: {known, packageId, error, errors[], log[], serial}.
     Q_INVOKABLE QVariantMap proceduralDiagnostics(const QString &clipId) const;
     Q_INVOKABLE QVariantMap setModel3dSource(int trackIndex, int clipIndex, const QString &path,

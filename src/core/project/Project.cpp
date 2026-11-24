@@ -378,8 +378,10 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     if (clip.type == ClipType::Pdf)
         json.insert(QStringLiteral("pdf"), clip.pdf.toJson());
-    if (clip.type == ClipType::Procedural)
+    if (clip.type == ClipType::Procedural || clip.type == ClipType::Generator)
         json.insert(QStringLiteral("procedural"), clip.procedural.toJson());
+    if (!clip.textScript.isEmpty())
+        json.insert(QStringLiteral("textScript"), clip.textScript);
     if (!clip.sequenceId.isEmpty())
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
@@ -501,6 +503,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int version, int canvasW = 1920, 
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.label = object.value(QStringLiteral("label")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
+    clip.textScript = object.value(QStringLiteral("textScript")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
     clip.subtitleCues = subtitleCuesFromJson(object.value(QStringLiteral("subtitleCues")).toArray());
     clip.shapeStyle = shapeStyleFromJson(object.value(QStringLiteral("shapeStyle")).toObject());
@@ -1748,6 +1751,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 23 added the teleprompter script. Nothing to migrate; the bump is a gate so an older
     // build does not silently drop the script on save.
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
+    // Version 34 added ClipType::Generator and the text clip script (Clip::textScript). Nothing to
+    // migrate; the bump is a gate, as for versions 6 and 9. An older build would load generators as
+    // videos with no path and show a scripted text clip's placeholder text.
     // Version 24 added ClipType::Procedural. Nothing to migrate; the bump is a gate, as for versions
     // 6 and 9. An older build would load those clips as videos with no path.
     // Version 25 added looping clips. Nothing to migrate; the bump is a gate, as for versions 6

@@ -816,6 +816,56 @@
           objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("User procedural id"))},
                         {QStringLiteral("force"), boolProp(QStringLiteral("Delete even if the project uses it"))}},
                        {QStringLiteral("id")}), false, true },
+        { "list_generators", "generators", "See the built-in generator clips and presets",
+          "Returns {generators:[{id, name, category, description, defaultDuration, params:[{key, label, type, "
+          "min, max, default, options?}]}], presets:[{id, name, kind, duration}]}. Kinds: gen.solid, gen.gradient, "
+          "gen.noise, gen.bars, gen.grid, gen.checker, gen.countdown, gen.particles. A preset is a kind with "
+          "starting params (particles.confetti, .fireworks, .sparks, .snow, .rain, .smoke, .magicdust, .bubbles). "
+          "Enum params take the option's index, bool params 0/1 or true/false, colours \"#rrggbb\" (or "
+          "\"#rrggbbaa\" when the param has alpha), point params are two keys \"<key>.x\" and \"<key>.y\".",
+          objectSchema({}), true, false, true },
+        { "add_generator", "generators", "Place a solid, gradient, noise, test pattern, countdown or particle clip",
+          "Add a generator clip on a graphic track, creating one when needed; it fills the canvas (resize it "
+          "like any clip) and works in preview and export. id is a kind or preset id from list_generators. "
+          "params sets starting values and set_keyframe on proc.<key> animates them (colours, gradient angle "
+          "and offset, noise offset and speed, the particle emitter position as proc.emitter.x / proc.emitter.y). "
+          "A countdown draws its number with the clip's text style (set_text). Particles are simulated from the "
+          "clip start with a fixed step, so a scrub and an export show the same frame; seed changes the "
+          "randomness. A moving emitter follows a tracker through the ordinary tracking tools on the clip. "
+          "Returns {id, track, index, kind}.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Kind or preset id from list_generators"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("track"), integerProp(QStringLiteral("Optional destination graphic track; omitted picks or creates one"))},
+                        {QStringLiteral("duration"), numberProp(QStringLiteral("Clip length in seconds (default depends on the kind)"))},
+                        {QStringLiteral("seed"), integerProp(QStringLiteral("Random seed for noise and particles"))},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))},
+                        {QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                               {QStringLiteral("description"), QStringLiteral("Starting param values by key, e.g. {\"color\": \"#ff0000\", \"emitter.x\": 0.3}")}}}},
+                       {QStringLiteral("id")}) },
+        { "set_generator", "generators", "Change a generator clip's params",
+          "Set static param values on a generator clip (not keyframes - use set_keyframe with proc.<key> for "
+          "animation). params is keyed like add_generator's; the seed is set with seed. One undo step per param.",
+          objectSchema(mergeProps({{QStringLiteral("params"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                                         {QStringLiteral("description"), QStringLiteral("Param values by key")}}},
+                                   {QStringLiteral("seed"), integerProp(QStringLiteral("Random seed"))}},
+                                  clipRefProps())) },
+        { "list_text_scripts", "text", "See the built-in text script presets",
+          "Returns {presets:[{id, name, script}]}: timecode burn-in (timeline or source), frame counter, number "
+          "ticker, stopwatch, date and clock, percentage loader. A script is Lua that returns the text for the "
+          "frame: it reads ctx (time, timeline, duration, progress, frame, timelineFrame, fps, width, height, "
+          "project, clip, source (seconds of the video under it, nil when none), now {year, month, day, hour, "
+          "min, sec, wday}) and the helpers timecode(seconds, fps), lerp, clamp, ease(name, t), pad(n, width), "
+          "commas(n). It runs in the procedural sandbox: no files, os, clock or random, and a 60 ms limit.",
+          objectSchema({}), true, false, true },
+        { "set_text_script", "text", "Make a text clip's content a Lua script",
+          "Replace a text clip's words with the result of a script evaluated for every frame (timecode, "
+          "counters, tickers, clocks), styled like any text. Pass script, or preset from list_text_scripts; an "
+          "empty script switches scripting off. Returns {ok, text, error?}: text is what the script says at the "
+          "playhead (or the clip start), error the Lua message when it fails (the clip then draws nothing).",
+          objectSchema(mergeProps({{QStringLiteral("script"), stringProp(QStringLiteral("Lua source returning a string, a number or a list of strings"))},
+                                   {QStringLiteral("preset"), stringProp(QStringLiteral("Preset id from list_text_scripts (used instead of script)"))}},
+                                  clipRefProps())) },
+
         { "add_procedural", "procedural", "Place a procedural 3D clip",
           "Add a clip of an installed package on a graphic track, creating one when needed. It is a 3D layer "
           "the size of the canvas; the whole scene is built by main.lua each frame, in project pixels (origin "

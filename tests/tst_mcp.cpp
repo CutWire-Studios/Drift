@@ -183,6 +183,7 @@ private slots:
     void authoredEffectLifecycle();
     void authoredEffectTimeHistory();
     void proceduralAuthoringLifecycle();
+    void generatorsAndScriptedText();
     void effectPresetHousekeeping();
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
@@ -438,7 +439,7 @@ void McpTest::catalogListsToolboxes()
     const QJsonObject cat = drift::mcp::catalogPayload();
     QVERIFY(cat.value(QStringLiteral("ok")).toBool());
     const QJsonArray boxes = cat.value(QStringLiteral("toolboxes")).toArray();
-    QCOMPARE(boxes.size(), 23);
+    QCOMPARE(boxes.size(), 24);
     QStringList names;
     for (const QJsonValue &v : boxes)
         names.append(v.toObject().value(QStringLiteral("name")).toString());
@@ -460,11 +461,11 @@ void McpTest::catalogOpsIncludeWhen()
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
     // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter, use_as_mask/convert_clip_to_mask,
-    // slip_clip, mask_faces and the capture ops.
-    QVERIFY2(compactSize < 26700, qPrintable(QString::number(compactSize)));
+    // slip_clip, mask_faces, the capture ops and the generator and text script ops.
+    QVERIFY2(compactSize < 27300, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
-    QVERIFY2(briefSize < 12995, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter and mask ops
+    QVERIFY2(briefSize < 13500, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter, mask, generator and text script ops
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -10265,6 +10266,83 @@ static QMap<QString, QString> proceduralDocExample()
         files.insert(m.captured(1), m.captured(2) + QLatin1Char('\n'));
     }
     return files;
+}
+
+void McpTest::generatorsAndScriptedText()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto call = [&](const char *op, const QJsonObject &args = {}) {
+        return dispatcher.applyOne(QString::fromLatin1(op), args);
+    };
+    const auto dump = [](const QJsonObject &o) { return qPrintable(QJsonDocument(o).toJson()); };
+
+    QVERIFY(drift::mcp::toolboxNames().contains(QStringLiteral("generators")));
+    const QJsonObject listed = call("list_generators");
+    QVERIFY2(listed.value(QStringLiteral("generators")).toArray().size() >= 8, dump(listed));
+    QCOMPARE(listed.value(QStringLiteral("presets")).toArray().size(), 8);
+
+    QCOMPARE(call("add_generator", {{QStringLiteral("id"), QStringLiteral("gen.nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(call("add_generator", {{QStringLiteral("id"), QStringLiteral("gen.solid")},
+                                    {QStringLiteral("params"), QJsonObject{{QStringLiteral("nope"), 1}}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    const QJsonObject added = call("add_generator", {{QStringLiteral("id"), QStringLiteral("particles.confetti")},
+                                                     {QStringLiteral("at"), 1.0},
+                                                     {QStringLiteral("params"), QJsonObject{{QStringLiteral("emitter.x"), 0.25}}}});
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool() || added.value(QStringLiteral("id")).isString(), dump(added));
+    const QString clipId = added.value(QStringLiteral("id")).toString();
+    const auto clipRef = [&]() -> const drift::Clip & {
+        return state.project()->tracks().at(added.value(QStringLiteral("track")).toInt()).clips.at(added.value(QStringLiteral("index")).toInt());
+    };
+    QCOMPARE(clipRef().type, drift::ClipType::Generator);
+    QCOMPARE(clipRef().procedural.packageId, QStringLiteral("gen.particles"));
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("emitter.x")).toDouble(), 0.25);
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("burst")).toInt(), 160);
+    QCOMPARE(clipRef().timelineStart, drift::secondsToUs(1.0));
+
+    QVERIFY2(call("set_generator", {{QStringLiteral("clip"), clipId},
+                                    {QStringLiteral("params"), QJsonObject{{QStringLiteral("gravity"), 500.0},
+                                                                           {QStringLiteral("rainbow"), false},
+                                                                           {QStringLiteral("emitter.y"), 0.4},
+                                                                           {QStringLiteral("colorStart"), QStringLiteral("#ff0000")}}}})
+                 .value(QStringLiteral("ok")).toBool(), "set_generator");
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("gravity")).toDouble(), 500.0);
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("emitter.y")).toDouble(), 0.4);
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("emitter.x")).toDouble(), 0.25);
+    QCOMPARE(clipRef().procedural.parameters.value(QStringLiteral("colorStart")).toString(), QStringLiteral("#ff0000"));
+    QCOMPARE(call("set_generator", {{QStringLiteral("clip"), clipId},
+                                    {QStringLiteral("params"), QJsonObject{{QStringLiteral("emitter"), 0.5}}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // Animating the emitter rides on the ordinary proc.<key> keyframes.
+    QVERIFY2(call("set_keyframe", {{QStringLiteral("clip"), clipId}, {QStringLiteral("prop"), QStringLiteral("proc.emitter.x")},
+                                   {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 0.1}})
+                 .value(QStringLiteral("error")).toString().isEmpty(), "keyframe emitter.x");
+    QVERIFY(clipRef().procedural.paramKeyframes.contains(QStringLiteral("emitter.x")));
+
+    // Scripted text.
+    QVERIFY(call("list_text_scripts").value(QStringLiteral("presets")).toArray().size() >= 7);
+    const QJsonObject text = call("add_text", {{QStringLiteral("text"), QStringLiteral("hello")}, {QStringLiteral("at"), 0.0}});
+    const QString textId = text.value(QStringLiteral("id")).toString();
+    QVERIFY2(!textId.isEmpty(), dump(text));
+    const QJsonObject scripted = call("set_text_script", {{QStringLiteral("clip"), textId}, {QStringLiteral("preset"), QStringLiteral("timecode")}});
+    QVERIFY2(scripted.value(QStringLiteral("ok")).toBool(), dump(scripted));
+    QCOMPARE(scripted.value(QStringLiteral("text")).toString(), QStringLiteral("00:00:00:00"));
+    const QJsonObject broken = call("set_text_script", {{QStringLiteral("clip"), textId}, {QStringLiteral("script"), QStringLiteral("return nope.x")}});
+    QVERIFY(!broken.value(QStringLiteral("ok")).toBool());
+    QVERIFY2(broken.value(QStringLiteral("error")).toString().contains(QStringLiteral("script:1")), dump(broken));
+    QCOMPARE(call("set_text_script", {{QStringLiteral("clip"), clipId}, {QStringLiteral("script"), QStringLiteral("return 1")}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+    QCOMPARE(call("set_text_script", {{QStringLiteral("clip"), textId}, {QStringLiteral("preset"), QStringLiteral("nope")}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QVERIFY(call("set_text_script", {{QStringLiteral("clip"), textId}, {QStringLiteral("script"), QString()}}).value(QStringLiteral("ok")).toBool());
 }
 
 void McpTest::proceduralAuthoringLifecycle()

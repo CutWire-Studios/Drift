@@ -787,6 +787,36 @@
       "needs": []
     },
     {
+      "id": "generator-kind",
+      "target": "panel:properties.generator#generator-kind",
+      "context": "GeneratorInspector",
+      "source": "Generator",
+      "keywords": "solid gradient noise bars grid checkerboard countdown particles confetti snow",
+      "needs": [
+        "generator"
+      ]
+    },
+    {
+      "id": "generator-seed",
+      "target": "panel:properties.generator#generator-seed",
+      "context": "GeneratorInspector",
+      "source": "Generator seed",
+      "keywords": "random noise particles",
+      "needs": [
+        "generator"
+      ]
+    },
+    {
+      "id": "generator-params",
+      "target": "panel:properties.generator#generator-params",
+      "context": "GeneratorInspector",
+      "source": "Generator parameters",
+      "keywords": "keyframe colour color emitter rate gravity",
+      "needs": [
+        "generator"
+      ]
+    },
+    {
       "id": "masks-combine",
       "target": "panel:properties.masks#masks-combine",
       "context": "MasksInspector",
@@ -1062,6 +1092,16 @@
       "context": "TextInspectorFontSection",
       "source": "Text style",
       "keywords": "color outline shadow",
+      "needs": [
+        "textStyled"
+      ]
+    },
+    {
+      "id": "text-script",
+      "target": "panel:properties.text#text-script",
+      "context": "TextInspectorScriptSection",
+      "source": "Scripted text",
+      "keywords": "lua script timecode counter ticker clock stopwatch frame number burn-in",
       "needs": [
         "textStyled"
       ]
@@ -2096,6 +2136,14 @@
       "source": "Procedural",
       "needs": [
         "procedural"
+      ]
+    },
+    {
+      "id": "generator",
+      "context": "PropertiesPanel",
+      "source": "Generator",
+      "needs": [
+        "generator"
       ]
     },
     {
