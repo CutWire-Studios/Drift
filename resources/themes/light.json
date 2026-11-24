@@ -3481,6 +3481,13 @@
       "fallbackSelection": "$semantic.primary",
       "fallbackSelectionForeground": "$semantic.primaryForeground"
     },
+    "captureBar": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "text": "$semantic.foreground",
+      "indicator": "$semantic.destructive"
+    },
     "assetsPanelDropOverlay": {
       "accent": "$semantic.primary",
       "borderWidth": "$metrics.borderWidthFocus",

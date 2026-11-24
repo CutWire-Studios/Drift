@@ -13,6 +13,8 @@ Rectangle {
     signal newFolderRequested()
     signal newTimelineRequested()
     signal importFilesRequested()
+    signal recordScreenRequested()
+    signal recordCameraRequested()
     signal importFolderRequested()
     signal collectMediaRequested()
 
@@ -89,6 +91,8 @@ Rectangle {
             importing: root.importing
             compact: root._compactActions
             onImportFilesRequested: root.importFilesRequested()
+            onRecordScreenRequested: root.recordScreenRequested()
+            onRecordCameraRequested: root.recordCameraRequested()
             onImportFolderRequested: root.importFolderRequested()
             onCollectMediaRequested: root.collectMediaRequested()
         }

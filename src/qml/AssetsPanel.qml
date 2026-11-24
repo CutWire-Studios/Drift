@@ -736,6 +736,43 @@ PanelFrame {
             Toasts.error(qsTr("Couldn’t import that folder."))
     }
 
+    // The default microphone, or empty when there is none. A screen recording with no sound is
+    // almost never what someone recording a tutorial wanted, so one is chosen rather than asked
+    // for; which device, and whether to record at all, is a Settings matter.
+    function defaultAudioInputId() {
+        const inputs = EditorState.capture.audioInputs()
+        for (let i = 0; i < inputs.length; i++) {
+            if (inputs[i].isDefault)
+                return inputs[i].id
+        }
+        return inputs.length > 0 ? inputs[0].id : ""
+    }
+
+    function recordScreen() {
+        // No screen picker of our own: on Wayland the compositor shows its share dialog and
+        // ignores anything we nominated, so asking first would make the user choose twice.
+        if (!EditorState.capture.recordScreen(root.defaultAudioInputId(), 30))
+            return
+        if (EditorState.capture.platformChoosesScreen())
+            Toasts.info(qsTr("Choose what to share in the dialog your desktop shows."))
+    }
+
+    function recordCamera() {
+        EditorState.capture.recordCamera("", root.defaultAudioInputId(), 30)
+    }
+
+    readonly property string recordingClock: {
+        const total = Math.floor(EditorState.capture.recordedSeconds)
+        const minutes = Math.floor(total / 60)
+        const seconds = total % 60
+        return qsTr("%1:%2").arg(minutes).arg(seconds < 10 ? "0" + seconds : "" + seconds)
+    }
+
+    Connections {
+        target: EditorState.capture
+        function onFailed(message) { Toasts.error(message) }
+    }
+
     function collectMedia() {
         var url = FileDialogs.openDirectory(qsTr("Collect Media to Folder"))
         if (!url || url.toString() === "")
@@ -1002,6 +1039,77 @@ PanelFrame {
                 onImportFilesRequested: root.importMedia()
                 onImportFolderRequested: root.importFolder()
                 onCollectMediaRequested: root.collectMedia()
+                onRecordScreenRequested: root.recordScreen()
+                onRecordCameraRequested: root.recordCamera()
+            }
+
+            // While a recording runs there is nothing else on screen to say so — the window can be
+            // behind whatever is being recorded — so this is also the only place to stop it from.
+            Rectangle {
+                id: recordingBar
+                width: parent.width
+                height: EditorState.capture.recording ? Theme.controlHeight + Theme.spacingSm * 2 : 0
+                visible: height > 0
+                clip: true
+                color: Theme.c.captureBar.background
+
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: Theme.c.captureBar.borderWidth
+                    color: Theme.c.captureBar.border
+                }
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.leftMargin: Theme.pagePadding
+                    anchors.rightMargin: Theme.pagePadding
+                    spacing: Theme.spacingSm
+
+                    IconGlyph {
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: Theme.icons.circle
+                        iconSize: Theme.iconSizeSm
+                        iconColor: Theme.c.captureBar.indicator
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(0, parent.width - Theme.iconSizeSm - stopRecording.width
+                                           - discardRecording.width - Theme.spacingSm * 3)
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                        // The status carries the portal's "waiting for you to choose" as well as
+                        // plain recording, so it is shown rather than a fixed label.
+                        text: EditorState.capture.status.length > 0
+                              ? qsTr("%1 — %2").arg(EditorState.capture.status)
+                                               .arg(root.recordingClock)
+                              : root.recordingClock
+                        color: Theme.c.captureBar.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeXs
+                    }
+
+                    ThemedButton {
+                        id: stopRecording
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("Stop")
+                        variant: "secondary"
+                        glyph: Theme.icons.square
+                        onClicked: EditorState.capture.stop()
+                    }
+
+                    ThemedButton {
+                        id: discardRecording
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("Discard")
+                        variant: "ghost"
+                        glyph: Theme.icons.trash
+                        onClicked: EditorState.capture.cancel()
+                    }
+                }
             }
 
             EmojiPicker {
