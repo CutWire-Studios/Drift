@@ -1092,6 +1092,8 @@ add_library(driftengine STATIC
     src/engine/encode/proxies/ProxyNaming.cpp
     src/engine/capture/ScreenRecorder.h
     src/engine/capture/ScreenRecorder.cpp
+    src/engine/capture/CaptureWriter.h
+    src/engine/capture/CaptureWriter.cpp
     src/engine/capture/CaptureRequest.h
     src/engine/capture/CaptureRequest.cpp
     src/engine/capture/RecordingLocation.h
