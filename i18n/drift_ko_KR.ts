@@ -3579,6 +3579,14 @@
         <translation>텍스트 클립이 추가됨</translation>
     </message>
     <message>
+        <source>Edit text script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text script updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitle clip added</source>
         <translation>자막 클립이 추가됨</translation>
     </message>
@@ -4835,6 +4843,38 @@
         <translation>전환을 추가할 두 클립 사이의 컷이 없습니다</translation>
     </message>
     <message>
+        <source>unknown generator &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generator added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backgrounds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Test patterns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leaders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit generator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generator updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit curve</source>
         <translation>곡선 편집</translation>
     </message>
@@ -5695,6 +5735,64 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Unknown clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beats come from an audio or video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip is too short to find a tempo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No steady beat found in that clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the video or image clips to cut together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The music clip is gone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No beat to cut on between the start point and the end of the music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-cut to beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not add a track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n beat marker(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Cut %n clip(s) to the beat; %1 did not fit the music</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Cut %n clip(s) to the beat</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>내보내는 중…</translation>
     </message>
@@ -6090,6 +6188,14 @@
         <source>Added to My shapes</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Unknown title template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsMenu</name>
@@ -6430,6 +6536,10 @@
         <translation>도형</translation>
     </message>
     <message>
+        <source>Generators</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scenes</source>
         <translation>장면</translation>
     </message>
@@ -6475,6 +6585,10 @@
     </message>
     <message>
         <source>Shapes and arrows for callouts and backgrounds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid colours, gradients, noise, test patterns, countdowns and particle effects.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8165,6 +8279,49 @@
     </message>
 </context>
 <context>
+    <name>BeatCutDialog</name>
+    <message>
+        <source>Auto-cut to beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation type="unfinished">잘라내기</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected clip(s) will be placed on a new track, one per cut.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Cut every</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n beat(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Start at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Otherwise the first clip starts where the music starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut on bar lines only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on the first downbeat and keep every cut on the music&apos;s strong beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
@@ -8881,6 +9038,50 @@
         <translation>휘도(Luminance)</translation>
     </message>
     <message>
+        <source>Hue Centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue Softness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation High</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation Softness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminance Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminance High</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminance Softness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invert</source>
+        <translation type="unfinished">반전</translation>
+    </message>
+    <message>
+        <source>Show matte</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Film Grain</source>
         <translation>필름 그레인</translation>
     </message>
@@ -9027,6 +9228,14 @@
     <message>
         <source>Adjust hue curves</source>
         <translation>색상 곡선 조정</translation>
+    </message>
+    <message>
+        <source>Qualifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Limit the grade to a range of colours</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove</source>
@@ -13192,6 +13401,59 @@
     <message>
         <source>e.g. intro (empty clears it)</source>
         <translation>예: 인트로(비워두면 삭제됨)</translation>
+    </message>
+</context>
+<context>
+    <name>GeneratorCard</name>
+    <message>
+        <source>Couldn’t add the generator.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — click to add at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add at playhead</source>
+        <translation type="unfinished">재생 헤드 위치에 추가</translation>
+    </message>
+</context>
+<context>
+    <name>GeneratorInspector</name>
+    <message>
+        <source>Generator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished">시드</translation>
+    </message>
+    <message>
+        <source>Generator seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parameters</source>
+        <translation type="unfinished">매개변수</translation>
+    </message>
+    <message>
+        <source>Generator parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emoji or path to an image</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeneratorsTab</name>
+    <message>
+        <source>Search generators</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No generators match “%1”.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -20442,6 +20704,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Adjust the generated visual.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the generated picture.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28210,8 +28480,16 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show title templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show my styles</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Templates</source>
+        <translation type="unfinished">템플릿</translation>
     </message>
     <message>
         <source>My styles</source>
@@ -28913,6 +29191,88 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TextInspectorScriptSection</name>
+    <message>
+        <source>Script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make this text the result of a Lua script, evaluated for every frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate the text with a script instead of typing it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scripted text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start from a preset…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the script with a ready-made one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Return a string. Read ctx.time, ctx.timeline, ctx.progress, ctx.frame, ctx.fps, ctx.source and ctx.now; helpers: timecode, lerp, ease, pad, commas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextInspectorScrollSection</name>
+    <message>
+        <source>Scroll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll the text up the screen like end credits, or crawl it sideways like a ticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">없음</translation>
+    </message>
+    <message>
+        <source>Roll up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crawl left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crawl right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text crosses the screen over the clip&apos;s length: a longer clip scrolls slower.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter off-screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start with the text fully outside the frame; off, it starts where the box lays it out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exit off-screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End with the text fully outside the frame; off, it settles where the box lays it out</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextInspectorSpacingSection</name>
     <message>
         <source>Spacing</source>
@@ -29006,6 +29366,37 @@ If playback stutters, try another.</source>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp)</source>
         <translation>이미지 (*.png *.jpg *.jpeg *.webp)</translation>
+    </message>
+</context>
+<context>
+    <name>TextScriptPresets</name>
+    <message>
+        <source>Timecode burn-in (timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timecode burn-in (source)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame counter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number ticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopwatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Date and clock (at render)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Percentage loader</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -29443,6 +29834,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers: every beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers: every 2 beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers: every bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-cut to beat…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -30416,6 +30823,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>원활한 재생과 내보내기를 위해 작업 영역을 사전 렌더링합니다</translation>
+    </message>
+</context>
+<context>
+    <name>TitleTemplateCard</name>
+    <message>
+        <source>%1 — click to add at the playhead, then type over the text.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
