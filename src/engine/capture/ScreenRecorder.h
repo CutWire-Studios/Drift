@@ -18,10 +18,21 @@ namespace drift {
 // scaled and cut against the screen.
 //
 // Audio is likewise one input per recording, because a capture session holds one QAudioInput.
-// Where a platform publishes a loopback or monitor device (PulseAudio and PipeWire both do) that
-// device is simply an input in the list, so "record the computer's sound" is a device choice
-// rather than a separate code path. Recording a microphone *and* system audio at once needs two
-// recordings — in practice the screen takes one and the camera the other.
+// Recording a microphone *and* system audio at once therefore needs two recordings — in practice
+// the screen takes one and the camera the other.
+//
+// System audio is not generally reachable this way, and that is measured rather than assumed:
+// PipeWire does expose a monitor source for the default sink, but Qt's own device enumeration
+// filters monitors out of audioInputs(), so there is nothing for a capture session to attach to.
+// systemAudio() therefore works only where a platform really does list a loopback input (a
+// virtual cable the user installed, say), and reports that it cannot when it does not. Capturing
+// the machine's own output properly needs a client that talks to PipeWire, WASAPI loopback or
+// ScreenCaptureKit directly, outside Qt's capture session.
+//
+// Window capture depends on the backend being able to enumerate other applications' windows, and
+// Wayland does not permit that: windows() comes back empty on a Wayland session, XWayland
+// included. Callers must treat an empty list as "not available here" and say so, rather than
+// showing an empty picker.
 //
 // Qt's capture backends must be driven from the GUI thread, so every method here is for the GUI
 // thread only. Nothing blocks: starting is asynchronous and reported through the signals.

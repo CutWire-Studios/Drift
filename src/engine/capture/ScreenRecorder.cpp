@@ -21,10 +21,11 @@ namespace drift {
 
 namespace {
 
-// PulseAudio and PipeWire publish a device that hears the machine's own output, named for the sink
-// it mirrors. Qt passes the name through, so this is how "record the computer's sound" finds its
-// device without a platform #ifdef. Windows and macOS publish nothing of the sort, which is why
-// the caller treats an empty result as "system audio needs a loopback device installed".
+// A device that hears the machine's own output rather than a microphone, recognised by the name
+// the sound server gives it. This is how "record the computer's sound" finds a device without a
+// platform #ifdef — but only where one is actually listed. Qt filters PipeWire's and PulseAudio's
+// monitor sources out of audioInputs(), and Windows and macOS publish nothing of the sort either,
+// so in practice this matches only a virtual cable the user installed themselves.
 bool looksLikeLoopback(const QAudioDevice &device)
 {
     const QString description = device.description().toLower();
@@ -283,13 +284,39 @@ bool ScreenRecorder::start(const CaptureRequest &request, QString *errorOut)
     }
     }
 
-    const QAudioDevice audio = audioWithId(request.audioInputId);
+    QAudioDevice audio = audioWithId(request.audioInputId);
+    if (audio.isNull() && request.systemAudio) {
+        const QList<QAudioDevice> inputs = QMediaDevices::audioInputs();
+        for (const QAudioDevice &device : inputs) {
+            if (looksLikeLoopback(device)) {
+                audio = device;
+                break;
+            }
+        }
+        // Refused rather than recorded silently: someone who asked for the computer's sound and
+        // got a mute track would only find out after the take.
+        if (audio.isNull()) {
+            d->releaseSources();
+            return fail(tr("This system does not offer a device that records its own sound. "
+                           "Record the microphone instead, or install a loopback audio device."));
+        }
+    }
     if (!audio.isNull()) {
         d->audioInput = std::make_unique<QAudioInput>(audio);
         d->session.setAudioInput(d->audioInput.get());
     }
 
     d->recorder = std::make_unique<QMediaRecorder>();
+    // Pinned, not left to the backend. Asked only for high quality, Qt's FFmpeg backend picks
+    // HEVC and hands x265 a 4:4:4 12-bit profile: minutes of CPU for seconds of screen, a file
+    // many players refuse, and a first frame that can arrive after the user has already stopped.
+    // H.264 in MP4 with AAC is what every editor, phone and browser reads, and it is fast enough
+    // to keep up with a full-screen grab.
+    QMediaFormat format;
+    format.setFileFormat(QMediaFormat::MPEG4);
+    format.setVideoCodec(QMediaFormat::VideoCodec::H264);
+    format.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    d->recorder->setMediaFormat(format);
     d->recorder->setVideoFrameRate(clampCaptureFps(request.fps));
     d->recorder->setQuality(QMediaRecorder::HighQuality);
     d->recorder->setOutputLocation(QUrl::fromLocalFile(request.outputPath));
