@@ -59,6 +59,11 @@ target_include_directories(tst_maskselect PRIVATE ../src)
 target_link_libraries(tst_maskselect PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME MaskSelect COMMAND tst_maskselect)
 
+qt_add_executable(tst_capturerequest tst_capturerequest.cpp)
+target_include_directories(tst_capturerequest PRIVATE ../src)
+target_link_libraries(tst_capturerequest PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)
+add_test(NAME CaptureRequest COMMAND tst_capturerequest)
+
 qt_add_executable(tst_recordinglocation tst_recordinglocation.cpp)
 target_include_directories(tst_recordinglocation PRIVATE ../src)
 target_link_libraries(tst_recordinglocation PRIVATE Qt6::Test Qt6::Core driftengine driftcore)
