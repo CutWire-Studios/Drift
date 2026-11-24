@@ -878,6 +878,8 @@ add_library(driftengine STATIC
     src/engine/audio/analysis/AudioDucking.h
     src/engine/audio/analysis/AudioDucking.cpp
     src/engine/audio/analysis/RealFft.h
+    src/engine/audio/analysis/Stft.h
+    src/engine/audio/analysis/Stft.cpp
     src/engine/audio/analysis/AudioFrameAnalysis.h
     src/engine/audio/analysis/AudioFrameAnalysis.cpp
     src/engine/ml/vision/detection/SceneDetect.h

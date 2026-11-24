@@ -59,6 +59,11 @@ target_include_directories(tst_maskselect PRIVATE ../src)
 target_link_libraries(tst_maskselect PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME MaskSelect COMMAND tst_maskselect)
 
+qt_add_executable(tst_stft tst_stft.cpp)
+target_include_directories(tst_stft PRIVATE ../src)
+target_link_libraries(tst_stft PRIVATE Qt6::Test Qt6::Core driftengine driftcore)
+add_test(NAME Stft COMMAND tst_stft)
+
 qt_add_executable(tst_facemask tst_facemask.cpp)
 target_include_directories(tst_facemask PRIVATE ../src)
 target_link_libraries(tst_facemask PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore)
