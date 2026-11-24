@@ -370,6 +370,7 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/render/BakeController.cpp
     ../src/app/jobs/render/BakeFingerprint.cpp
     ../src/app/jobs/audio/DenoiseController.cpp
+    ../src/app/jobs/capture/CaptureController.cpp
     ../src/app/jobs/audio/AudioAlignController.cpp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp

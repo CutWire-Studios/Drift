@@ -15,6 +15,7 @@
 #include "app/jobs/vision/SegmentationController.h"
 #include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpDispatcher.h"
+#include "app/jobs/capture/CaptureController.h"
 
 #include <QColor>
 #include <QFutureWatcher>
@@ -3456,6 +3457,66 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                                                   "track yet — run detect_faces first — or the "
                                                   "scan found no faces in it."));
         return ok(clipFeedback(ref, {{QStringLiteral("faces"), faces}}));
+    }
+
+    if (tool == QLatin1String("list_capture_devices")) {
+        CaptureController *capture = m_controller->capture();
+        return ok({{QStringLiteral("screen"), capture->screenAvailable()},
+                   {QStringLiteral("camera"), capture->cameraAvailable()},
+                   {QStringLiteral("platformChoosesScreen"), capture->platformChoosesScreen()},
+                   {QStringLiteral("cameras"), QJsonArray::fromVariantList(capture->cameras())},
+                   {QStringLiteral("audioInputs"),
+                    QJsonArray::fromVariantList(capture->audioInputs())},
+                   {QStringLiteral("systemAudioInput"), capture->systemAudioInput()}});
+    }
+
+    if (tool == QLatin1String("record_screen")) {
+        CaptureController *capture = m_controller->capture();
+        if (!capture->screenAvailable()) {
+            return err("unsupported",
+                       QStringLiteral("This system has no screen-capture backend. On Linux it "
+                                      "needs xdg-desktop-portal and PipeWire."));
+        }
+        const int fps = args.contains(QStringLiteral("fps"))
+                            ? int(jsonNumber(args.value(QStringLiteral("fps")), 30))
+                            : 30;
+        if (!capture->recordScreen(argString(args, QStringLiteral("audio_input")), fps))
+            return err("failed", QStringLiteral("Could not start the screen recording."));
+        // Said here rather than left to the agent to infer: on Wayland nothing is recorded until
+        // somebody answers the compositor's dialog, and an agent cannot.
+        return ok({{QStringLiteral("started"), true},
+                   {QStringLiteral("needsPersonToChooseSource"),
+                    capture->platformChoosesScreen()}});
+    }
+
+    if (tool == QLatin1String("record_camera")) {
+        CaptureController *capture = m_controller->capture();
+        if (!capture->cameraAvailable())
+            return err("unsupported", QStringLiteral("No camera is connected."));
+        const int fps = args.contains(QStringLiteral("fps"))
+                            ? int(jsonNumber(args.value(QStringLiteral("fps")), 30))
+                            : 30;
+        if (!capture->recordCamera(argString(args, QStringLiteral("camera")),
+                                   argString(args, QStringLiteral("audio_input")), fps))
+            return err("failed", QStringLiteral("Could not start the camera recording."));
+        return ok({{QStringLiteral("started"), true}});
+    }
+
+    if (tool == QLatin1String("capture_status")) {
+        CaptureController *capture = m_controller->capture();
+        return ok({{QStringLiteral("recording"), capture->recording()},
+                   {QStringLiteral("seconds"), capture->recordedSeconds()},
+                   {QStringLiteral("status"), capture->status()}});
+    }
+
+    if (tool == QLatin1String("stop_recording")) {
+        m_controller->capture()->stop();
+        return ok({{QStringLiteral("stopped"), true}});
+    }
+
+    if (tool == QLatin1String("cancel_recording")) {
+        m_controller->capture()->cancel();
+        return ok({{QStringLiteral("cancelled"), true}});
     }
 
     if (tool == QLatin1String("estimate_depth")) {

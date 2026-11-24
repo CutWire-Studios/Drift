@@ -459,8 +459,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
-    // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter, use_as_mask/convert_clip_to_mask and slip_clip.
-    QVERIFY2(compactSize < 26201, qPrintable(QString::number(compactSize)));
+    // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter, use_as_mask/convert_clip_to_mask,
+    // slip_clip, mask_faces and the capture ops.
+    QVERIFY2(compactSize < 26700, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
     QVERIFY2(briefSize < 12995, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter and mask ops

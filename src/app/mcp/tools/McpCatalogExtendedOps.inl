@@ -1332,6 +1332,50 @@
           objectSchema(mergeProps({{QStringLiteral("padding"),
                                     numberProp(QStringLiteral("Face oval scale, default 1.4"), 1.0, 3.0)}},
                                   clipRefProps())), false, false, true },
+        { "list_capture_devices", "media", "Cameras and microphones available to record",
+          "What this machine can record from: {screen, camera, platformChoosesScreen, "
+          "cameras:[{id, description, isDefault}], audioInputs:[{id, description, isDefault, "
+          "loopback}], systemAudioInput}. `screen` false means there is no screen-capture backend "
+          "here at all. `platformChoosesScreen` true means the desktop shows its own share picker "
+          "and a person has to answer it — see record_screen. `systemAudioInput` is usually empty: "
+          "recording the machine's own sound needs a loopback device that most systems do not "
+          "publish.",
+          objectSchema({}), true, false, true },
+        { "record_screen", "media", "Record the screen to a file in the bin",
+          "Start recording the screen. The file lands in the media bin when the recording is "
+          "stopped, not on the timeline. Pass audio_input from list_capture_devices to record "
+          "sound; omit it for a silent recording. One recording at a time.\n\n"
+          "IMPORTANT: where list_capture_devices reports platformChoosesScreen (every Wayland "
+          "desktop), the compositor shows a share dialog that only a person sitting at the machine "
+          "can answer, and nothing is recorded until they do. Tell the user to answer it rather "
+          "than waiting or retrying. Returns {started}; poll capture_status.",
+          objectSchema({{QStringLiteral("audio_input"),
+                         stringProp(QStringLiteral("Audio input id from list_capture_devices"))},
+                        {QStringLiteral("fps"),
+                         integerProp(QStringLiteral("Frames per second, 1-120, default 30"))}}) },
+        { "record_camera", "media", "Record the webcam to a file in the bin",
+          "Start recording a camera. Needs no dialog, unlike record_screen. camera defaults to the "
+          "system's default camera; pass audio_input to record sound. The file lands in the bin on "
+          "stop. Returns {started}; poll capture_status.",
+          objectSchema({{QStringLiteral("camera"),
+                         stringProp(QStringLiteral("Camera id from list_capture_devices"))},
+                        {QStringLiteral("audio_input"),
+                         stringProp(QStringLiteral("Audio input id from list_capture_devices"))},
+                        {QStringLiteral("fps"),
+                         integerProp(QStringLiteral("Frames per second, 1-120, default 30"))}}) },
+        { "capture_status", "media", "Whether a recording is running",
+          "Returns {recording, seconds, status}. `status` carries what the recording is waiting "
+          "for, which is how to tell a share dialog nobody has answered from a recording that is "
+          "actually running.",
+          objectSchema({}), true, false, true },
+        { "stop_recording", "media", "Finish the recording and add it to the bin",
+          "Stop the running recording, finish writing the file and import it. Returns {stopped}. "
+          "Ok even when nothing was running.",
+          objectSchema({}) },
+        { "cancel_recording", "media", "Throw the recording away",
+          "Stop the running recording and delete its file. Returns {cancelled}. Ok even when "
+          "nothing was running.",
+          objectSchema({}), false, true },
         { "estimate_depth", "ai", "Estimate depth for the depth effects",
           "Estimate a video or image clip's depth with the depth-model addon (Video Depth Anything), "
           "which the depth effects read: depth.relight (3D lights), depth.focus (depth of field), "
