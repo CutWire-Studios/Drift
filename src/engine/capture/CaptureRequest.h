@@ -21,9 +21,15 @@ std::optional<CaptureSource> captureSourceFromString(const QString &text);
 struct CaptureRequest
 {
     CaptureSource source = CaptureSource::Screen;
-    QString screenName;   // Screen/Region: QScreen::name(); empty means the primary screen
-    quint64 windowId = 0; // Window: a QCapturableWindow id
-    QRect region;         // Region: in the chosen screen's device-independent pixels
+    QString screenName; // Screen/Region: QScreen::name(); empty means the primary screen
+    // Window: Qt's QCapturableWindow publishes no stable handle — only a description — so a
+    // window is addressed by its place in ScreenRecorder::windows() and confirmed by the title it
+    // carried when the user picked it. The list is re-read at start, and a title that no longer
+    // matches is searched for by name, because windows open and close between picking and
+    // recording and the index alone would silently capture the wrong one.
+    int windowIndex = -1;
+    QString windowTitle;
+    QRect region;       // Region: in the chosen screen's device-independent pixels
     QString cameraId;     // Camera: QCameraDevice::id(); empty means the default camera
     QString audioInputId; // empty means no microphone
     bool systemAudio = false;

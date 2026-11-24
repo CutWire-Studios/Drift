@@ -69,7 +69,7 @@ QString captureRequestProblem(const CaptureRequest &request)
 
     switch (request.source) {
     case CaptureSource::Window:
-        if (request.windowId == 0) {
+        if (request.windowIndex < 0 && request.windowTitle.isEmpty()) {
             return QCoreApplication::translate("CaptureRequest",
                                                "Pick a window to record.");
         }

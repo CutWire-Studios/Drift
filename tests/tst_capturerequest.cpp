@@ -114,7 +114,12 @@ void CaptureRequestTest::problemNamesWhatIsMissing()
 
     request.source = CaptureSource::Window;
     QVERIFY(!captureRequestProblem(request).isEmpty());
-    request.windowId = 42;
+    // Either half identifies a window: the index alone is what a picker supplies, and the title
+    // alone is enough to find it again after the list has shifted.
+    request.windowIndex = 2;
+    QVERIFY(captureRequestProblem(request).isEmpty());
+    request.windowIndex = -1;
+    request.windowTitle = QStringLiteral("Terminal");
     QVERIFY(captureRequestProblem(request).isEmpty());
 
     request.source = CaptureSource::Region;
