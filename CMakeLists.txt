@@ -1092,6 +1092,8 @@ add_library(driftengine STATIC
     src/engine/encode/proxies/ProxyNaming.cpp
     src/engine/capture/ScreenRecorder.h
     src/engine/capture/ScreenRecorder.cpp
+    src/engine/capture/ScreenCaptureSource.h
+    src/engine/capture/ScreenCaptureSource.cpp
     src/engine/capture/CaptureWriter.h
     src/engine/capture/CaptureWriter.cpp
     src/engine/capture/CaptureRequest.h
@@ -1144,6 +1146,30 @@ target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto $
 # LlamaServer talks HTTP to its own child process on loopback; nothing else in the engine needs it.
 find_package(Qt6 REQUIRED COMPONENTS Network)
 target_link_libraries(driftengine PRIVATE Qt6::Network)
+
+# Linux screen recording goes through xdg-desktop-portal's ScreenCast interface (D-Bus) and reads
+# the frames from PipeWire. There is no alternative on a Wayland session: Qt's own QScreenCapture
+# has no Wayland path and silently delivers nothing there. Optional, because a build without
+# PipeWire development files is still a working editor — it just cannot record the screen, which
+# makeScreenCaptureSource reports by returning null.
+option(DRIFT_WITH_PORTAL_CAPTURE "Linux screen recording via xdg-desktop-portal and PipeWire" ON)
+if(UNIX AND NOT APPLE AND NOT ANDROID AND DRIFT_WITH_PORTAL_CAPTURE)
+    find_package(Qt6 COMPONENTS DBus QUIET)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(PipeWire QUIET IMPORTED_TARGET libpipewire-0.3)
+    endif()
+    if(Qt6DBus_FOUND AND TARGET PkgConfig::PipeWire)
+        target_sources(driftengine PRIVATE
+            src/engine/capture/PortalScreenCapture.h
+            src/engine/capture/PortalScreenCapture.cpp)
+        target_link_libraries(driftengine PRIVATE Qt6::DBus PkgConfig::PipeWire)
+        target_compile_definitions(driftengine PRIVATE DRIFT_WITH_PORTAL_CAPTURE)
+        message(STATUS "Screen recording: xdg-desktop-portal + PipeWire ${PipeWire_VERSION}")
+    else()
+        message(STATUS "Screen recording: disabled (needs Qt6 DBus and libpipewire-0.3)")
+    endif()
+endif()
 if(WIN32)
     # Hybrid-graphics laptops: D3D11VA -> OpenGL preview interop, and DXGI adapter enumeration for
     # the GPU preference and for opening D3D11VA on the GPU that renders.
