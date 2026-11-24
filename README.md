@@ -126,7 +126,8 @@ then apply it to the rest.
 
 **Masks that follow the shot.** Shape, freeform and image masks with feather and invert. Point and
 planar trackers pin a mask, a title, or a sticker to something moving, or steady the clip. Blur or
-pixelate any masked area.
+pixelate any masked area — or blur every face in a clip in one click, each one tracked and
+editable afterwards.
 
 **150+ transitions and 40+ effects.** Every look previews on your footage. One click can drop a
 whole stack — Beat Drop, Glitch Cut, Neon Cutout. Trails of earlier frames, and grades that stick
