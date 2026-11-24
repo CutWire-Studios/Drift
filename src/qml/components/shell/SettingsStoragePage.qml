@@ -141,6 +141,113 @@ SettingsPage {
     }
 
     SettingsRow {
+        title: qsTr("Save screen and camera recordings")
+        searchId: "capture-recording-location"
+        description: qsTr("Where Drift puts the recordings it makes. A recording is the only copy of what it caught, so Drift’s cache is not an option here — it gets cleared. Changing this doesn’t move recordings you already made.")
+        keywords: "record recording screen camera capture folder location movies videos"
+        stacked: true
+        query: page.query
+        visible: EditorState.capture.screenAvailable() || EditorState.capture.cameraAvailable()
+
+        Column {
+            id: recordingColumn
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            readonly property bool hasFolder: EditorState.preferences.recordingFolder.length > 0
+
+            function chooseFolder() {
+                const url = FileDialogs.openDirectory(qsTr("Folder for recordings"),
+                                                      EditorState.preferences.recordingFolderUrl())
+                if (!url || url.toString() === "")
+                    return false
+                const reason = EditorState.preferences.setRecordingFolder(url.toString())
+                if (reason.length > 0) {
+                    Toasts.error(reason)
+                    return false
+                }
+                EditorState.preferences.recordingLocation = "folder"
+                return true
+            }
+
+            ThemedComboBox {
+                id: recordingLocationCombo
+                width: Theme.c.settingsRow.controlWidth
+                textRole: "label"
+                valueRole: "id"
+                model: FileDialogs.supportsDirectoryPicker()
+                       ? [
+                           { id: "movies", label: qsTr("In my Movies folder") },
+                           { id: "project", label: qsTr("Beside the project") },
+                           { id: "folder", label: qsTr("In this folder…") }
+                         ]
+                       : [
+                           { id: "movies", label: qsTr("In my Movies folder") },
+                           { id: "project", label: qsTr("Beside the project") }
+                         ]
+                currentIndex: {
+                    for (var i = 0; i < model.length; ++i) {
+                        if (model[i].id === EditorState.preferences.recordingLocation)
+                            return i
+                    }
+                    return 0
+                }
+                onActivated: {
+                    const choice = model[currentIndex].id
+                    if (choice === "folder" && !recordingColumn.hasFolder
+                            && !recordingColumn.chooseFolder()) {
+                        // Cancelled or refused: back to what was set.
+                        currentIndex = Qt.binding(() => {
+                            for (var i = 0; i < model.length; ++i) {
+                                if (model[i].id === EditorState.preferences.recordingLocation)
+                                    return i
+                            }
+                            return 0
+                        })
+                        return
+                    }
+                    EditorState.preferences.recordingLocation = choice
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: Theme.spacingSm
+                visible: EditorState.preferences.recordingLocation === "folder"
+                         || recordingColumn.hasFolder
+
+                ThemedLabel {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - chooseRecordingFolder.width - parent.spacing
+                    text: recordingColumn.hasFolder ? EditorState.preferences.recordingFolder
+                                                    : qsTr("No folder chosen")
+                    font.family: Theme.monoFontFamily
+                    elide: Text.ElideMiddle
+                }
+                ThemedButton {
+                    id: chooseRecordingFolder
+                    anchors.verticalCenter: parent.verticalCenter
+                    variant: "secondary"
+                    text: qsTr("Choose…")
+                    visible: FileDialogs.supportsDirectoryPicker()
+                    onClicked: recordingColumn.chooseFolder()
+                }
+            }
+
+            // Said here rather than only when it bites: "Beside the project" cannot work until the
+            // project has been saved somewhere, and the fallback happens mid-recording.
+            ThemedLabel {
+                width: parent.width
+                size: "xs"
+                tone: "muted"
+                wrapMode: Text.WordWrap
+                visible: EditorState.preferences.recordingLocation === "project"
+                text: qsTr("Until the project is saved, recordings go to your Movies folder.")
+            }
+        }
+    }
+
+    SettingsRow {
         title: qsTr("Save preview copies and reversed clips")
         searchId: "preview-proxy-location"
         description: qsTr("Where Drift saves the files it makes from your media. Changing the folder doesn’t move or delete anything. Proxies in the previous folder are no longer found; choosing that folder again finds them.")
