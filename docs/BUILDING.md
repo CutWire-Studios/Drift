@@ -39,6 +39,24 @@ On Debian/Ubuntu install `libzstd-dev`, `libssl-dev`, `libsoundtouch-dev` and `z
 
 Optional: OpenCV for experimental background-removal builds (`-DWITH_BGREMOVAL=ON`). Only `core`, `imgproc`, and `imgcodecs` are linked.
 
+Optional, Linux only: **Qt 6 DBus** and **libpipewire-0.3** for screen recording
+(`-DDRIFT_WITH_PORTAL_CAPTURE=ON`, the default). Screen capture goes through
+`xdg-desktop-portal`'s ScreenCast interface and reads frames from PipeWire; Qt's own
+`QScreenCapture` is not used, because it has no Wayland path and silently delivers zero frames
+there. Configure prints which way it went:
+
+```
+-- Screen recording: xdg-desktop-portal + PipeWire 1.6.9
+-- Screen recording: disabled (needs Qt6 DBus and libpipewire-0.3)
+```
+
+A build without them is still a working editor — `makeScreenCaptureSource()` returns null and the
+UI hides the screen-recording action. Camera recording needs neither. On Debian/Ubuntu install
+`qt6-base-dev` (DBus is part of it) and `libpipewire-0.3-dev`; on Arch, `pipewire`.
+
+Recording the screen on Wayland always shows the compositor's own share dialog, and nothing is
+captured until the person answers it — that is the security model, not a bug to route around.
+
 Skia draws text, shapes and Lottie/SVG clips on the GPU and is on by default (`-DDRIFT_WITH_SKIA=OFF` builds a video/image/audio-only editor: text, shape and Lottie/SVG clips draw nothing). Skia has no distro package Drift can rely on, so `third_party/build-skia.sh <target>` compiles a pinned milestone into `third_party/prebuilt/skia/<target>/` (linux-x64 by default; also `linux-arm64`, `mac-arm64`, `mac-x64` and `android-<abi>`). It needs `clang`, `ninja`, `python3` and `git`, plus on Linux the development packages for HarfBuzz, ICU, FreeType, fontconfig, expat, libpng and zlib (`gn` is downloaded by the script unless one is on `PATH`). The first build takes 20–40 minutes; the result is picked up by `cmake/FindSkia.cmake` automatically, or point `DRIFT_SKIA_DIR` at any directory holding a generated `SkiaConfig.cmake`. Windows CI uses vcpkg's `skia[gl,harfbuzz,icu,freetype,png]:x64-windows-static-md` instead, which pins the same commit. Every packaging lane builds with the option on.
 
 **Nothing has to be placed by hand.** Fonts, emoji stickers, and speech models are addons (see below), so a clone builds and runs with no bundled assets.

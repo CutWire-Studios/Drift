@@ -171,6 +171,10 @@ you change speed, record a voiceover.
 **Find shots. Switch cameras.** Search footage for what’s on screen. Watch every angle at once and
 punch the cut.
 
+**Record the screen, or the webcam.** Capture a monitor, a window or the camera straight into the
+bin, with sound, then cut it like any other clip. On Linux it goes through the desktop's own
+screen-sharing portal, so it works on Wayland.
+
 **Stabilise, export, take the project with you.** Smooth shaky clips, upscale, play heavy files
 smoothly. MP4, GIF, audio-only, or just a range. Pack the media with the edit so paths stay whole.
 
