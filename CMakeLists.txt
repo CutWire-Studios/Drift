@@ -1090,6 +1090,8 @@ add_library(driftengine STATIC
     src/engine/encode/writers/MatteWriter.cpp
     src/engine/encode/proxies/ProxyNaming.h
     src/engine/encode/proxies/ProxyNaming.cpp
+    src/engine/capture/RecordingLocation.h
+    src/engine/capture/RecordingLocation.cpp
     src/engine/encode/proxies/ProxyLocation.h
     src/engine/encode/proxies/ProxyLocation.cpp
     src/engine/encode/proxies/ReverseProxyCache.h
