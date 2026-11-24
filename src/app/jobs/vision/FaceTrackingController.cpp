@@ -1,6 +1,9 @@
 #include "app/jobs/vision/FaceTrackingController.h"
 
 #include "app/editor/AppController.h"
+#include "app/mcp/McpDetail.h"
+#include "core/edit/TimelineOps.h"
+#include "engine/face/tracking/FaceMask.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/face/tracking/FaceLandmarker.h"
@@ -21,6 +24,33 @@ FaceTrackingController::FaceTrackingController(AppController *app, QObject *pare
 namespace {
 
 constexpr quint64 kFaceDetectStreamId = 0xA5'11'5C'A4'00'00'00'05ull;
+
+// Height / width of the frames a scan ran on, which is the space FaceAnchors measures lengths in.
+//
+// Sidecars have recorded it since the scan started writing it down. One baked before that is
+// reconstructed from the asset: Clip::rotationCorrection is relative to the file's own
+// display-matrix tag, so the two add, and a quarter turn swaps the axes. The canvas is the last
+// resort — wrong for a clip whose media differs in shape from the project, but bounded, and it
+// only applies to a track that predates the field.
+double faceScanAspect(const drift::FaceTrack &track, const drift::Clip &clip,
+                      const drift::Project &project)
+{
+    if (track.frameAspect > 0.0)
+        return track.frameAspect;
+
+    if (const drift::MediaAsset *asset = project.asset(clip.assetId)) {
+        int width = asset->width;
+        int height = asset->height;
+        const int turn =
+            ((asset->rotationDegrees + clip.rotationCorrection) % 360 + 360) % 360;
+        if (turn == 90 || turn == 270)
+            std::swap(width, height);
+        if (width > 0 && height > 0)
+            return double(height) / double(width);
+    }
+
+    return project.width() > 0 ? double(project.height()) / double(project.width()) : 1.0;
+}
 
 } // namespace
 
@@ -240,6 +270,99 @@ void FaceTrackingController::detect(int trackIndex, int clipIndex)
                    : tr("Face detection complete"),
                trackPath);
     });
+}
+
+int FaceTrackingController::addFaceMasks(int trackIndex, int clipIndex, double padding)
+{
+    // Same redirect as detect and clearTrack: the caller is the effect adjustment's inspector,
+    // and the landmarks live on the clip it is pinned to.
+    const drift::ClipRef source = m_app->sourceClipRef(trackIndex, clipIndex);
+    trackIndex = source.trackIndex;
+    clipIndex = source.clipIndex;
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return 0;
+
+    const drift::Clip clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.faceTrackPath.isEmpty()) {
+        m_app->setLastMessage(tr("Scan this clip for faces first"), QStringLiteral("warning"));
+        return 0;
+    }
+    const std::shared_ptr<const drift::FaceTrack> track =
+        drift::loadFaceTrackCached(clip.faceTrackPath);
+    if (!track || track->isEmpty()) {
+        m_app->setLastMessage(tr("This clip's face track could not be read — re-detect faces"),
+                              QStringLiteral("error"));
+        return 0;
+    }
+    const int slotCount = drift::faceSlotCount(*track);
+    if (slotCount <= 0 || clip.timelineDuration <= 0) {
+        m_app->setLastMessage(tr("No faces found in this clip"), QStringLiteral("warning"));
+        return 0;
+    }
+
+    drift::FaceMaskOptions options;
+    options.padding = padding;
+    // Feather scales with the canvas because it is measured in pixels: a fixed figure that reads
+    // as a soft edge at 1080p is a hard ring at 4K.
+    options.feather = std::max(4.0, m_app->m_project.width() * 0.015);
+    options.frameAspect = faceScanAspect(*track, clip, m_app->m_project);
+
+    // Key every frame, matching how a motion tracker writes the mask it drives: the detector ran
+    // per frame, so anything coarser would lag a turning head.
+    const drift::TimeUs step = drift::kUsPerSecond / std::max(1, m_app->m_project.fps());
+    QList<QPair<drift::TimeUs, drift::TimeUs>> samples;
+    samples.reserve(int(clip.timelineDuration / std::max<drift::TimeUs>(1, step)) + 2);
+    auto sampleAt = [&clip](drift::TimeUs maskUs) {
+        return qMakePair(maskUs, clip.timelineToSourceUs(clip.timelineStart + maskUs)
+                                     - clip.faceTrackSrcOffsetUs);
+    };
+    for (drift::TimeUs t = 0; t < clip.timelineDuration; t += step)
+        samples.append(sampleAt(t));
+    // The last instant too, so the mask tracks to the end of the clip instead of holding the last
+    // whole frame's pose across the tail.
+    const drift::TimeUs last = clip.timelineDuration - 1;
+    if (samples.isEmpty() || samples.constLast().first < last)
+        samples.append(sampleAt(last));
+
+    const QString hostId = clip.id;
+    const drift::Project before = m_app->m_project;
+
+    // Replace what an earlier run left, so re-running after a re-scan does not lay a second set
+    // over the first. Descending, like clearLinkedMasks: a removal only shifts higher indices.
+    const QList<drift::ClipRef> existing =
+        drift::linkedMaskAdjustments(m_app->m_project, trackIndex, clipIndex);
+    for (int i = existing.size() - 1; i >= 0; --i) {
+        const drift::ClipRef &ref = existing.at(i);
+        if (m_app->m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).mask.faceSlot >= 0)
+            m_app->m_project.tracks()[ref.trackIndex].clips.removeAt(ref.clipIndex);
+    }
+
+    int masked = 0;
+    for (int slot = 0; slot < slotCount; ++slot) {
+        drift::Mask mask = drift::faceMask(*track, slot, samples, options);
+        if (!mask.contributes())
+            continue; // a slot the landmarker opened but never filled
+        mask.faceSlot = slot;
+        mask.name = slotCount > 1 ? tr("Face %1").arg(slot + 1) : tr("Face");
+
+        // Each pin can insert a lane, which moves the host; re-resolve before the next one.
+        int hostTrack = -1;
+        int hostClip = -1;
+        if (!drift::mcpdetail::findClipById(m_app->m_project, hostId, &hostTrack, &hostClip))
+            break;
+        if (drift::addLinkedMask(m_app->m_project, hostTrack, hostClip, mask).trackIndex >= 0)
+            ++masked;
+    }
+
+    if (masked == 0) {
+        m_app->m_project = before;
+        m_app->setLastMessage(tr("No faces found in this clip"), QStringLiteral("warning"));
+        return 0;
+    }
+
+    m_app->pushProjectEdit(before, tr("Mask faces"));
+    m_app->finishEdit(tr("Masked %n face(s)", "", masked));
+    return masked;
 }
 
 void FaceTrackingController::ingestSwapSource(const QString &photoPath)
