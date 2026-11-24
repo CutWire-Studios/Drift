@@ -6398,6 +6398,14 @@
         <translation>导入文件夹</translation>
     </message>
     <message>
+        <source>Choose what to share in the dialog your desktop shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1:%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Collect Media to Folder</source>
         <translation>收集媒体到文件夹</translation>
     </message>
@@ -6494,6 +6502,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished">%1 — %2</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">停止</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">放弃</translation>
+    </message>
+    <message>
         <source>New folder</source>
         <translation>新建文件夹</translation>
     </message>
@@ -6569,6 +6589,14 @@
     <message>
         <source>Import Folder…</source>
         <translation>导入文件夹…</translation>
+    </message>
+    <message>
+        <source>Record Screen…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record Camera…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse Marketplace…</source>
@@ -8432,6 +8460,80 @@
     <message>
         <source>Camera position</source>
         <translation>相机位置</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureController</name>
+    <message>
+        <source>The folder for recordings isn&apos;t available, so this one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the project to keep recordings beside it. This one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The recording did not produce a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording saved and added to the bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A recording is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift cannot record the screen on this system. On Linux this needs xdg-desktop-portal and PipeWire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">滤色</translation>
+    </message>
+    <message>
+        <source>There is nowhere to save the recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That microphone could not be opened, so this recording has no sound.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording</source>
+        <translation type="unfinished">正在录音</translation>
+    </message>
+    <message>
+        <source>Waiting for you to choose what to share…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">启动中…</translation>
+    </message>
+    <message>
+        <source>No camera is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CaptureRequest</name>
+    <message>
+        <source>There is nowhere to save this recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a window to record.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag out the area to record first.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -18940,6 +19042,21 @@
     <message>
         <source>Samples</source>
         <translation>采样数</translation>
+    </message>
+</context>
+<context>
+    <name>PortalScreenCapture</name>
+    <message>
+        <source>The desktop refused to share the screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop shared nothing to record.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop would not open the screen-sharing stream.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -33826,6 +33943,36 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>全息</translation>
+    </message>
+</context>
+<context>
+    <name>drift::CameraCaptureSource</name>
+    <message>
+        <source>A camera recording is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The camera stopped working.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PortalScreenCapture</name>
+    <message>
+        <source>A screen recording is already starting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This desktop has no screen-sharing portal, so Drift cannot record the screen. Install xdg-desktop-portal and a backend for your desktop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The screen-sharing portal returned no session.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

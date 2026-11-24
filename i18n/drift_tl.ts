@@ -6425,6 +6425,14 @@
         <translation>Mag-import ng Folder</translation>
     </message>
     <message>
+        <source>Choose what to share in the dialog your desktop shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1:%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Collect Media to Folder</source>
         <translation>Kolektahin ang Media sa Folder</translation>
     </message>
@@ -6521,6 +6529,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished">%1 — %2</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Ihinto</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">Ibasura</translation>
+    </message>
+    <message>
         <source>New folder</source>
         <translation>Bagong folder</translation>
     </message>
@@ -6598,6 +6618,14 @@
     <message>
         <source>Import Folder…</source>
         <translation>Mag-import ng Folder…</translation>
+    </message>
+    <message>
+        <source>Record Screen…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record Camera…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse Marketplace…</source>
@@ -8464,6 +8492,80 @@
     <message>
         <source>Camera position</source>
         <translation>Posisyon ng camera</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureController</name>
+    <message>
+        <source>The folder for recordings isn&apos;t available, so this one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the project to keep recordings beside it. This one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The recording did not produce a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording saved and added to the bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A recording is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift cannot record the screen on this system. On Linux this needs xdg-desktop-portal and PipeWire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Screen</translation>
+    </message>
+    <message>
+        <source>There is nowhere to save the recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That microphone could not be opened, so this recording has no sound.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording</source>
+        <translation type="unfinished">Nagre-record</translation>
+    </message>
+    <message>
+        <source>Waiting for you to choose what to share…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Nagsisimula…</translation>
+    </message>
+    <message>
+        <source>No camera is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Camera</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureRequest</name>
+    <message>
+        <source>There is nowhere to save this recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a window to record.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag out the area to record first.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -19021,6 +19123,21 @@
     <message>
         <source>Samples</source>
         <translation>Mga Sample</translation>
+    </message>
+</context>
+<context>
+    <name>PortalScreenCapture</name>
+    <message>
+        <source>The desktop refused to share the screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop shared nothing to record.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop would not open the screen-sharing stream.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -33940,6 +34057,36 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Holographic</source>
         <translation>Holographic</translation>
+    </message>
+</context>
+<context>
+    <name>drift::CameraCaptureSource</name>
+    <message>
+        <source>A camera recording is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The camera stopped working.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PortalScreenCapture</name>
+    <message>
+        <source>A screen recording is already starting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This desktop has no screen-sharing portal, so Drift cannot record the screen. Install xdg-desktop-portal and a backend for your desktop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The screen-sharing portal returned no session.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
