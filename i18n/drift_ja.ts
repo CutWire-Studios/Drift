@@ -11158,6 +11158,14 @@
         <source>Remove background</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Blur faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find and blur faces</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EffectsOccludeSection</name>
@@ -12195,6 +12203,32 @@
     <message>
         <source>Face detection complete</source>
         <translation>顔検出完了</translation>
+    </message>
+    <message>
+        <source>Scan this clip for faces first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip&apos;s face track could not be read — re-detect faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished">顔 %1</translation>
+    </message>
+    <message>
+        <source>Face</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Masked %n face(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Scanned clip no longer exists</source>
