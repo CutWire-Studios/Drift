@@ -1319,6 +1319,19 @@
         { "clear_face_track", "ai", "Remove face track",
           "Delete the stored face track from a clip, undoing detect_faces.",
           objectSchema(clipRefProps()), false, true },
+        { "mask_faces", "ai", "Mask every face so a mask effect covers it",
+          "Lay one keyframed ellipse mask on each face in a clip's face track, pinned to the clip "
+          "and following the face. Run detect_faces first. This is how you blur or pixelate faces: "
+          "add_effect the privacy_blur effect to the same clip, then call this. The effect reads "
+          "the clip's folded mask stack, and a clip whose chain reads its masks is not cut out by "
+          "them — so without such an effect these masks crop the clip to the faces instead of "
+          "blurring them. Re-running replaces the masks an earlier call made and leaves "
+          "hand-drawn masks alone. padding scales the detected oval, which traces the skin "
+          "boundary and so leaves hair, ears and jaw outside it. Returns {faces}, the number "
+          "masked.",
+          objectSchema(mergeProps({{QStringLiteral("padding"),
+                                    numberProp(QStringLiteral("Face oval scale, default 1.4"), 1.0, 3.0)}},
+                                  clipRefProps())), false, false, true },
         { "estimate_depth", "ai", "Estimate depth for the depth effects",
           "Estimate a video or image clip's depth with the depth-model addon (Video Depth Anything), "
           "which the depth effects read: depth.relight (3D lights), depth.focus (depth of field), "

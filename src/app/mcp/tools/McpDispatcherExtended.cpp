@@ -3443,6 +3443,21 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref));
     }
 
+    if (tool == QLatin1String("mask_faces")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const double padding = jsonNumber(args.value(QStringLiteral("padding")), 1.4);
+        const int faces = m_controller->faces()->addFaceMasks(ref.track, ref.clip, padding);
+        // The controller has already said why in the app's own message line; an agent cannot see
+        // that, so the reason has to come back through the error.
+        if (faces <= 0)
+            return err("no_faces", QStringLiteral("No masks were created. This clip has no face "
+                                                  "track yet — run detect_faces first — or the "
+                                                  "scan found no faces in it."));
+        return ok(clipFeedback(ref, {{QStringLiteral("faces"), faces}}));
+    }
+
     if (tool == QLatin1String("estimate_depth")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
