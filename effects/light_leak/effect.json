@@ -7,6 +7,18 @@
   "order": 180,
   "parameters": [
     {
+      "identifier": "pattern",
+      "displayName": "Pattern",
+      "type": "choice",
+      "options": [
+        "Sweeping band",
+        "Film leak",
+        "Corner burn",
+        "Side band"
+      ],
+      "defaultValue": 0
+    },
+    {
       "identifier": "intensity",
       "displayName": "Intensity",
       "type": "float",
@@ -72,5 +84,6 @@
         }
       }
     ]
-  }
+  },
+  "description": "Soft coloured light leaks washing over the frame: a sweeping band, a film-style leak, a corner burn or a side band."
 }
