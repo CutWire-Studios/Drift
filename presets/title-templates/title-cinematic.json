@@ -1,0 +1,107 @@
+{
+  "format": 1,
+  "id": "title-cinematic",
+  "label": "Title: cinematic",
+  "category": "title",
+  "order": 110,
+  "duration": 6,
+  "elements": [
+    {
+      "type": "text",
+      "key": "title",
+      "label": "Title",
+      "text": "THE LONG ROAD HOME",
+      "box": [
+        0.05,
+        0.38,
+        0.9,
+        0.14
+      ],
+      "font": "Cinzel",
+      "weight": 500,
+      "size": 0.07,
+      "color": "#F5E6C8",
+      "align": "center",
+      "valign": "middle",
+      "letterSpacing": 0.22,
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "in": {
+        "preset": "blur-in",
+        "duration": 1.2,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.8,
+        "unit": "block",
+        "ease": "easeIn"
+      },
+      "loop": {
+        "preset": "tracking-drift"
+      }
+    },
+    {
+      "type": "shape",
+      "name": "Rule",
+      "shape": "rectangle",
+      "box": [
+        0.4,
+        0.55,
+        0.2,
+        0.0025
+      ],
+      "fill": "#F5E6C8",
+      "opacity": 0.8,
+      "start": 0.6,
+      "in": {
+        "anim": "zoomIn",
+        "duration": 0.8,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "zoomOut",
+        "duration": 0.6,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "subtitle",
+      "label": "Subtitle",
+      "text": "A film by you",
+      "box": [
+        0.2,
+        0.575,
+        0.6,
+        0.06
+      ],
+      "font": "Cormorant Garamond",
+      "weight": 400,
+      "size": 0.04,
+      "color": "#F5E6C8",
+      "align": "center",
+      "valign": "middle",
+      "italic": true,
+      "letterSpacing": 0.08,
+      "start": 1.0,
+      "in": {
+        "preset": "fade",
+        "duration": 1.0,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.6,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

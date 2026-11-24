@@ -441,6 +441,17 @@ ApplicationWindow {
     }
 
     LazyLoader {
+        id: beatCutDialogLoader
+        sourceComponent: Component {
+            BeatCutDialog { }
+        }
+    }
+
+    function openBeatCut(track, clip) {
+        beatCutDialogLoader.ensure().openFor(track, clip)
+    }
+
+    LazyLoader {
         id: imageSequenceDialogLoader
         sourceComponent: Component {
             ImageSequenceDialog { }

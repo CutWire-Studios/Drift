@@ -1556,6 +1556,26 @@
                {QStringLiteral("min_strength"), propWithDefault(numberProp(QStringLiteral("For unit:\"onset\" only — drop onsets weaker than this"), 0, 1), 0.0)},
                {QStringLiteral("max_distance"), propWithDefault(numberProp(QStringLiteral("Leave a clip alone when the nearest grid time is further than this many seconds")), 0.25)}},
               {{QStringLiteral("track"), integerProp(QStringLiteral("Quantise every clip on this track index; ignored when clips is given"))}})) },
+        { "add_beat_markers", "audio", "Beat markers on a music clip",
+          "Mark the beats of ONE audio or video clip (its own sound, not the mix) as project markers. "
+          "BLOCKS a few seconds; no detect_beats needed. every: 1 each beat, 2 each second beat, 0 one "
+          "per bar, counted from the first bar line. Clip 4 to 600 s. Returns {added, beats, bpm, "
+          "confidence}; not_found when no steady beat. One undo step.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("every"), propWithDefault(integerProp(QStringLiteral("Beats between markers; 0 = one per bar"), 0, 16), 1)}},
+              clipRefProps())) },
+        { "auto_cut_to_beat", "audio", "Cut clips together on the beat",
+          "Lay video and image clips (in timeline order) end to end on a NEW video track so each cut "
+          "lands on a beat of the music clip. BLOCKS while the music is analysed. Clips are trimmed to "
+          "their slot; shorter footage leaves a gap (short). Stops when the music ends; unused clips "
+          "stay put (unused). beats_per_cut 1, 2, 4 or 8; sync_downbeats cuts only on bar lines. "
+          "Returns {placed:[{clip, start, duration}], track, bpm, short, unused}. One undo step.",
+          objectSchema({{QStringLiteral("music"), stringProp(QStringLiteral("UUID of the music clip"))},
+                        {QStringLiteral("clips"), arrayProp(stringProp(QStringLiteral("Clip UUID")), QStringLiteral("Video or image clips to cut together"))},
+                        {QStringLiteral("beats_per_cut"), propWithDefault(integerProp(QStringLiteral("Beats between cuts"), 1, 16), 2)},
+                        {QStringLiteral("from_playhead"), boolProp(QStringLiteral("Start at the playhead instead of the music's start"))},
+                        {QStringLiteral("sync_downbeats"), propWithDefault(boolProp(QStringLiteral("Only cut on bar lines")), true)}},
+                       {QStringLiteral("music"), QStringLiteral("clips")}) },
         { "set_volume", "audio", "Make a clip louder or quieter, or keyframe a duck",
           "Set a clip's volume. 1 is unity, 0 is silent, 2 is the maximum the mixer allows. "
           "Without `at` this sets the clip's constant level; with `at` it writes a keyframe at that "

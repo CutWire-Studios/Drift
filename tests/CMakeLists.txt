@@ -99,6 +99,16 @@ target_include_directories(tst_audioducking PRIVATE ../src)
 target_link_libraries(tst_audioducking PRIVATE Qt6::Test Qt6::Core driftengine driftcore)
 add_test(NAME AudioDucking COMMAND tst_audioducking)
 
+qt_add_executable(tst_beatsync tst_beatsync.cpp)
+target_include_directories(tst_beatsync PRIVATE ../src)
+target_link_libraries(tst_beatsync PRIVATE Qt6::Test Qt6::Core driftengine driftcore)
+add_test(NAME BeatSync COMMAND tst_beatsync)
+
+qt_add_executable(tst_titletemplates tst_titletemplates.cpp)
+target_include_directories(tst_titletemplates PRIVATE ../src)
+target_link_libraries(tst_titletemplates PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore)
+add_test(NAME TitleTemplates COMMAND tst_titletemplates)
+
 qt_add_executable(tst_curveedit
     tst_curveedit.cpp
     ../src/ui/color/CurveEdit.cpp)
@@ -340,6 +350,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/appcontroller/AppControllerKeyframes.cpp
     ../src/app/editor/appcontroller/AppControllerEffects.cpp
     ../src/app/editor/appcontroller/AppControllerTracks.cpp
+    ../src/app/editor/appcontroller/AppControllerTitleTemplates.cpp
     ../src/app/editor/keymap/Keymap.h
     ../src/app/editor/keymap/Keymap.cpp
     ../src/app/editor/keymap/KeymapCatalog.h

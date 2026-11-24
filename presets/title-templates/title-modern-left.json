@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "id": "title-modern-left",
+  "label": "Title: modern left",
+  "category": "title",
+  "order": 120,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Accent",
+      "shape": "rectangle",
+      "box": [
+        0.07,
+        0.27,
+        0.06,
+        0.012
+      ],
+      "fill": "#8B5CF6",
+      "in": {
+        "anim": "slideRight",
+        "duration": 0.45,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideLeft",
+        "duration": 0.35,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "title",
+      "label": "Title",
+      "text": "Make something great",
+      "box": [
+        0.07,
+        0.3,
+        0.75,
+        0.27
+      ],
+      "font": "Plus Jakarta Sans",
+      "weight": 800,
+      "size": 0.105,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "top",
+      "lineHeight": 1.05,
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "start": 0.1,
+      "in": {
+        "preset": "rise-by-word",
+        "duration": 0.6,
+        "unit": "word",
+        "ease": "easeOut",
+        "stagger": 0.08
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "subtitle",
+      "label": "Subtitle",
+      "text": "Add your supporting line here",
+      "box": [
+        0.07,
+        0.6,
+        0.6,
+        0.06
+      ],
+      "font": "Plus Jakarta Sans",
+      "weight": 400,
+      "size": 0.035,
+      "color": "#C4B5FD",
+      "align": "left",
+      "valign": "middle",
+      "start": 0.5,
+      "in": {
+        "preset": "slide-up",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "format": 1,
+  "id": "chapter-card",
+  "label": "Chapter card",
+  "category": "chapter",
+  "order": 200,
+  "duration": 4,
+  "elements": [
+    {
+      "type": "text",
+      "key": "number",
+      "label": "Number",
+      "text": "01",
+      "box": [
+        0.07,
+        0.25,
+        0.3,
+        0.5
+      ],
+      "font": "Bebas Neue",
+      "weight": 400,
+      "size": 0.3,
+      "color": "#FF5A36",
+      "align": "right",
+      "valign": "middle",
+      "in": {
+        "preset": "pop",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "shape",
+      "name": "Divider",
+      "shape": "rectangle",
+      "box": [
+        0.385,
+        0.36,
+        0.004,
+        0.28
+      ],
+      "fill": "#FFFFFF",
+      "start": 0.15,
+      "in": {
+        "anim": "zoomIn",
+        "duration": 0.4,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "zoomOut",
+        "duration": 0.3,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "label",
+      "label": "Label",
+      "text": "Chapter",
+      "box": [
+        0.41,
+        0.36,
+        0.5,
+        0.06
+      ],
+      "font": "Poppins",
+      "weight": 500,
+      "size": 0.03,
+      "color": "#9CA3AF",
+      "align": "left",
+      "valign": "middle",
+      "case": "upper",
+      "letterSpacing": 0.25,
+      "start": 0.25,
+      "in": {
+        "preset": "slide-right",
+        "duration": 0.45,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "title",
+      "label": "Title",
+      "text": "The beginning",
+      "box": [
+        0.41,
+        0.42,
+        0.55,
+        0.2
+      ],
+      "font": "Poppins",
+      "weight": 700,
+      "size": 0.075,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "top",
+      "start": 0.35,
+      "in": {
+        "preset": "slide-right",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

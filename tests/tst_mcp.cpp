@@ -461,11 +461,11 @@ void McpTest::catalogOpsIncludeWhen()
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
     // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter, use_as_mask/convert_clip_to_mask,
-    // slip_clip, mask_faces, the capture ops and the generator and text script ops.
-    QVERIFY2(compactSize < 27300, qPrintable(QString::number(compactSize)));
+    // slip_clip, mask_faces, the capture ops, the generator and text script ops, title templates and the beat-sync ops.
+    QVERIFY2(compactSize < 27600, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
-    QVERIFY2(briefSize < 13500, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter, mask, generator and text script ops
+    QVERIFY2(briefSize < 13700, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter, mask, generator, text script, title template and beat-sync ops
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -6332,7 +6332,7 @@ void McpTest::audioToolboxReturnsSchemas()
     const QJsonObject payload = drift::mcp::toolboxPayload(QStringLiteral("audio"));
     QVERIFY(payload.value(QStringLiteral("ok")).toBool());
     const QJsonArray tools = payload.value(QStringLiteral("tools")).toArray();
-    QCOMPARE(tools.size(), 22);
+    QCOMPARE(tools.size(), 24);
 
     QStringList names;
     for (const QJsonValue &v : tools) {

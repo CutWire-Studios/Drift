@@ -2061,6 +2061,13 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | textStylePackThumb | borderWidthFocus | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | textStylePackThumb | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | textStylePackThumb | radius | $metrics.radius.sm | $metrics.radius.sm |
+| titleTemplateCard | background | $semantic.preview.textStyleBackground | $semantic.preview.textStyleBackground |
+| titleTemplateCard | border | $semantic.preview.textStyleBorder | $semantic.preview.textStyleBorder |
+| titleTemplateCard | borderHover | $semantic.panel.muted | $semantic.panel.muted |
+| titleTemplateCard | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| titleTemplateCard | foregroundHover | $semantic.panel.foreground | $semantic.panel.foreground |
+| titleTemplateCard | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| titleTemplateCard | radius | $metrics.radius.sm | $metrics.radius.sm |
 | transformInspector | accent | $semantic.clip.transform | $semantic.clip.transform |
 | transformInspector | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | transformInspector | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
@@ -2489,6 +2496,11 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | assetsPanel | fallbackForeground | $semantic.foreground | $semantic.foreground |
 | assetsPanel | fallbackSelection | $semantic.primary | $semantic.primary |
 | assetsPanel | fallbackSelectionForeground | $semantic.primaryForeground | $semantic.primaryForeground |
+| captureBar | background | $semantic.surface.panel | $semantic.surface.panel |
+| captureBar | border | $semantic.panel.border | $semantic.panel.border |
+| captureBar | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
+| captureBar | text | $semantic.foreground | $semantic.foreground |
+| captureBar | indicator | $semantic.destructive | $semantic.destructive |
 | assetsPanelDropOverlay | accent | $semantic.primary | $semantic.primary |
 | assetsPanelDropOverlay | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
 | assetsPanelDropOverlay | radius | $metrics.radius.md | $metrics.radius.md |

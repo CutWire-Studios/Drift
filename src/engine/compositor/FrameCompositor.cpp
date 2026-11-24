@@ -1665,6 +1665,13 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         }
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
         destRect = rasterRect;
+        if (!editingText && layer.hasPixels() && textClip->textStyle.scroll != drift::TextScroll::None) {
+            const QPointF scroll = drift::textScrollOffset(
+                textClip->textStyle, rasterRect, QSizeF(projectWidth * renderScale, projectHeight * renderScale),
+                clipTimeUs, clip.timelineDuration);
+            block.dx += scroll.x();
+            block.dy += scroll.y();
+        }
         applyTextBlockMotion(layer, block, &destRect, &opacity, &rotation);
     } else if (clip.type == drift::ClipType::Subtitle) {
         const drift::TimeUs localUs = timelineUs - clip.timelineStart;

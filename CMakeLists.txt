@@ -662,6 +662,9 @@ add_library(driftcore STATIC
     src/core/edit/MaskSpace.cpp
     src/core/edit/CutOps.h
     src/core/edit/CutOps.cpp
+    src/core/edit/BeatCut.cpp
+    src/core/text/TitleTemplate.h
+    src/core/text/TitleTemplate.cpp
     src/core/edit/commands/ProjectCommands.h
     src/core/edit/commands/ProjectCommands.cpp
 )
@@ -673,6 +676,13 @@ qt_add_resources(driftcore "drift_text_animations"
     PREFIX "/text-animations"
     BASE "${CMAKE_SOURCE_DIR}/presets/text-animations"
     FILES ${DRIFT_TEXT_ANIMATION_FILES}
+)
+
+file(GLOB DRIFT_TITLE_TEMPLATE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/presets/title-templates/*.json")
+qt_add_resources(driftcore "drift_title_templates"
+    PREFIX "/title-templates"
+    BASE "${CMAKE_SOURCE_DIR}/presets/title-templates"
+    FILES ${DRIFT_TITLE_TEMPLATE_FILES}
 )
 
 # Audio effect DSP. JUCE modules compile into whatever target links them, so keeping them in a
@@ -1427,6 +1437,7 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerKeyframes.cpp
     src/app/editor/appcontroller/AppControllerEffects.cpp
     src/app/editor/appcontroller/AppControllerTracks.cpp
+    src/app/editor/appcontroller/AppControllerTitleTemplates.cpp
     src/app/editor/keymap/Keymap.h
     src/app/editor/keymap/Keymap.cpp
     src/app/editor/keymap/KeymapCatalog.h
@@ -2093,6 +2104,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TextInspectorTabBar.qml
         src/qml/components/properties/TextInspectorStylePage.qml
         src/qml/components/properties/TextInspectorSpacingSection.qml
+        src/qml/components/properties/TextInspectorScrollSection.qml
         src/qml/components/properties/TextInspectorPresetSection.qml
         src/qml/components/properties/TextInspectorLookSection.qml
         src/qml/components/properties/TextInspectorFontSection.qml
@@ -2169,6 +2181,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/CollapsibleSectionHeader.qml
         src/qml/components/properties/AudioEffectHeader.qml
         src/qml/components/assets/TextAssetsTab.qml
+        src/qml/components/assets/TitleTemplateCard.qml
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/SpeechTab.qml
@@ -2768,6 +2781,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/ExportDialog.qml
         src/qml/components/dialogs/ExportProgressDialog.qml
         src/qml/components/dialogs/CollectMediaDialog.qml
+        src/qml/components/dialogs/BeatCutDialog.qml
         src/qml/components/dialogs/ImageSequenceDialog.qml
         src/qml/components/dialogs/ReverseProgressDialog.qml
         src/qml/components/dialogs/SubtitleProgressDialog.qml

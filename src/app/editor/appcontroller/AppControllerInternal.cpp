@@ -569,6 +569,13 @@ QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStar
         {QStringLiteral("animation"), textAnimationSetToMap(s.animation)},
     };
 
+    // Only scrolling styles carry the keys, which keeps agent-facing clip rows small.
+    if (s.scroll != drift::TextScroll::None) {
+        map.insert(QStringLiteral("scroll"), drift::textScrollToString(s.scroll));
+        map.insert(QStringLiteral("scrollEnterOffscreen"), s.scrollEnterOffscreen);
+        map.insert(QStringLiteral("scrollExitOffscreen"), s.scrollExitOffscreen);
+    }
+
     // Read-only mirrors of the flat v6 look, kept one release for the inspector rows and agents
     // that still read them.
     map.insert(QStringLiteral("color"), s.primaryColor().name(QColor::HexArgb));

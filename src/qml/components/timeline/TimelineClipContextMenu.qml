@@ -439,6 +439,29 @@ ThemedContextMenu {
                 }
             }
             ThemedMenuItem {
+                text: qsTr("Add beat markers: every beat")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addBeatMarkersForSelection(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, 1)
+            }
+            ThemedMenuItem {
+                text: qsTr("Add beat markers: every 2 beats")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addBeatMarkersForSelection(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, 2)
+            }
+            ThemedMenuItem {
+                text: qsTr("Add beat markers: every bar")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addBeatMarkersForSelection(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, 0)
+            }
+            ThemedMenuItem {
+                text: qsTr("Auto-cut to beat…")
+                icon.name: Theme.icons.scissors
+                visible: clipContextMenu.owner.clipData.kind === "audio"
+                         && typeof ShellBridge.main?.openBeatCut === "function"
+                enabled: EditorState.beatCutTargetCount(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex) > 0
+                onTriggered: ShellBridge.main.openBeatCut(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
+            }
+            ThemedMenuItem {
                 text: qsTr("Cancel audio analysis")
                 icon.name: Theme.icons.x
                 visible: EditorState.audioAlign.running

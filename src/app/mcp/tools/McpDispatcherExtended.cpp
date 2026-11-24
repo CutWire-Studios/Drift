@@ -2235,6 +2235,29 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref));
     }
 
+    if (tool == QLatin1String("list_title_templates")) {
+        QJsonArray templates;
+        for (const QVariant &v : m_controller->titleTemplates()) {
+            QVariantMap m = v.toMap();
+            m.remove(QStringLiteral("elements"));
+            templates.append(QJsonObject::fromVariantMap(m));
+        }
+        return ok({{QStringLiteral("templates"), templates}});
+    }
+
+    if (tool == QLatin1String("insert_title_template")) {
+        const QVariantMap result = m_controller->insertTitleTemplate(
+            argString(args, QStringLiteral("template")),
+            args.contains(QStringLiteral("at")) ? jsonNumber(args.value(QStringLiteral("at")), -1.0) : -1.0,
+            args.value(QStringLiteral("texts")).toObject().toVariantMap());
+        if (result.contains(QStringLiteral("error")))
+            return opFailure(result);
+        return ok({{QStringLiteral("clips"), QJsonArray::fromStringList(result.value(QStringLiteral("clips")).toStringList())},
+                   {QStringLiteral("start"), result.value(QStringLiteral("start")).toDouble()},
+                   {QStringLiteral("duration"), result.value(QStringLiteral("duration")).toDouble()},
+                   {QStringLiteral("text_clip"), result.value(QStringLiteral("text_clip")).toString()}});
+    }
+
     if (tool == QLatin1String("list_text_looks")) {
         return ok({{QStringLiteral("looks"), QJsonArray::fromVariantList(m_controller->textLooks())}});
     }
@@ -3656,6 +3679,45 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     if (tool == QLatin1String("snap_clips_to_beats"))
         return opSnapClipsToBeats(args);
+
+    if (tool == QLatin1String("add_beat_markers")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QVariantMap result =
+            m_controller->addBeatMarkersForClip(ref.id, jsonInt(args.value(QStringLiteral("every")), 1));
+        if (result.contains(QStringLiteral("error")))
+            return opFailure(result);
+        return ok({{QStringLiteral("added"), result.value(QStringLiteral("added")).toInt()},
+                   {QStringLiteral("beats"), result.value(QStringLiteral("beats")).toInt()},
+                   {QStringLiteral("bpm"), result.value(QStringLiteral("bpm")).toDouble()},
+                   {QStringLiteral("confidence"), result.value(QStringLiteral("confidence")).toDouble()}});
+    }
+
+    if (tool == QLatin1String("auto_cut_to_beat")) {
+        QStringList clips;
+        for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray())
+            clips.append(v.toString());
+        const QVariantMap result = m_controller->autoCutToBeat(
+            argString(args, QStringLiteral("music")), clips,
+            jsonInt(args.value(QStringLiteral("beats_per_cut")), 2),
+            jsonBool(args.value(QStringLiteral("from_playhead"))),
+            !args.contains(QStringLiteral("sync_downbeats")) || jsonBool(args.value(QStringLiteral("sync_downbeats"))));
+        if (result.contains(QStringLiteral("error")))
+            return opFailure(result);
+        QJsonArray placed;
+        for (const QVariant &v : result.value(QStringLiteral("placed")).toList()) {
+            const QVariantMap m = v.toMap();
+            placed.append(QJsonObject{{QStringLiteral("clip"), m.value(QStringLiteral("clip")).toString()},
+                                      {QStringLiteral("start"), m.value(QStringLiteral("start")).toDouble()},
+                                      {QStringLiteral("duration"), m.value(QStringLiteral("duration")).toDouble()}});
+        }
+        return ok({{QStringLiteral("placed"), placed},
+                   {QStringLiteral("track"), result.value(QStringLiteral("track")).toInt()},
+                   {QStringLiteral("bpm"), result.value(QStringLiteral("bpm")).toDouble()},
+                   {QStringLiteral("short"), result.value(QStringLiteral("short")).toInt()},
+                   {QStringLiteral("unused"), result.value(QStringLiteral("unused")).toInt()}});
+    }
 
     if (tool == QLatin1String("get_camera_state"))
         return opGetCameraState(args);

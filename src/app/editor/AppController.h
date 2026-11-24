@@ -1007,6 +1007,22 @@ public:
     Q_INVOKABLE void splitSelectionOnBeats(int trackIndex, int clipIndex, const QString &unit);
     Q_INVOKABLE void snapSelectionToBeats(int trackIndex, int clipIndex, const QString &unit);
     Q_INVOKABLE void addMarkersAtBeats(const QString &unit);
+    // Beat tracking on one clip's own audio, ignoring the rest of the mix. A failure comes back as
+    // {error, message} in `failure`; the analysis is empty then. Blocks in a nested event loop.
+    AudioBeatAnalysis analyzeClipBeats(const QString &clipId, QVariantMap *failure);
+    // Markers on every `every`-th beat of the clip, counted from its bar lines; every <= 0 is one per
+    // bar. Returns {added, beats, bpm, confidence} or {error, message}. One undo step.
+    QVariantMap addBeatMarkersForClip(const QString &clipId, int every);
+    // Lays the video and image clips of `clipIds` end to end on a new track so each cut lands on a
+    // beat of the music clip: every `beatsPerCut` beats, from the music's start or the playhead,
+    // optionally only on bar lines. Footage longer than its slot is trimmed; shorter footage leaves a
+    // gap. Returns {placed, track, bpm, short, unused} or {error, message}. One undo step.
+    QVariantMap autoCutToBeat(const QString &musicClipId, const QStringList &clipIds, int beatsPerCut,
+                              bool fromPlayhead, bool syncDownbeats);
+    Q_INVOKABLE int beatCutTargetCount(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE void addBeatMarkersForSelection(int trackIndex, int clipIndex, int every);
+    Q_INVOKABLE void autoCutSelectionToBeat(int trackIndex, int clipIndex, int beatsPerCut, bool fromPlayhead,
+                                            bool syncDownbeats);
     bool beatsAvailable() const { return !m_beatAnalysisRaw.beats.isEmpty(); }
     // Keys a crop window of `aspect` (<= 0 means 9:16) onto the clip's subject: mode "face" follows
     // its face track when it has one, "center" holds the middle. Failure is {error, message};
@@ -1292,6 +1308,15 @@ public:
     // Style packs the user saved from the inspector. Kept out of textPresets() so the built-in
     // catalog (and the MCP list it feeds) stays a stable, shippable set.
     Q_INVOKABLE QVariantList userTextPresets() const;
+    // Multi-element title and lower-third templates (see core/text/TitleTemplate.h): the catalog with
+    // each template's fields and element list, for the assets grid and its thumbnails.
+    Q_INVOKABLE QVariantList titleTemplates() const;
+    // Places the template's text and shape clips at atSeconds (< 0: the playhead), each on a free
+    // track above the video, loosely linked. `texts` maps field keys to replacement text. One undo
+    // step. Returns {clips, start, duration, text_clip} or {error, message}.
+    QVariantMap insertTitleTemplate(const QString &templateId, double atSeconds, const QVariantMap &texts);
+    // GUI: insert at the playhead, select the first text clip and open it for typing.
+    Q_INVOKABLE void addTitleTemplate(const QString &templateId);
     Q_INVOKABLE QString saveTextStyleAsPreset(int trackIndex, int clipIndex, const QString &label);
     Q_INVOKABLE bool renameUserTextPreset(const QString &presetId, const QString &label);
     Q_INVOKABLE bool deleteUserTextPreset(const QString &presetId);

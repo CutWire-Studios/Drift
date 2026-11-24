@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "id": "subscribe-cta",
+  "label": "Subscribe call to action",
+  "category": "call-to-action",
+  "order": 300,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "text",
+      "key": "line",
+      "label": "Line",
+      "text": "Enjoying this video?",
+      "box": [
+        0.3,
+        0.7,
+        0.4,
+        0.05
+      ],
+      "font": "Montserrat",
+      "weight": 600,
+      "size": 0.03,
+      "color": "#FFFFFF",
+      "align": "center",
+      "valign": "middle",
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "in": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "shape",
+      "name": "Button",
+      "shape": "pill",
+      "box": [
+        0.37,
+        0.77,
+        0.26,
+        0.09
+      ],
+      "fill": "#FF2D2D",
+      "start": 0.2,
+      "in": {
+        "anim": "pop",
+        "duration": 0.45,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "zoomOut",
+        "duration": 0.3,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "button",
+      "label": "Button",
+      "text": "Subscribe",
+      "box": [
+        0.37,
+        0.77,
+        0.26,
+        0.09
+      ],
+      "font": "Montserrat",
+      "weight": 800,
+      "size": 0.036,
+      "color": "#FFFFFF",
+      "align": "center",
+      "valign": "middle",
+      "case": "upper",
+      "letterSpacing": 0.06,
+      "start": 0.35,
+      "in": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.25,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

@@ -25,6 +25,11 @@ Column {
         width: parent.width
         inspector: root.inspector
     }
+    TextInspectorScrollSection {
+        visible: inspector.showSpacing && inspector.hasTextStyle && inspector.clipKind === "text"
+        width: parent.width
+        inspector: root.inspector
+    }
     TextInspectorSpacingSection {
         visible: inspector.showSpacing && inspector.hasTextStyle
         expanded: inspector.mode === "settings"

@@ -2829,6 +2829,15 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm"
     },
+    "titleTemplateCard": {
+      "background": "$semantic.preview.textStyleBackground",
+      "border": "$semantic.preview.textStyleBorder",
+      "borderHover": "$semantic.panel.muted",
+      "borderWidth": "$metrics.borderWidth",
+      "foregroundHover": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "radius": "$metrics.radius.sm"
+    },
     "transformInspector": {
       "accent": "$semantic.clip.transform",
       "foreground": "$semantic.panel.foreground",

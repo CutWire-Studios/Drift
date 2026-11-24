@@ -404,6 +404,11 @@ QJsonObject textStyleSchema()
                                              {QStringLiteral("none"), QStringLiteral("upper"), QStringLiteral("lower"),
                                               QStringLiteral("title"), QStringLiteral("sentence")})},
         {QStringLiteral("wordWrap"), boolProp(QStringLiteral("Wrap long lines"))},
+        {QStringLiteral("scroll"), enumProp(QStringLiteral("Move the block across the canvas over the clip's length: rollUp = credits, crawl = one-line ticker"),
+                                          {QStringLiteral("none"), QStringLiteral("rollUp"), QStringLiteral("crawlLeft"),
+                                           QStringLiteral("crawlRight")})},
+        {QStringLiteral("scrollEnterOffscreen"), boolProp(QStringLiteral("Start fully off-canvas (default true)"))},
+        {QStringLiteral("scrollExitOffscreen"), boolProp(QStringLiteral("End fully off-canvas (default true)"))},
         {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Legacy: the stroke layer on/off"))},
         {QStringLiteral("outlineWidth"), numberProp(QStringLiteral("Legacy: stroke width in px at pixelSize"))},
         {QStringLiteral("outlineColor"), stringProp(QStringLiteral("Legacy: stroke colour"))},
@@ -1150,6 +1155,19 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("text"), stringProp(QStringLiteral("Caption"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
                         {QStringLiteral("preset"), stringProp(QStringLiteral("Optional text style pack id from list_text_presets"))}}) },
+        { "list_title_templates", "text", "Ready-made titles and lower thirds",
+          "Returns {templates:[{id, label, category, duration, fields:[{key, label, text}]}]}. "
+          "fields are the editable text; pass their keys as `texts` to insert_title_template.",
+          objectSchema({}), true, false, true },
+        { "insert_title_template", "text", "Drop a multi-element title or lower third on the timeline",
+          "Place a template's text and shape clips at `at` (default: playhead) on free tracks above the "
+          "video, loosely linked. They stay ordinary clips: edit with set_text, or pass `texts` "
+          "{field key: text}. One undo step. Returns {clips, start, duration, text_clip}.",
+          objectSchema({{QStringLiteral("template"), stringProp(QStringLiteral("Template id from list_title_templates"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("texts"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Replacement copy {field key: text}; unnamed fields keep the placeholder")}}}},
+                       {QStringLiteral("template")}) },
         { "set_text", "text", "Change caption copy or style",
           "Set text content and/or a partial style patch. Only supplied style keys change; omitted "
           "ones keep their current value.",
@@ -1920,6 +1938,8 @@ QString agentGuideText()
         "   move_clip and move_to_track magnet to the nearest beat within 150 ms from then on.\n"
         "3. split_on_beats and snap_clips_to_beats cut and quantise against the same grid;\n"
         "   bookmark_beats writes it into the project as markers that survive re-analysis.\n"
+        "4. add_beat_markers({clip, every}) marks one music clip's beats without detect_beats;\n"
+        "   auto_cut_to_beat({music, clips, beats_per_cut}) lays picture clips out so cuts land on beats.\n"
         "The analysis is transient: any edit that changes the mix drops it, and\n"
         "inspect({detail:true}).beats.stale says whether what you have still describes the audio.\n"
         "\n"
@@ -1985,6 +2005,8 @@ QString agentGuideText()
         "   look (neon, gradient, chrome…); add/set/remove/move/duplicate_text_layer to edit the\n"
         "   shading stack (fill/stroke/shadow/glow/extrude, each solid/gradient/texture/effect —\n"
         "   list_gradient_presets and list_text_effects give the ready-made paints).\n"
+        "   For a finished multi-element look use list_title_templates, then insert_title_template.\n"
+        "   set_text({style:{scroll:\"rollUp\"}}) rolls a text clip like credits over its duration.\n"
         "3. Motion: list_text_animations, then set_text_animation({which:in|out|loop, preset, …}).\n"
         "4. Keyframe text.<key> and text.layer.<id>.<field> with set_keyframe; capture to check.\n"
         "\n"
