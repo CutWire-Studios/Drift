@@ -6653,6 +6653,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Record Screen with Computer Sound…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Record Camera…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8534,6 +8538,10 @@
     </message>
     <message>
         <source>Save the project to keep recordings beside it. This one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The computer&apos;s sound could not be recorded, so this recording has no audio.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24094,6 +24102,30 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>1080p</source>
         <translation type="unfinished">1080p</translation>
+    </message>
+    <message>
+        <source>Save screen and camera recordings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where Drift puts the recordings it makes. A recording is the only copy of what it caught, so Drift’s cache is not an option here — it gets cleared. Changing this doesn’t move recordings you already made.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folder for recordings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In my Movies folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Until the project is saved, recordings go to your Movies folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save preview copies and reversed clips</source>
