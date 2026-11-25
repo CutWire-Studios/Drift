@@ -1418,6 +1418,94 @@
       "descriptionSource": "Audio device used for recording voiceovers onto audio tracks."
     },
     {
+      "id": "controllers-enabled",
+      "target": "settings:controllers#controllers-enabled",
+      "context": "SettingsControllersPage",
+      "source": "Use game controllers",
+      "keywords": "gamepad joystick xbox playstation dualsense switch pro input",
+      "needs": []
+    },
+    {
+      "id": "controllers-devices",
+      "target": "settings:controllers#controllers-devices",
+      "context": "SettingsControllersPage",
+      "source": "Connected controllers",
+      "keywords": "gamepad joystick connected gyro rumble",
+      "needs": []
+    },
+    {
+      "id": "controllers-test",
+      "target": "settings:controllers#controllers-test",
+      "context": "SettingsControllersPage",
+      "source": "Test",
+      "keywords": "gamepad calibrate sticks triggers buttons",
+      "needs": [],
+      "descriptionSource": "Move the sticks and press buttons to see what the editor receives."
+    },
+    {
+      "id": "controllers-dead-zone",
+      "target": "settings:controllers#controllers-dead-zone",
+      "context": "SettingsControllersPage",
+      "source": "Dead zone",
+      "keywords": "gamepad stick drift threshold",
+      "needs": [],
+      "descriptionSource": "How far a stick must move before it counts. Raise it if the view drifts on its own."
+    },
+    {
+      "id": "controllers-curve",
+      "target": "settings:controllers#controllers-curve",
+      "context": "SettingsControllersPage",
+      "source": "Response curve",
+      "keywords": "gamepad stick exponent sensitivity acceleration",
+      "needs": [],
+      "descriptionSource": "1 is linear. Higher values give finer control near the centre."
+    },
+    {
+      "id": "controllers-look-speed",
+      "target": "settings:controllers#controllers-look-speed",
+      "context": "SettingsControllersPage",
+      "source": "Look speed",
+      "keywords": "gamepad right stick sensitivity turn rate fly",
+      "needs": [],
+      "descriptionSource": "Degrees per second at full right-stick deflection in 3D fly mode."
+    },
+    {
+      "id": "controllers-gyro",
+      "target": "settings:controllers#controllers-gyro",
+      "context": "SettingsControllersPage",
+      "source": "Gyro aiming",
+      "keywords": "gamepad motion sensor gyroscope aim dualsense switch pro",
+      "needs": [],
+      "descriptionSource": "Tilt the controller to aim the camera in 3D fly mode."
+    },
+    {
+      "id": "controllers-gyro-sensitivity",
+      "target": "settings:controllers#controllers-gyro-sensitivity",
+      "context": "SettingsControllersPage",
+      "source": "Gyro sensitivity",
+      "keywords": "gamepad motion gyroscope aim",
+      "needs": [],
+      "descriptionSource": "Scales how far the view turns for a given tilt."
+    },
+    {
+      "id": "controllers-haptics",
+      "target": "settings:controllers#controllers-haptics",
+      "context": "SettingsControllersPage",
+      "source": "Rumble feedback",
+      "keywords": "gamepad vibration haptics rumble snap marker",
+      "needs": [],
+      "descriptionSource": "A short pulse when scrubbing crosses a cut or marker and when a gizmo snaps."
+    },
+    {
+      "id": "controllers-bindings",
+      "target": "settings:controllers#controllers-bindings",
+      "context": "SettingsControllersPage",
+      "source": "Button bindings",
+      "keywords": "gamepad buttons keymap rebind shoulder dpad",
+      "needs": [],
+      "descriptionSource": "Gamepad buttons are bound like keys, in the Keyboard shortcuts page: add a binding and press a controller button."
+    },
+    {
       "id": "export-hardware-encoder",
       "target": "settings:export#export-hardware-encoder",
       "context": "SettingsExportPage",
@@ -1425,6 +1513,40 @@
       "keywords": "nvenc qsv amf vaapi videotoolbox mediacodec gpu encode h264 x264",
       "needs": [],
       "descriptionSource": "Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder."
+    },
+    {
+      "id": "farm-coordinator",
+      "target": "settings:farm#farm-coordinator",
+      "context": "SettingsFarmPage",
+      "source": "Let other computers render for this one",
+      "keywords": "render farm coordinator workers network lan distributed cluster",
+      "needs": [],
+      "descriptionSource": "Listens for render workers on your network. Jobs sent to the farm from the Export dialog are split up between them. Only turn this on in a network you trust."
+    },
+    {
+      "id": "farm-port",
+      "target": "settings:farm#farm-port",
+      "context": "SettingsFarmPage",
+      "source": "Port",
+      "keywords": "render farm port tcp",
+      "needs": []
+    },
+    {
+      "id": "farm-token",
+      "target": "settings:farm#farm-token",
+      "context": "SettingsFarmPage",
+      "source": "Token",
+      "keywords": "render farm token password secret authentication",
+      "needs": []
+    },
+    {
+      "id": "farm-cache",
+      "target": "settings:farm#farm-cache",
+      "context": "SettingsFarmPage",
+      "source": "Media cache size",
+      "keywords": "render farm worker cache media disk size gb",
+      "needs": [],
+      "descriptionSource": "How much of a coordinator's media a worker started on this computer keeps for the next job, in GB. The least recently used files go first."
     },
     {
       "id": "general-language",
@@ -1831,6 +1953,24 @@
       "descriptionSource": "How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K."
     },
     {
+      "id": "preview-fly-look",
+      "target": "settings:preview#preview-fly-look",
+      "context": "SettingsPreviewPage",
+      "source": "Fly look",
+      "keywords": "fly mode mouse look pointer lock capture steer touchpad first person camera",
+      "needs": [],
+      "descriptionSource": "How the mouse turns the view in fly mode. Mouse look locks the pointer; steering turns toward the pointer and suits touchpads."
+    },
+    {
+      "id": "preview-record-smoothing",
+      "target": "settings:preview#preview-record-smoothing",
+      "context": "SettingsPreviewPage",
+      "source": "Recording smoothing",
+      "keywords": "record camera puppet keyframes simplify reduce tolerance virtual camera",
+      "needs": [],
+      "descriptionSource": "How much a recorded camera flight or clip motion is thinned into keyframes. Higher gives fewer, smoother keys."
+    },
+    {
       "id": "general-cache",
       "target": "settings:storage#general-cache",
       "context": "SettingsStoragePage",
@@ -1874,6 +2014,15 @@
       "descriptionSource": "Size of new preview copies. Copies made at another size are not used until you create them again."
     },
     {
+      "id": "capture-recording-location",
+      "target": "settings:storage#capture-recording-location",
+      "context": "SettingsStoragePage",
+      "source": "Save screen and camera recordings",
+      "keywords": "record recording screen camera capture folder location movies videos",
+      "needs": [],
+      "descriptionSource": "Where Drift puts the recordings it makes. A recording is the only copy of what it caught, so Drift’s cache is not an option here — it gets cleared. Changing this doesn’t move recordings you already made."
+    },
+    {
       "id": "preview-proxy-location",
       "target": "settings:storage#preview-proxy-location",
       "context": "SettingsStoragePage",
@@ -1890,6 +2039,60 @@
       "keywords": "proxy naming file name regex",
       "needs": [],
       "descriptionSource": "Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically."
+    },
+    {
+      "id": "surfaces-learn",
+      "target": "settings:surfaces#surfaces-learn",
+      "context": "SettingsSurfacesPage",
+      "source": "Learn mode",
+      "keywords": "control surface midi osc mackie faders knobs bind assign learn controller",
+      "needs": [],
+      "descriptionSource": "Click a parameter in the editor, such as a slider, a colour wheel or a mixer fader, then move a knob, fader or button on your device to bind it."
+    },
+    {
+      "id": "surfaces-midi",
+      "target": "settings:surfaces#surfaces-midi",
+      "context": "SettingsSurfacesPage",
+      "source": "MIDI controllers",
+      "keywords": "midi usb bluetooth keyboard controller launchpad faders knobs enable",
+      "needs": [],
+      "descriptionSource": "Open every MIDI controller that is plugged in, including ones that appear later."
+    },
+    {
+      "id": "surfaces-osc",
+      "target": "settings:surfaces#surfaces-osc",
+      "context": "SettingsSurfacesPage",
+      "source": "OSC control",
+      "keywords": "osc open sound control touchosc udp network",
+      "needs": [],
+      "descriptionSource": "Listen for OSC messages over UDP, for TouchOSC, Open Stage Control and scripts. Anything else a sender transmits shows up as a control to bind."
+    },
+    {
+      "id": "surfaces-osc-hosts",
+      "target": "settings:surfaces#surfaces-osc-hosts",
+      "context": "SettingsSurfacesPage",
+      "source": "Allowed hosts",
+      "keywords": "osc allowed hosts firewall allowlist ip address network",
+      "needs": [],
+      "descriptionSource": "One address or range per line, such as 192.168.1.40 or 10.0.0.0/24. Empty allows the local network only."
+    },
+    {
+      "id": "surfaces-remote",
+      "target": "settings:surfaces#surfaces-remote",
+      "context": "SettingsSurfacesPage",
+      "source": "Phone remote",
+      "keywords": "phone remote android pair qr code wifi jog wheel trackball faders gyro",
+      "needs": [],
+      "descriptionSource": "Let a phone running Drift act as a jog wheel, fader bank and colour trackballs for this editor over your local network."
+    },
+    {
+      "id": "surfaces-remote-phone",
+      "target": "settings:surfaces#surfaces-remote-phone",
+      "context": "SettingsSurfacesPage",
+      "source": "Use this phone as a remote",
+      "keywords": "phone remote pair desktop control",
+      "needs": [],
+      "descriptionSource": "Pair with Drift on your computer to jog, fly the 3D view and set colours from here."
     },
     {
       "id": "timeline-mouse-wheel-scrolls",
@@ -2029,10 +2232,22 @@
       "keywords": "keymap keys hotkeys bindings"
     },
     {
+      "id": "surfaces",
+      "context": "SettingsPane",
+      "source": "Control surfaces",
+      "keywords": "midi osc mackie controller faders knobs jog hardware surface phone remote"
+    },
+    {
       "id": "preview",
       "context": "SettingsPane",
       "source": "Preview",
       "keywords": "quality resolution decode guides background"
+    },
+    {
+      "id": "controllers",
+      "context": "SettingsPane",
+      "source": "Controllers",
+      "keywords": "gamepad controller joystick xbox playstation dualsense gyro rumble stick dead zone"
     },
     {
       "id": "performance",
@@ -2051,6 +2266,12 @@
       "context": "SettingsPane",
       "source": "Export",
       "keywords": "hardware encoder gpu encode h264 nvenc folder"
+    },
+    {
+      "id": "farm",
+      "context": "SettingsPane",
+      "source": "Render farm",
+      "keywords": "render queue farm coordinator workers distributed network lan token port cache"
     },
     {
       "id": "audio",
