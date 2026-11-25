@@ -1169,6 +1169,8 @@ add_library(driftengine STATIC
     src/engine/projdir/ProjectLsp.cpp
     src/engine/projdir/ProjectScripts.h
     src/engine/projdir/ProjectScripts.cpp
+    src/engine/projdir/ProjectTemplate.h
+    src/engine/projdir/ProjectTemplate.cpp
     src/engine/projdir/ProjectFolderLint.h
     src/engine/projdir/ProjectFolderLint.cpp
     src/engine/projdir/ProjectGuide.h
@@ -3047,6 +3049,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/EditorHeaderSearchField.qml
         src/qml/components/shell/EditorHeaderProjectsButton.qml
         src/qml/components/shell/ProjectFolderBanner.qml
+        src/qml/components/dialogs/TemplateRenderDialog.qml
         src/qml/components/shell/EditorHeaderNotificationsButton.qml
         src/qml/components/shell/EditorHeaderHairline.qml
         src/qml/components/shell/EditorHeaderExtrasWave.qml

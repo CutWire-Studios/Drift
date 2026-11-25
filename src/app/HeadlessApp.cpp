@@ -1,4 +1,5 @@
 #include "app/HeadlessApp.h"
+#include "app/ProjectDirCli.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
@@ -158,6 +159,11 @@ int runHeadless(int argc, char *argv[])
     editorState.setAddonManager(&addonManager);
     static MarketServices market(assetLibrary, editorState, addonManager);
     editorState.setMarketplace(market.context());
+
+    // `--render <template folder>` renders a project template and exits; see ProjectDirCli.
+    drift::projdir::RenderRequest templateRender;
+    if (drift::projdir::parseTemplateRender(argc, argv, &templateRender))
+        return drift::projdir::runTemplateRender(editorState, templateRender);
 
     // consumeStartupProject() is the hook the QML window normally calls once it is up;
     // here there is no window to wait for. Only positional arguments are considered, so
