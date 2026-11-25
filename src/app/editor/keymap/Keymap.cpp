@@ -367,7 +367,8 @@ void Keymap::migrateLegacy()
         const keymap::ActionDef *action = keymap::findAction(defaultsFrom);
         if (!action)
             return;
-        const QStringList base = keymap::presetChords(*drift, defaultsFrom, keymap::scopeOf(*action));
+        QStringList base = keymap::presetChords(*drift, defaultsFrom, keymap::scopeOf(*action));
+        base.removeIf(keymap::isPadChord);
         if (base.size() == 1 && base.first() == stored)
             return;
         migrated.insert(id, stored);

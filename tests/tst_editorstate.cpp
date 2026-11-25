@@ -2826,6 +2826,17 @@ void EditorStateTest::storedArrowShortcutsMigrateOntoTheNewJogLayout()
 }
 
 namespace {
+// Controller defaults ride along in the same list; these tests are about the keyboard layout.
+QStringList kb(const drift::Keymap &keymap, const QString &actionId)
+{
+    QStringList out;
+    for (const QString &chord : keymap.bindings(actionId)) {
+        if (!chord.startsWith(QLatin1String("Pad+")))
+            out << chord;
+    }
+    return out;
+}
+
 struct KeymapSandbox {
     QString org = QCoreApplication::organizationName();
     QString app = QCoreApplication::applicationName();
@@ -2855,13 +2866,13 @@ void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
 {
     KeymapSandbox sandbox;
     drift::Keymap keymap;
-    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QCOMPARE(kb(keymap, QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
     QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
 
     QSignalSpy changed(&keymap, &drift::Keymap::changed);
     QVERIFY(keymap.addBinding(QStringLiteral("playPause"), QStringLiteral("F9")).isEmpty());
     QCOMPARE(changed.count(), 1);
-    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
+    QCOMPARE(kb(keymap, QStringLiteral("playPause")), (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
     QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("F9")), QStringLiteral("playPause"));
     QVERIFY(keymap.isModified(QStringLiteral("playPause")));
     QVERIFY(keymap.chords().contains(QStringLiteral("F9")));
@@ -2873,11 +2884,11 @@ void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
     QCOMPARE(changed.count(), 1);
 
     keymap.removeBinding(QStringLiteral("playPause"), QStringLiteral("Space"));
-    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
+    QCOMPARE(kb(keymap, QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
     QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Space")).isEmpty());
 
     keymap.resetAction(QStringLiteral("playPause"));
-    QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QCOMPARE(kb(keymap, QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
     QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
 
     AssetLibrary library;
@@ -2887,8 +2898,9 @@ void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
         const QVariantMap map = entry.toMap();
         if (map.value(QStringLiteral("id")).toString() != QLatin1String("playPause"))
             continue;
-        QCOMPARE(map.value(QStringLiteral("shortcuts")).toStringList(),
-                 (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
+        QStringList shortcuts = map.value(QStringLiteral("shortcuts")).toStringList();
+        shortcuts.removeIf([](const QString &chord) { return chord.startsWith(QLatin1String("Pad+")); });
+        QCOMPARE(shortcuts, (QStringList{QStringLiteral("Space"), QStringLiteral("F9")}));
         QCOMPARE(map.value(QStringLiteral("shortcut")).toString(), QStringLiteral("Space"));
         QCOMPARE(map.value(QStringLiteral("category")).toString(), QStringLiteral("playback"));
         QCOMPARE(map.value(QStringLiteral("scope")).toString(), QStringLiteral("global"));
@@ -2896,7 +2908,7 @@ void EditorStateTest::keymapSupportsSeveralBindingsPerAction()
     }
     QCOMPARE(state.shortcutFor(QStringLiteral("playPause")), QStringLiteral("Space"));
     state.resetShortcuts();
-    QCOMPARE(state.keymap()->bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+    QCOMPARE(kb(*state.keymap(), QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
 }
 
 void EditorStateTest::keymapRefusesAChordTakenInTheSameScope()
@@ -2904,10 +2916,10 @@ void EditorStateTest::keymapRefusesAChordTakenInTheSameScope()
     KeymapSandbox sandbox;
     drift::Keymap keymap;
     QCOMPARE(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("Ctrl+S")), QStringLiteral("Save project"));
-    QCOMPARE(keymap.bindings(QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
+    QCOMPARE(kb(keymap, QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
     QCOMPARE(keymap.setBindings(QStringLiteral("undo"), {QStringLiteral("F9"), QStringLiteral("Ctrl+S")}),
              QStringLiteral("Save project"));
-    QCOMPARE(keymap.bindings(QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
+    QCOMPARE(kb(keymap, QStringLiteral("undo")), QStringList{QStringLiteral("Ctrl+Z")});
     QVERIFY(!keymap.isModified(QStringLiteral("undo")));
 
     // Taking it back from its owner first makes it free.
@@ -2917,7 +2929,7 @@ void EditorStateTest::keymapRefusesAChordTakenInTheSameScope()
 
     // A chord is stored once, whatever spelling it arrived in.
     QVERIFY(keymap.addBinding(QStringLiteral("save"), QStringLiteral("ctrl+shift+f9")).isEmpty());
-    QCOMPARE(keymap.bindings(QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+Shift+F9")});
+    QCOMPARE(kb(keymap, QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+Shift+F9")});
     QCOMPARE(keymap.addBinding(QStringLiteral("undo"), QStringLiteral("ctrl+shift+f9")), QStringLiteral("Save project"));
 }
 
@@ -2927,27 +2939,27 @@ void EditorStateTest::keymapClearedShortcutSurvivesARestart()
     {
         drift::Keymap keymap;
         QVERIFY(keymap.setBindings(QStringLiteral("delete"), {}).isEmpty());
-        QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
+        QVERIFY(kb(keymap, QStringLiteral("delete")).isEmpty());
         QVERIFY(keymap.setBindings(QStringLiteral("selectAll"), {QStringLiteral("Ctrl+;"), QStringLiteral("Ctrl+|")}).isEmpty());
     }
     {
         drift::Keymap keymap;
-        QVERIFY(keymap.bindings(QStringLiteral("delete")).isEmpty());
+        QVERIFY(kb(keymap, QStringLiteral("delete")).isEmpty());
         QVERIFY(keymap.isModified(QStringLiteral("delete")));
         QVERIFY(keymap.actionFor(QStringLiteral("global"), QStringLiteral("Delete")).isEmpty());
-        QCOMPARE(keymap.bindings(QStringLiteral("selectAll")),
+        QCOMPARE(kb(keymap, QStringLiteral("selectAll")),
                  (QStringList{QStringLiteral("Ctrl+;"), QStringLiteral("Ctrl+|")}));
         keymap.resetAction(QStringLiteral("delete"));
     }
     {
         drift::Keymap keymap;
-        QCOMPARE(keymap.bindings(QStringLiteral("delete")), QStringList{QStringLiteral("Delete")});
+        QCOMPARE(kb(keymap, QStringLiteral("delete")), QStringList{QStringLiteral("Delete")});
         keymap.resetAll();
     }
     {
         drift::Keymap keymap;
         QVERIFY(!keymap.hasOverrides());
-        QCOMPARE(keymap.bindings(QStringLiteral("selectAll")), QStringList{QStringLiteral("Ctrl+A")});
+        QCOMPARE(kb(keymap, QStringLiteral("selectAll")), QStringList{QStringLiteral("Ctrl+A")});
     }
 
     // Through AppController: setShortcut("") is the old "clear" call.
@@ -2978,17 +2990,17 @@ void EditorStateTest::keymapMigratesTheLegacyShortcutsGroup()
         settings.endGroup();
     }
     drift::Keymap keymap;
-    QCOMPARE(keymap.bindings(QStringLiteral("delete")), QStringList{QStringLiteral("Ctrl+Backspace")});
+    QCOMPARE(kb(keymap, QStringLiteral("delete")), QStringList{QStringLiteral("Ctrl+Backspace")});
     QVERIFY(keymap.isModified(QStringLiteral("delete")));
     QVERIFY(!keymap.isModified(QStringLiteral("playPause")));
     // v0 default: not a choice, so the new layout arrives.
     QVERIFY(!keymap.isModified(QStringLiteral("stepBack")));
-    QCOMPARE(keymap.bindings(QStringLiteral("stepBack")), QStringList{});
-    QCOMPARE(keymap.bindings(QStringLiteral("jumpBack")), QStringList{QStringLiteral("Shift+Left")});
+    QCOMPARE(kb(keymap, QStringLiteral("stepBack")), QStringList{});
+    QCOMPARE(kb(keymap, QStringLiteral("jumpBack")), QStringList{QStringLiteral("Shift+Left")});
     // An empty stored value meant "default".
-    QCOMPARE(keymap.bindings(QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+S")});
+    QCOMPARE(kb(keymap, QStringLiteral("save")), QStringList{QStringLiteral("Ctrl+S")});
     // The stored binding keeps the chord; the default that would have duplicated it loses it.
-    QCOMPARE(keymap.bindings(QStringLiteral("nudgeLeft")), QStringList{QStringLiteral("Left")});
+    QCOMPARE(kb(keymap, QStringLiteral("nudgeLeft")), QStringList{QStringLiteral("Left")});
 
     QSettings settings;
     QVERIFY(!settings.childGroups().contains(QStringLiteral("shortcuts")));
@@ -3142,7 +3154,7 @@ void EditorStateTest::keymapPresetSwitchKeepsOrDiscardsOverrides()
         QVERIFY(keymap.isModified(QStringLiteral("playPause")));
         keymap.setPreset(QStringLiteral("drift"), false);
         QVERIFY(!keymap.hasOverrides());
-        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+        QCOMPARE(kb(keymap, QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
     }
     QVERIFY(drift::Keymap().presets().size() >= 1);
 }
@@ -3160,10 +3172,10 @@ void EditorStateTest::keymapPresetSwitchResolvesConflictsInFavourOfOverrides()
         // Premiere gives D to selectClipAtPlayhead; the user's binding keeps it and the preset's
         // loses it in memory only.
         QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("zoomToFit"));
-        QVERIFY(keymap.bindings(QStringLiteral("selectClipAtPlayhead")).isEmpty());
+        QVERIFY(kb(keymap, QStringLiteral("selectClipAtPlayhead")).isEmpty());
         QVERIFY(!keymap.isModified(QStringLiteral("selectClipAtPlayhead")));
-        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
-        QCOMPARE(keymap.bindings(QStringLiteral("split")), QStringList{QStringLiteral("Ctrl+K")});
+        QCOMPARE(kb(keymap, QStringLiteral("playPause")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(kb(keymap, QStringLiteral("split")), QStringList{QStringLiteral("Ctrl+K")});
     }
     {
         drift::Keymap keymap;
@@ -3172,8 +3184,8 @@ void EditorStateTest::keymapPresetSwitchResolvesConflictsInFavourOfOverrides()
         keymap.setPreset(QStringLiteral("premiere"), false);
         QVERIFY(!keymap.hasOverrides());
         QCOMPARE(keymap.actionFor(QStringLiteral("global"), QStringLiteral("D")), QStringLiteral("selectClipAtPlayhead"));
-        QCOMPARE(keymap.bindings(QStringLiteral("zoomToFit")), QStringList{QStringLiteral("\\")});
-        QCOMPARE(keymap.bindings(QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
+        QCOMPARE(kb(keymap, QStringLiteral("zoomToFit")), QStringList{QStringLiteral("\\")});
+        QCOMPARE(kb(keymap, QStringLiteral("playPause")), QStringList{QStringLiteral("Space")});
     }
 }
 
@@ -3201,11 +3213,11 @@ void EditorStateTest::keymapScopesShareChordsButNotWithinOneScope()
 
     // Inside one scope the chord has a single owner and the refusal names it.
     QCOMPARE(keymap.addBinding(QStringLiteral("masking.ellipseTool"), QStringLiteral("R")), QStringLiteral("Rectangle mask tool"));
-    QCOMPARE(keymap.bindings(QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("E")});
+    QCOMPARE(kb(keymap, QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("E")});
     QCOMPARE(keymap.addBinding(QStringLiteral("keyframes.addKey"), QStringLiteral("F")), keymap.labelFor(QStringLiteral("keyframes.fitSelection")));
     QCOMPARE(keymap.setBindings(QStringLiteral("viewport3d.gizmoScale"), {QStringLiteral("F9"), QStringLiteral("T")}),
              keymap.labelFor(QStringLiteral("viewport3d.gizmoMove")));
-    QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
+    QCOMPARE(kb(keymap, QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
 
     // Window-local scopes stay out of the app-wide shortcut list, panel scopes are in it.
     QVERIFY(keymap.chords().contains(QStringLiteral("K")));
@@ -3267,7 +3279,7 @@ void EditorStateTest::keymapCatalogIsConsistent()
     drift::Keymap keymap;
     for (const ActionDef &action : actions()) {
         const QString id = QLatin1String(action.id);
-        QCOMPARE(keymap.bindings(id), drift->chords.value(id));
+        QCOMPARE(kb(keymap, id), drift->chords.value(id));
     }
 }
 
@@ -3326,7 +3338,7 @@ void EditorStateTest::keymapEveryPresetIsConsistent()
             QStringList expected;
             for (const QString &raw : it.value())
                 expected << translateForPlatform(raw, hostMac);
-            QCOMPARE(keymap.bindings(it.key()), expected);
+            QCOMPARE(kb(keymap, it.key()), expected);
         }
     }
 }
@@ -3355,21 +3367,21 @@ void EditorStateTest::keymapCarriesBindingsOfSplitActionIds()
                    {QStringLiteral("maskingPolygonTool"), {QStringLiteral("F11")}}});
     {
         drift::Keymap keymap;
-        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoMove")), QStringList{QStringLiteral("F7")});
-        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackerTool")), QStringList{QStringLiteral("F7")});
-        QVERIFY(keymap.bindings(QStringLiteral("viewport3d.gizmoRotate")).isEmpty());
-        QVERIFY(keymap.bindings(QStringLiteral("masking.rectTool")).isEmpty());
+        QCOMPARE(kb(keymap, QStringLiteral("viewport3d.gizmoMove")), QStringList{QStringLiteral("F7")});
+        QCOMPARE(kb(keymap, QStringLiteral("tracking.trackerTool")), QStringList{QStringLiteral("F7")});
+        QVERIFY(kb(keymap, QStringLiteral("viewport3d.gizmoRotate")).isEmpty());
+        QVERIFY(kb(keymap, QStringLiteral("masking.rectTool")).isEmpty());
         QVERIFY(keymap.isModified(QStringLiteral("masking.rectTool")));
         // bladeTool still exists, and the brush mask tool follows it.
-        QCOMPARE(keymap.bindings(QStringLiteral("bladeTool")), QStringList{QStringLiteral("F8")});
-        QCOMPARE(keymap.bindings(QStringLiteral("masking.brushTool")), QStringList{QStringLiteral("F8")});
-        QCOMPARE(keymap.bindings(QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
-        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackFrameForward")), QStringList{QStringLiteral("Ctrl+Alt+Right")});
+        QCOMPARE(kb(keymap, QStringLiteral("bladeTool")), QStringList{QStringLiteral("F8")});
+        QCOMPARE(kb(keymap, QStringLiteral("masking.brushTool")), QStringList{QStringLiteral("F8")});
+        QCOMPARE(kb(keymap, QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(kb(keymap, QStringLiteral("tracking.trackFrameForward")), QStringList{QStringLiteral("Ctrl+Alt+Right")});
         // A binding already stored under the new id wins over the carried one.
-        QCOMPARE(keymap.bindings(QStringLiteral("masking.polygonTool")), QStringList{QStringLiteral("F10")});
+        QCOMPARE(kb(keymap, QStringLiteral("masking.polygonTool")), QStringList{QStringLiteral("F10")});
         QVERIFY(!keymap.actionFor(QStringLiteral("viewport3d"), QStringLiteral("F7")).isEmpty());
         // Untouched actions keep their defaults.
-        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
+        QCOMPARE(kb(keymap, QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("E")});
     }
     // Persisted under the new ids; the removed ones are gone from the settings.
     {
@@ -3383,7 +3395,7 @@ void EditorStateTest::keymapCarriesBindingsOfSplitActionIds()
     }
     {
         drift::Keymap keymap;
-        QCOMPARE(keymap.bindings(QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
+        QCOMPARE(kb(keymap, QStringLiteral("masking.wandTool")), QStringList{QStringLiteral("F9")});
     }
 
     // The same through the legacy group.
@@ -3399,9 +3411,9 @@ void EditorStateTest::keymapCarriesBindingsOfSplitActionIds()
     }
     {
         drift::Keymap keymap;
-        QCOMPARE(keymap.bindings(QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("F6")});
-        QCOMPARE(keymap.bindings(QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("F6")});
-        QCOMPARE(keymap.bindings(QStringLiteral("tracking.trackForward")), QStringList{QStringLiteral("F5")});
+        QCOMPARE(kb(keymap, QStringLiteral("viewport3d.gizmoScale")), QStringList{QStringLiteral("F6")});
+        QCOMPARE(kb(keymap, QStringLiteral("masking.ellipseTool")), QStringList{QStringLiteral("F6")});
+        QCOMPARE(kb(keymap, QStringLiteral("tracking.trackForward")), QStringList{QStringLiteral("F5")});
         // Equal to the default, so not an override.
         QVERIFY(!keymap.isModified(QStringLiteral("masking.brushSmaller")));
     }

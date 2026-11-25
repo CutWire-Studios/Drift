@@ -1448,7 +1448,11 @@ void AppController::setTimelineCursor(const QString &kindName, int heightPx, int
 
 QString AppController::shortcutFor(const QString &actionId) const
 {
-    return m_keymap->bindings(actionId).value(0);
+    for (const QString &chord : m_keymap->bindings(actionId)) {
+        if (!chord.startsWith(QLatin1String("Pad+")))
+            return chord;
+    }
+    return {};
 }
 
 QString AppController::setShortcut(const QString &actionId, const QString &keys)
