@@ -161,6 +161,128 @@ SettingsPage {
     }
 
     SettingsGroupHeader {
+        text: qsTr("Phone remote")
+        available: SurfaceHub.hasRemoteServer || SurfaceHub.hasRemoteClient
+        query: page.query
+    }
+
+    SettingsRow {
+        title: qsTr("Phone remote")
+        searchId: "surfaces-remote"
+        description: qsTr("Let a phone running Drift act as a jog wheel, fader bank and colour trackballs for this editor over your local network.")
+        keywords: "phone remote android pair qr code wifi jog wheel trackball faders gyro"
+        available: SurfaceHub.hasRemoteServer
+        query: page.query
+
+        ThemedSwitch {
+            checked: SurfaceHub.remoteServer !== null && SurfaceHub.remoteServer.enabled
+            onToggled: SurfaceHub.remoteServer.enabled = checked
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Pair a phone")
+        description: qsTr("Scan the code from the Drift app on your phone, or type the code into its Remote page. It works for a few minutes.")
+        keywords: "pair phone qr code token connect"
+        stacked: true
+        available: SurfaceHub.hasRemoteServer && SurfaceHub.remoteServer.enabled
+        query: page.query
+
+        Loader {
+            width: parent.width
+            active: SurfaceHub.hasRemoteServer
+            sourceComponent: Component {
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingMd
+
+                    ThemedButton {
+                        text: SurfaceHub.remoteServer.pairing ? qsTr("Stop pairing") : qsTr("Pair phone")
+                        onClicked: SurfaceHub.remoteServer.pairing ? SurfaceHub.remoteServer.stopPairing()
+                                                                   : SurfaceHub.remoteServer.startPairing()
+                    }
+
+                    Canvas {
+                        id: qr
+                        readonly property var rows: SurfaceHub.remoteServer.pairingQr
+                        visible: rows.length > 0
+                        width: Theme.c.phonePairing.qrSize
+                        height: width
+                        onRowsChanged: requestPaint()
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.fillStyle = Theme.c.phonePairing.qrBackground
+                            ctx.fillRect(0, 0, width, height)
+                            const n = rows.length
+                            if (n === 0)
+                                return
+                            const quiet = 2
+                            const cell = width / (n + quiet * 2)
+                            ctx.fillStyle = Theme.c.phonePairing.qrModule
+                            for (let y = 0; y < n; ++y)
+                                for (let x = 0; x < n; ++x)
+                                    if (rows[y][x] === "1")
+                                        ctx.fillRect((x + quiet) * cell, (y + quiet) * cell, Math.ceil(cell), Math.ceil(cell))
+                        }
+                    }
+
+                    ThemedLabel {
+                        width: parent.width
+                        visible: SurfaceHub.remoteServer.pairing
+                        text: SurfaceHub.remoteServer.pairingCode
+                        tone: "muted"
+                        size: "sm"
+                        wrapMode: Text.WrapAnywhere
+                    }
+
+                    ThemedLabel {
+                        width: parent.width
+                        visible: text.length > 0
+                        text: SurfaceHub.remoteServer.error
+                        tone: "muted"
+                        size: "sm"
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+        }
+    }
+
+    Repeater {
+        model: SurfaceHub.remoteServer !== null ? SurfaceHub.remoteServer.phones : []
+
+        delegate: SettingsRow {
+            id: phoneRow
+
+            required property var modelData
+
+            title: modelData.name
+            description: modelData.connected ? qsTr("Connected") : qsTr("Paired, not connected")
+            keywords: "phone remote paired forget"
+            query: page.query
+
+            ThemedButton {
+                text: qsTr("Forget")
+                onClicked: SurfaceHub.remoteServer.forget(phoneRow.modelData.id)
+            }
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Use this phone as a remote")
+        searchId: "surfaces-remote-phone"
+        description: qsTr("Pair with Drift on your computer to jog, fly the 3D view and set colours from here.")
+        keywords: "phone remote pair desktop control"
+        available: SurfaceHub.hasRemoteClient
+        query: page.query
+
+        ThemedButton {
+            text: qsTr("Open remote")
+            onClicked: SurfaceHub.openRemote()
+        }
+    }
+
+    SettingsGroupHeader {
         text: qsTr("Devices")
         query: page.query
     }

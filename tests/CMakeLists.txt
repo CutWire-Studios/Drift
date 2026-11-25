@@ -742,3 +742,8 @@ qt_add_executable(tst_osc tst_osc.cpp)
 target_include_directories(tst_osc PRIVATE ../src)
 target_link_libraries(tst_osc PRIVATE Qt6::Test Qt6::Core Qt6::Network driftsurfaces)
 add_test(NAME Osc COMMAND tst_osc)
+
+qt_add_executable(tst_remote tst_remote.cpp)
+target_include_directories(tst_remote PRIVATE ../src)
+target_link_libraries(tst_remote PRIVATE Qt6::Test Qt6::Core Qt6::Network driftsurfaces)
+add_test(NAME Remote COMMAND tst_remote)

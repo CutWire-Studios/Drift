@@ -17,7 +17,7 @@ Item {
     property string currentPage: "general"
     // The phone shell has no workspaces or keyboard to configure.
     property bool mobile: false
-    readonly property var mobileHiddenPages: ["workspaces", "personalize", "keymap", "surfaces"]
+    readonly property var mobileHiddenPages: ["workspaces", "personalize", "keymap"]
     readonly property string query: searchField.text.trim().toLowerCase()
     readonly property bool narrow: width < 640
     readonly property real sidebarWidth: 220
@@ -246,7 +246,6 @@ Item {
             PageSlot {
                 id: surfacesSlot
                 pageId: "surfaces"
-                allowed: !root.mobile
                 sourceComponent: SettingsSurfacesPage { query: root.query }
             }
 

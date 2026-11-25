@@ -851,6 +851,21 @@
       "marker": "$semantic.primary",
       "foreground": "$semantic.panel.foreground"
     },
+    "phoneRemote": {
+      "padBackground": "$semantic.panel.secondary.background",
+      "padBorder": "$semantic.panel.border",
+      "padRadius": "$metrics.radius.md",
+      "wheelBackground": "$semantic.panel.secondary.background",
+      "wheelBorder": "$semantic.panel.border",
+      "wheelTick": "$semantic.mutedForeground",
+      "wheelThumb": "$semantic.primary",
+      "borderWidth": "$metrics.borderWidth"
+    },
+    "phonePairing": {
+      "qrBackground": "#ffffff",
+      "qrModule": "#000000",
+      "qrSize": 200
+    },
     "settingsCloudProvidersSection": {
       "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",

@@ -8,6 +8,10 @@
 #ifdef DRIFT_SURFACE_OSC
 #include "app/surfaces/osc/OscSurfaceService.h"
 #endif
+#ifdef DRIFT_SURFACE_REMOTE
+#include "app/surfaces/remote/PhoneRemoteClient.h"
+#include "app/surfaces/remote/PhoneRemoteServer.h"
+#endif
 
 namespace drift {
 
@@ -21,7 +25,14 @@ SurfaceHub::SurfaceHub(ControlSurfaceManager *manager, QObject *parent)
 #ifdef DRIFT_SURFACE_OSC
     m_osc = new OscSurfaceService(manager, this);
 #endif
-#if !defined(DRIFT_SURFACE_MIDI) && !defined(DRIFT_SURFACE_OSC)
+#ifdef DRIFT_SURFACE_REMOTE
+#ifdef Q_OS_ANDROID
+    m_remoteClient = new PhoneRemoteClient(this);
+#else
+    m_remoteServer = new PhoneRemoteServer(manager, this);
+#endif
+#endif
+#if !defined(DRIFT_SURFACE_MIDI) && !defined(DRIFT_SURFACE_OSC) && !defined(DRIFT_SURFACE_REMOTE)
     Q_UNUSED(manager)
 #endif
 }

@@ -3,6 +3,7 @@
 #include "app/color/ColorController.h"
 #include "app/editor/AppController.h"
 #include "app/editor/keymap/KeymapCatalog.h"
+#include "ui/preview/PreviewController.h"
 #include "app/surfaces/FaderScale.h"
 
 #include <QVariantMap>
@@ -177,6 +178,12 @@ QList<SurfaceTarget> EditorSurfaceTargets::targets() const
     out.append({"playhead.shuttle", tr("Shuttle (spring fader)"), playhead, SurfaceTarget::Absolute});
     out.append({"playhead.scrub", tr("Playhead position"), playhead, SurfaceTarget::Absolute});
     out.append({"timeline.zoom", tr("Timeline zoom"), playhead, SurfaceTarget::Relative});
+
+    const QString view3d = tr("3D view");
+    out.append({"view3d.fly.yaw", tr("Turn left and right"), view3d, SurfaceTarget::Relative});
+    out.append({"view3d.fly.pitch", tr("Look up and down"), view3d, SurfaceTarget::Relative});
+    out.append({"view3d.fly.forward", tr("Fly forward and back"), view3d, SurfaceTarget::Relative});
+    out.append({"view3d.fly.strafe", tr("Fly left and right"), view3d, SurfaceTarget::Relative});
 
     const QString mixer = tr("Mixer");
     for (int n = 1; n <= kBankSize; ++n) {
@@ -443,6 +450,22 @@ void EditorSurfaceTargets::nudge(const QString &id, double ticks)
     if (id == QLatin1String("timeline.zoom")) {
         if (requestAction && ticks != 0.0)
             requestAction(ticks > 0 ? QStringLiteral("zoomIn") : QStringLiteral("zoomOut"));
+        return;
+    }
+    if (id.startsWith(QLatin1String("view3d.fly."))) {
+        // A tick turns the view a fifth of a degree, or moves it a hundredth of its distance.
+        const QString axis = id.mid(11);
+        const double turn = ticks * 0.2;
+        const double step = ticks * 0.01;
+        PreviewController *preview = m_app->preview();
+        if (axis == QLatin1String("yaw"))
+            preview->fly(turn, 0, 0, 0, 0);
+        else if (axis == QLatin1String("pitch"))
+            preview->fly(0, turn, 0, 0, 0);
+        else if (axis == QLatin1String("forward"))
+            preview->fly(0, 0, step, 0, 0);
+        else if (axis == QLatin1String("strafe"))
+            preview->fly(0, 0, 0, step, 0);
         return;
     }
     const double cur = current(id);

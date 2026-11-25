@@ -1325,12 +1325,19 @@ if(NOT EMSCRIPTEN)
         src/app/surfaces/midi/MidiSurfaceService.h
         src/app/surfaces/midi/MidiSurfaceService.cpp
     )
-    target_compile_definitions(driftsurfaces PRIVATE DRIFT_SURFACE_MIDI DRIFT_SURFACE_OSC)
+    target_compile_definitions(driftsurfaces PRIVATE DRIFT_SURFACE_MIDI DRIFT_SURFACE_OSC DRIFT_SURFACE_REMOTE)
     target_sources(driftsurfaces PRIVATE
         src/app/surfaces/osc/OscCodec.h
         src/app/surfaces/osc/OscCodec.cpp
         src/app/surfaces/osc/OscSurfaceService.h
         src/app/surfaces/osc/OscSurfaceService.cpp
+        src/app/surfaces/remote/RemoteProtocol.h
+        src/app/surfaces/remote/QrCode.h
+        src/app/surfaces/remote/QrCode.cpp
+        src/app/surfaces/remote/PhoneRemoteServer.h
+        src/app/surfaces/remote/PhoneRemoteServer.cpp
+        src/app/surfaces/remote/PhoneRemoteClient.h
+        src/app/surfaces/remote/PhoneRemoteClient.cpp
     )
     if(ANDROID)
         target_sources(driftsurfaces PRIVATE src/app/surfaces/midi/AndroidMidiIo.cpp)
@@ -2834,6 +2841,8 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidToolPage.qml
         src/qml/components/android/AndroidClipRangeBar.qml
         src/qml/components/android/AndroidSubPage.qml
+        src/qml/components/android/AndroidRemotePage.qml
+        src/qml/components/android/RemoteJogWheel.qml
         src/qml/components/android/AndroidHomeTab.qml
         src/qml/components/android/AndroidMyVideosTab.qml
         src/qml/components/android/pages/AndroidAddPage.qml
