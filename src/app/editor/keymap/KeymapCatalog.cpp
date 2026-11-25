@@ -232,6 +232,7 @@ const QList<ActionDef> kActions = {
     {"viewport3d.resetView", QT_TRANSLATE_NOOP("AppController", "Reset the view"), "viewport3d"},
     {"viewport3d.toggleFly", QT_TRANSLATE_NOOP("AppController", "Fly mode"), "viewport3d"},
     {"viewport3d.toggleOrthographic", QT_TRANSLATE_NOOP("AppController", "Toggle orthographic projection"), "viewport3d"},
+    {"viewport3d.toggleRecord", QT_TRANSLATE_NOOP("AppController", "Record camera or motion on play"), "viewport3d"},
     {"viewport3d.lookThrough", QT_TRANSLATE_NOOP("AppController", "Look through the scene camera"), "viewport3d"},
     {"viewport3d.viewFront", QT_TRANSLATE_NOOP("AppController", "Front view"), "viewport3d"},
     {"viewport3d.viewBack", QT_TRANSLATE_NOOP("AppController", "Back view"), "viewport3d"},

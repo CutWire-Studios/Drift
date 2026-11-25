@@ -200,6 +200,24 @@ SettingsPage {
         }
     }
 
+    SettingsRow {
+        title: qsTr("Recording smoothing")
+        searchId: "preview-record-smoothing"
+        description: qsTr("How much a recorded camera flight or clip motion is thinned into keyframes. Higher gives fewer, smoother keys.")
+        keywords: "record camera puppet keyframes simplify reduce tolerance virtual camera"
+        query: page.query
+
+        ThemedSlider {
+            width: Theme.c.settingsRow.controlWidth
+            label: qsTr("Smoothing")
+            from: 0
+            to: 1
+            value: EditorState.preview.recordSmoothing
+            valueFormatter: (v) => Math.round(v * 100) + "%"
+            onMoved: EditorState.preview.recordSmoothing = value
+        }
+    }
+
     PreviewOptionsDecodeDialog {
         id: decodeGpuDialog
         onRestoreSelection: decodeCombo.currentIndex = Math.max(0, decodeCombo.values.indexOf(EditorState.playback.decodeMode))

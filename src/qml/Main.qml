@@ -1648,6 +1648,21 @@ ApplicationWindow {
         }
     }
 
+    // Puppet recording: while it runs the sticks steer the selected clip (left moves, right turns
+    // and grows). The scene camera is flown from the 3D view instead.
+    Timer {
+        interval: 16
+        repeat: true
+        running: EditorState.preview.recording && Gamepad.connected
+        property double last: 0
+        onRunningChanged: last = Date.now()
+        onTriggered: {
+            const now = Date.now()
+            EditorState.preview.puppet((now - last) / 1000, Gamepad.leftX, Gamepad.leftY, Gamepad.rightY, Gamepad.rightX)
+            last = now
+        }
+    }
+
     // A short rumble when a scrub passes a cut or a marker.
     Connections {
         target: EditorState

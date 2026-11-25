@@ -40,6 +40,7 @@ Item {
     function handleViewAction(id) {
         switch (id) {
         case "viewport3d.toggleFly": EditorState.preview.flying = !EditorState.preview.flying; return true
+        case "viewport3d.toggleRecord": EditorState.preview.recordArmed = !EditorState.preview.recordArmed; return true
         case "viewport3d.frameSelected": EditorState.preview.frameSelection(); return true
         case "viewport3d.resetView": EditorState.preview.resetView(); return true
         case "viewport3d.frameAll": EditorState.preview.frameAll(); return true
