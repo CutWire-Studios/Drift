@@ -31,6 +31,7 @@
 #include "engine/addons/AddonRegistry.h"
 #include "app/platform/Haptics.h"
 #include "app/platform/PointerDevices.h"
+#include "app/platform/Gamepad.h"
 #include "app/platform/PointerLock.h"
 #include "app/platform/PlatformDrag.h"
 #include "app/platform/PrimaryDisplay.h"
@@ -979,6 +980,7 @@ int main(int argc, char *argv[])
     drift::Haptics haptics;
     drift::PointerDevices pointerDevices;
     drift::PointerLock pointerLock;
+    drift::Gamepad gamepad;
     drift::PlatformDrag platformDrag;
     CrashReporter crashReporter;
     editorState.setAddonManager(&addonManager);
@@ -1012,6 +1014,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerDevices", &pointerDevices);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerLock", &pointerLock);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Gamepad", &gamepad);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PlatformDrag", &platformDrag);
     qmlRegisterSingletonInstance("Drift", 1, 0, "CrashReports", &crashReporter);
     // QML_ELEMENT on ThemeManager is recorded in qml_register_types_Drift(), and

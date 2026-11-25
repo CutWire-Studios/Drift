@@ -980,6 +980,22 @@ void AppController::goToPreviousEdit()
     setPlayheadUs(adjacentEditPoint(m_project, m_playheadUs, -1));
 }
 
+bool AppController::crossesEditPoint(double fromSeconds, double toSeconds) const
+{
+    const drift::TimeUs from = drift::secondsToUs(std::min(fromSeconds, toSeconds));
+    const drift::TimeUs to = drift::secondsToUs(std::max(fromSeconds, toSeconds));
+    if (to <= from)
+        return false;
+    const drift::TimeUs next = adjacentEditPoint(m_project, from, 1);
+    if (next > from && next <= to)
+        return true;
+    for (const auto &mark : m_project.bookmarks()) {
+        if (mark.timeUs > from && mark.timeUs <= to)
+            return true;
+    }
+    return false;
+}
+
 void AppController::toggleBookmarkAtPlayhead()
 {
     // The timeline's 150 ms snapping radius is much wider than a frame. Using it here

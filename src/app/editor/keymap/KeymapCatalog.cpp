@@ -251,6 +251,7 @@ const QList<ActionDef> kActions = {
     {"fly3d.right", QT_TRANSLATE_NOOP("AppController", "Fly right"), "fly3d"},
     {"fly3d.down", QT_TRANSLATE_NOOP("AppController", "Fly down"), "fly3d"},
     {"fly3d.up", QT_TRANSLATE_NOOP("AppController", "Fly up"), "fly3d"},
+    {"fly3d.land", QT_TRANSLATE_NOOP("AppController", "Land (finish flying)"), "fly3d"},
     {"nodes.undo", QT_TRANSLATE_NOOP("AppController", "Undo"), "nodes"},
     {"nodes.redo", QT_TRANSLATE_NOOP("AppController", "Redo"), "nodes"},
     {"nodes.redoAlt", QT_TRANSLATE_NOOP("AppController", "Redo (alternate)"), "nodes"},

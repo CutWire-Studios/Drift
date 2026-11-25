@@ -31,6 +31,7 @@ Item {
         { id: "timeline", title: qsTr("Timeline"), keywords: "scroll wheel horizontal vertical crossfade transition overview minimap toolbar buttons customize auto keyframes animation" },
         { id: "keymap", title: qsTr("Keyboard shortcuts"), keywords: "keymap keys hotkeys bindings" },
         { id: "preview", title: qsTr("Preview"), keywords: "quality resolution decode guides background" },
+        { id: "controllers", title: qsTr("Controllers"), keywords: "gamepad controller joystick xbox playstation dualsense gyro rumble stick dead zone", available: Gamepad.available },
         { id: "performance", title: qsTr("Performance"), keywords: "graphics card gpu faster preview zero copy advanced tuning cache memory ram vram buffer drop frames pool" },
         { id: "storage", title: qsTr("Storage & media"), keywords: "cache location disk space preview copies proxies proxy folder thumbnails" },
         { id: "export", title: qsTr("Export"), keywords: "hardware encoder gpu encode h264 nvenc folder" },
@@ -41,11 +42,11 @@ Item {
         { id: "about", title: qsTr("About"), keywords: "version updates debug info diagnostics quick setup" }
     ]
     readonly property var visiblePages: pages.filter(
-        (page) => !(mobile && mobileHiddenPages.includes(page.id)))
+        (page) => page.available !== false && !(mobile && mobileHiddenPages.includes(page.id)))
 
     readonly property bool searchHasMatches: {
         for (const slot of [generalSlot, personalizeSlot, appearanceSlot, workspacesSlot, timelineSlot, keymapSlot,
-                            previewSlot, performanceSlot, storageSlot, exportSlot, audioSlot, aiSlot,
+                            previewSlot, controllersSlot, performanceSlot, storageSlot, exportSlot, audioSlot, aiSlot,
                             notificationsSlot, networkSlot, aboutSlot]) {
             if (slot.hasMatches)
                 return true
@@ -245,6 +246,13 @@ Item {
                 id: previewSlot
                 pageId: "preview"
                 sourceComponent: SettingsPreviewPage { query: root.query }
+            }
+
+            PageSlot {
+                id: controllersSlot
+                pageId: "controllers"
+                allowed: Gamepad.available
+                sourceComponent: SettingsControllersPage { query: root.query }
             }
 
             PageSlot {

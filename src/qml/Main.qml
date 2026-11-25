@@ -1638,6 +1638,29 @@ ApplicationWindow {
         return false
     }
 
+    // Controller buttons are chords like keys ("Pad+RB"), so the same dispatch decides whose they
+    // are. Fly mode takes them while it is on, and the shortcut capture field while it listens.
+    Connections {
+        target: Gamepad
+        function onButtonPressed(chord) {
+            if (!window.showStartScreen && !Gamepad.capturing && !EditorState.preview.flying)
+                window.dispatchChord(chord)
+        }
+    }
+
+    // A short rumble when a scrub passes a cut or a marker.
+    Connections {
+        target: EditorState
+        property real lastSeconds: 0
+        function onPlayheadSecondsChanged() {
+            const seconds = EditorState.playheadSeconds
+            if (!EditorState.playing && Gamepad.connected && Gamepad.hapticsEnabled
+                    && EditorState.crossesEditPoint(lastSeconds, seconds))
+                Gamepad.haptic("cut")
+            lastSeconds = seconds
+        }
+    }
+
     // One Shortcut per distinct chord across the global and panel scopes; dispatchChord decides
     // whose it is. Shortcut is not an Item, so wrap each in a zero-size host. Arrow chords are
     // left to the editor FocusScope below.

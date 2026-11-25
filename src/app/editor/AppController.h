@@ -1933,6 +1933,9 @@ public:
     // key walks to the first or last cut and stops there.
     Q_INVOKABLE void goToNextEdit();
     Q_INVOKABLE void goToPreviousEdit();
+    // Whether a cut point or a bookmark lies between two times (either order), exclusive of the
+    // start and inclusive of the end: a scrub that moved from one to the other passed it.
+    Q_INVOKABLE bool crossesEditPoint(double fromSeconds, double toSeconds) const;
     // Add at the playhead, or remove the nearest bookmark when one already sits
     // within the snap threshold — same key for mark and unmark.
     Q_INVOKABLE void toggleBookmarkAtPlayhead();

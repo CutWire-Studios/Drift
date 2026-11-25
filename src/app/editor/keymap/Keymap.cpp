@@ -146,6 +146,8 @@ QString Keymap::normalizeChord(const QString &chord)
 {
     if (chord.isEmpty())
         return {};
+    if (keymap::isPadChord(chord))
+        return keymap::normalizePadChord(chord);
     const QKeySequence sequence = QKeySequence::fromString(chord, QKeySequence::PortableText);
     if (sequence.count() != 1)
         return {};
@@ -447,7 +449,7 @@ void Keymap::rebuild()
         if (keymap::isLocalScope(scopeOf(it.key())))
             continue;
         for (const QString &chord : it.value()) {
-            if (!isArrowChord(chord))
+            if (!isArrowChord(chord) && !keymap::isPadChord(chord))
                 all.insert(chord);
         }
     }

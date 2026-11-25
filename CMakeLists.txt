@@ -1342,6 +1342,9 @@ qt_add_executable(drift
     src/app/platform/PointerDevices.cpp
     src/app/platform/PointerLock.h
     src/app/platform/PointerLock.cpp
+    src/app/platform/Gamepad.h
+    src/app/platform/Gamepad.cpp
+    src/app/platform/GamepadSdl.cpp
     src/app/platform/PlatformDrag.h
     src/app/platform/PlatformDrag.cpp
     src/ui/preview/PreviewItem.h
@@ -2852,6 +2855,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsPage.qml
         src/qml/components/shell/SettingsPerformancePage.qml
         src/qml/components/shell/SettingsPreviewPage.qml
+        src/qml/components/shell/SettingsControllersPage.qml
+        src/qml/components/shell/ControllerTestView.qml
         src/qml/components/shell/SettingsRow.qml
         src/qml/components/shell/SearchAnchor.qml
         src/qml/components/quicksetup/QuickSetupStepIndicator.qml
@@ -3004,6 +3009,71 @@ if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT EMSCRIPTEN)
 endif()
 if(APPLE)
     target_link_libraries(drift PRIVATE "-framework ApplicationServices")
+endif()
+
+# Game controllers on desktop go through SDL3, initialised with the gamepad and sensor subsystems
+# only (no SDL video, window or audio). An installed SDL3 is used as is; otherwise DRIFT_SDL_DIR
+# (a source tree, as JUCE's) or a download gives a trimmed static build. Android reads controllers
+# from the activity's InputDevice events instead, and wasm has none.
+if(NOT ANDROID AND NOT EMSCRIPTEN)
+    option(DRIFT_WITH_SDL "Game controller support through SDL3" ON)
+    option(DRIFT_FETCH_SDL "Download SDL3 when it is not installed and DRIFT_SDL_DIR is not set" ON)
+    set(DRIFT_SDL_DIR "" CACHE STRING "SDL3 source tree - absolute, or relative to this file")
+    set(DRIFT_SDL_TAG "release-3.2.0" CACHE STRING "SDL3 release tag to fetch when SDL3 is not installed")
+    if(DRIFT_WITH_SDL)
+        set(_drift_sdl_target "")
+        if(DRIFT_SDL_DIR)
+            if(IS_ABSOLUTE "${DRIFT_SDL_DIR}")
+                set(_drift_sdl_src "${DRIFT_SDL_DIR}")
+            else()
+                set(_drift_sdl_src "${CMAKE_CURRENT_SOURCE_DIR}/${DRIFT_SDL_DIR}")
+            endif()
+            if(NOT EXISTS "${_drift_sdl_src}/CMakeLists.txt")
+                message(FATAL_ERROR "DRIFT_SDL_DIR=${DRIFT_SDL_DIR} does not point at an SDL3 source tree")
+            endif()
+        else()
+            find_package(SDL3 CONFIG QUIET)
+            if(TARGET SDL3::SDL3)
+                set(_drift_sdl_target SDL3::SDL3)
+                message(STATUS "SDL3: using ${SDL3_DIR}")
+            elseif(DRIFT_FETCH_SDL)
+                include(FetchContent)
+                FetchContent_Declare(SDL3
+                    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+                    GIT_TAG ${DRIFT_SDL_TAG}
+                    GIT_SHALLOW TRUE)
+                message(STATUS "SDL3: fetching ${DRIFT_SDL_TAG}")
+            endif()
+        endif()
+        if(NOT _drift_sdl_target AND (_drift_sdl_src OR DRIFT_FETCH_SDL))
+            set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+            set(SDL_STATIC ON CACHE BOOL "" FORCE)
+            set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+            set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+            set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+            set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
+            set(SDL_VIDEO OFF CACHE BOOL "" FORCE)
+            set(SDL_RENDER OFF CACHE BOOL "" FORCE)
+            set(SDL_GPU OFF CACHE BOOL "" FORCE)
+            set(SDL_AUDIO OFF CACHE BOOL "" FORCE)
+            set(SDL_CAMERA OFF CACHE BOOL "" FORCE)
+            set(SDL_DIALOG OFF CACHE BOOL "" FORCE)
+            if(_drift_sdl_src)
+                add_subdirectory("${_drift_sdl_src}" "${CMAKE_BINARY_DIR}/_deps/sdl3-build" EXCLUDE_FROM_ALL)
+            else()
+                FetchContent_MakeAvailable(SDL3)
+            endif()
+            if(TARGET SDL3::SDL3-static)
+                set(_drift_sdl_target SDL3::SDL3-static)
+            elseif(TARGET SDL3-static)
+                set(_drift_sdl_target SDL3-static)
+            endif()
+        endif()
+        if(_drift_sdl_target)
+            target_link_libraries(drift PRIVATE ${_drift_sdl_target})
+            target_compile_definitions(drift PRIVATE DRIFT_HAVE_SDL)
+        endif()
+    endif()
 endif()
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.

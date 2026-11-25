@@ -835,6 +835,13 @@
       "borderWidth": "$metrics.borderWidth",
       "controlWidth": 220
     },
+    "controllerTest": {
+      "background": "$semantic.panel.accent",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "marker": "$semantic.primary",
+      "foreground": "$semantic.panel.foreground"
+    },
     "settingsCloudProvidersSection": {
       "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",

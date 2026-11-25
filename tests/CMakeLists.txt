@@ -104,6 +104,20 @@ target_include_directories(tst_beatsync PRIVATE ../src)
 target_link_libraries(tst_beatsync PRIVATE Qt6::Test Qt6::Core driftengine driftcore)
 add_test(NAME BeatSync COMMAND tst_beatsync)
 
+qt_add_executable(tst_input
+    tst_input.cpp
+    ../src/app/platform/Gamepad.h
+    ../src/app/platform/Gamepad.cpp
+    ../src/app/editor/keymap/Keymap.h
+    ../src/app/editor/keymap/Keymap.cpp
+    ../src/app/editor/keymap/KeymapCatalog.h
+    ../src/app/editor/keymap/KeymapCatalog.cpp
+    ../src/app/editor/keymap/KeymapPresets.h
+    ../src/app/editor/keymap/KeymapPresets.cpp)
+target_include_directories(tst_input PRIVATE ../src)
+target_link_libraries(tst_input PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore)
+add_test(NAME Input COMMAND tst_input)
+
 qt_add_executable(tst_titletemplates tst_titletemplates.cpp)
 target_include_directories(tst_titletemplates PRIVATE ../src)
 target_link_libraries(tst_titletemplates PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore)

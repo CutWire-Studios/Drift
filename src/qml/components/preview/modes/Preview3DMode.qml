@@ -254,6 +254,10 @@ Item {
             const t = Math.max(0, Math.abs(offset) - deadZone) / (1 - deadZone)
             return Math.sign(offset) * Math.min(1, t) * Math.min(1, t)
         }
+        // Whether a key of a held fly action is a controller button that is down now.
+        function padHeld(action) {
+            return EditorState.keymap.bindings(action).some((chord) => Gamepad.chordHeld(chord))
+        }
         function step(dt) {
             let right = 0
             let up = 0
@@ -262,9 +266,23 @@ Item {
                 up = -steer((pointer.y - height / 2) / (height / 2)) * turnRate * dt
             }
             const move = speed * dt * (has("shift") ? 4 : 1)
-            const forward = axis("fly3d.forward", "fly3d.back") * move
-            const strafe = axis("fly3d.right", "fly3d.left") * move
-            const rise = axis("fly3d.up", "fly3d.down") * move
+            let forward = axis("fly3d.forward", "fly3d.back") * move
+            let strafe = axis("fly3d.right", "fly3d.left") * move
+            let rise = axis("fly3d.up", "fly3d.down") * move
+            if (Gamepad.connected) {
+                // Sticks move and turn, the triggers speed up and slow down, the shoulders sink and rise.
+                const padMove = speed * dt * Math.pow(4, Gamepad.rightTrigger - Gamepad.leftTrigger)
+                forward += Gamepad.leftY * padMove
+                strafe += Gamepad.leftX * padMove
+                rise += ((padHeld("fly3d.up") ? 1 : 0) - (padHeld("fly3d.down") ? 1 : 0)) * padMove
+                right += Gamepad.rightX * Gamepad.lookSpeed * dt
+                up += Gamepad.rightY * Gamepad.lookSpeed * dt
+                if (Gamepad.gyroEnabled) {
+                    const degrees = 57.29578 * Gamepad.gyroSensitivity * dt
+                    right -= Gamepad.gyroY * degrees
+                    up += Gamepad.gyroX * degrees
+                }
+            }
             if (right !== 0 || up !== 0 || forward !== 0 || strafe !== 0 || rise !== 0)
                 EditorState.preview.fly(right, up, forward, strafe, rise)
         }
@@ -288,6 +306,16 @@ Item {
             if (!activeFocus) {
                 held = {}
                 PointerLock.unlock()
+            }
+        }
+
+        Connections {
+            target: Gamepad
+            enabled: fly.on
+
+            function onButtonPressed(chord) {
+                if (EditorState.keymap.actionFor("fly3d", chord) === "fly3d.land")
+                    EditorState.preview.flying = false
             }
         }
 
