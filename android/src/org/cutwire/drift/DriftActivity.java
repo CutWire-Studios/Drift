@@ -22,4 +22,11 @@ public class DriftActivity extends QtActivity
         }
         super.onCreate(savedInstanceState);
     }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture)
+    {
+        super.onPointerCaptureChanged(hasCapture);
+        PointerCapture.changed(hasCapture);
+    }
 }

@@ -179,6 +179,27 @@ SettingsPage {
         }
     }
 
+    SettingsGroupHeader {
+        text: qsTr("3D view")
+        query: page.query
+    }
+
+    SettingsRow {
+        title: qsTr("Fly look")
+        searchId: "preview-fly-look"
+        description: qsTr("How the mouse turns the view in fly mode. Mouse look locks the pointer; steering turns toward the pointer and suits touchpads.")
+        keywords: "fly mode mouse look pointer lock capture steer touchpad first person camera"
+        query: page.query
+
+        ThemedComboBox {
+            readonly property var ids: ["mouse", "steer"]
+            width: Theme.c.settingsRow.controlWidth
+            model: [qsTr("Mouse look (locked pointer)"), qsTr("Steer toward pointer")]
+            currentIndex: Math.max(0, ids.indexOf(EditorState.preview.flyLook))
+            onActivated: EditorState.preview.flyLook = ids[currentIndex]
+        }
+    }
+
     PreviewOptionsDecodeDialog {
         id: decodeGpuDialog
         onRestoreSelection: decodeCombo.currentIndex = Math.max(0, decodeCombo.values.indexOf(EditorState.playback.decodeMode))

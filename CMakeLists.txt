@@ -1340,6 +1340,8 @@ qt_add_executable(drift
     src/app/platform/Haptics.cpp
     src/app/platform/PointerDevices.h
     src/app/platform/PointerDevices.cpp
+    src/app/platform/PointerLock.h
+    src/app/platform/PointerLock.cpp
     src/app/platform/PlatformDrag.h
     src/app/platform/PlatformDrag.cpp
     src/ui/preview/PreviewItem.h
@@ -2964,6 +2966,45 @@ target_link_libraries(drift PRIVATE
     driftengine
     ${DRIFT_ZSTD_TARGET}
 )
+# Mouse-look for 3D fly mode on Wayland binds zwp_pointer_constraints_v1 and zwp_relative_pointer_v1
+# directly. It needs Qt's Wayland client (for the native window interface), libwayland-client and
+# the scanner plus protocol XML; without any of them the pointer-lock service falls back to the
+# warp-to-centre path or reports itself unsupported.
+if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT EMSCRIPTEN)
+    find_package(Qt6 COMPONENTS WaylandClient GuiPrivate QUIET)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND AND Qt6WaylandClient_FOUND AND TARGET Qt6::GuiPrivate)
+        pkg_check_modules(DRIFT_WAYLAND_CLIENT QUIET IMPORTED_TARGET wayland-client)
+        pkg_get_variable(_drift_wl_protocols wayland-protocols pkgdatadir)
+        find_program(DRIFT_WAYLAND_SCANNER wayland-scanner)
+        set(_drift_wl_constraints "${_drift_wl_protocols}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml")
+        set(_drift_wl_relative "${_drift_wl_protocols}/unstable/relative-pointer/relative-pointer-unstable-v1.xml")
+        if(DRIFT_WAYLAND_CLIENT_FOUND AND DRIFT_WAYLAND_SCANNER AND EXISTS "${_drift_wl_constraints}"
+           AND EXISTS "${_drift_wl_relative}")
+            set(_drift_wl_dir "${CMAKE_CURRENT_BINARY_DIR}/wayland-protocols")
+            file(MAKE_DIRECTORY "${_drift_wl_dir}")
+            set(_drift_wl_sources "")
+            foreach(_xml IN ITEMS "${_drift_wl_constraints}" "${_drift_wl_relative}")
+                get_filename_component(_name "${_xml}" NAME_WE)
+                add_custom_command(
+                    OUTPUT "${_drift_wl_dir}/${_name}-client-protocol.h" "${_drift_wl_dir}/${_name}-protocol.c"
+                    COMMAND "${DRIFT_WAYLAND_SCANNER}" client-header "${_xml}" "${_drift_wl_dir}/${_name}-client-protocol.h"
+                    COMMAND "${DRIFT_WAYLAND_SCANNER}" private-code "${_xml}" "${_drift_wl_dir}/${_name}-protocol.c"
+                    DEPENDS "${_xml}"
+                    VERBATIM)
+                list(APPEND _drift_wl_sources "${_drift_wl_dir}/${_name}-protocol.c" "${_drift_wl_dir}/${_name}-client-protocol.h")
+            endforeach()
+            target_sources(drift PRIVATE src/app/platform/PointerLock_wayland.cpp ${_drift_wl_sources})
+            target_include_directories(drift PRIVATE "${_drift_wl_dir}")
+            target_link_libraries(drift PRIVATE PkgConfig::DRIFT_WAYLAND_CLIENT Qt6::GuiPrivate)
+            target_compile_definitions(drift PRIVATE DRIFT_HAVE_WAYLAND_LOCK)
+            message(STATUS "Pointer lock: Wayland pointer constraints enabled")
+        endif()
+    endif()
+endif()
+if(APPLE)
+    target_link_libraries(drift PRIVATE "-framework ApplicationServices")
+endif()
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.
 target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace src/ui/nodes)

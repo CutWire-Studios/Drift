@@ -202,8 +202,9 @@ Item {
         }
     }
 
-    // Blender's fly mode. The view keeps turning toward the pointer, faster the farther it is from
-    // the centre, so steering needs no pointer lock (Wayland has none to give). W/S move along the
+    // Blender's fly mode. With the Mouse look setting the pointer is locked and the mouse's raw
+    // movement turns the view; otherwise (touchpads, or where no lock is available) the view keeps
+    // turning toward the pointer, faster the farther it is from the centre. W/S move along the
     // view, A/D strafe, Q/E sink and rise, Shift hurries and the wheel sets the speed. Esc, a click
     // or the tool button lands, keeping the view where it is.
     Item {
@@ -221,6 +222,10 @@ Item {
         // the edge would otherwise send the view spinning at once.
         property bool steering: false
         property point pointer: Qt.point(width / 2, height / 2)
+        // True while the pointer lock was granted for this flight; the look is then the mouse's.
+        property bool mouseLook: false
+        // Degrees per mouse count.
+        readonly property real lookSensitivity: 0.12
 
         // Shift speeds the flight up, so a fly chord is looked up without it.
         function flyAction(event) {
@@ -252,7 +257,7 @@ Item {
         function step(dt) {
             let right = 0
             let up = 0
-            if (steering && width > 0 && height > 0) {
+            if (!mouseLook && steering && width > 0 && height > 0) {
                 right = steer((pointer.x - width / 2) / (width / 2)) * turnRate * dt
                 up = -steer((pointer.y - height / 2) / (height / 2)) * turnRate * dt
             }
@@ -272,12 +277,32 @@ Item {
         onOnChanged: {
             held = {}
             steering = false
-            if (on)
+            PointerLock.unlock()
+            mouseLook = false
+            if (on) {
                 forceActiveFocus()
+                mouseLook = EditorState.preview.flyLook === "mouse" && PointerLock.lock(fly)
+            }
         }
         onActiveFocusChanged: {
-            if (!activeFocus)
+            if (!activeFocus) {
                 held = {}
+                PointerLock.unlock()
+            }
+        }
+
+        Connections {
+            target: PointerLock
+
+            function onMoved(dx, dy) {
+                if (fly.on && fly.mouseLook)
+                    EditorState.preview.fly(dx * fly.lookSensitivity, -dy * fly.lookSensitivity, 0, 0, 0)
+            }
+            // Only a lock that was held can drop: the compositor or system took it back.
+            function onLockedChanged() {
+                if (!PointerLock.locked && fly.mouseLook && fly.on)
+                    EditorState.preview.flying = false
+            }
         }
 
         Keys.onShortcutOverride: (event) => {
@@ -311,6 +336,8 @@ Item {
             cursorShape: Qt.CrossCursor
 
             onPositionChanged: (mouse) => {
+                if (fly.mouseLook)
+                    return
                 fly.pointer = Qt.point(mouse.x, mouse.y)
                 if (!fly.steering
                         && Math.abs(mouse.x - width / 2) <= fly.deadZone * width / 2
@@ -332,12 +359,16 @@ Item {
 
         // The still zone, so there is something to aim the pointer at.
         Preview3DFlyDeadZone {
+            visible: !fly.mouseLook
             steering: fly.steering
             fraction: fly.deadZone
         }
 
         Preview3DFlyHint {
-            message: fly.steering
+            message: fly.mouseLook
+                     ? qsTr("Mouse looks · W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish")
+                           .arg(fly.speed.toFixed(2))
+                     : fly.steering
                      ? qsTr("W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish")
                            .arg(fly.speed.toFixed(2))
                      : qsTr("Move the pointer to the centre ring to start steering")

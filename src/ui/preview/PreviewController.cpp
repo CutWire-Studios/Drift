@@ -191,6 +191,9 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
     m_navigationScheme = settings.value(QStringLiteral("preview/navigationScheme"), m_navigationScheme).toString();
     if (m_navigationScheme != QLatin1String("maya"))
         m_navigationScheme = QStringLiteral("blender");
+    m_flyLook = settings.value(QStringLiteral("preview/flyLook"), m_flyLook).toString();
+    if (m_flyLook != QLatin1String("steer"))
+        m_flyLook = QStringLiteral("mouse");
     m_orbitAroundSelection =
         settings.value(QStringLiteral("preview/orbitAroundSelection"), m_orbitAroundSelection).toBool();
     m_editorFov = std::clamp(settings.value(QStringLiteral("preview/editorFov"), m_editorFov).toDouble(), 10.0, 120.0);
@@ -433,6 +436,15 @@ void PreviewController::setNavigationScheme(const QString &scheme)
         return;
     m_navigationScheme = scheme;
     QSettings().setValue(QStringLiteral("preview/navigationScheme"), m_navigationScheme);
+    emit navigationChanged();
+}
+
+void PreviewController::setFlyLook(const QString &look)
+{
+    if (m_flyLook == look || (look != QLatin1String("mouse") && look != QLatin1String("steer")))
+        return;
+    m_flyLook = look;
+    QSettings().setValue(QStringLiteral("preview/flyLook"), m_flyLook);
     emit navigationChanged();
 }
 

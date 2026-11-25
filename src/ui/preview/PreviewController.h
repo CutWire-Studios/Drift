@@ -60,6 +60,9 @@ class PreviewController : public QObject
     // Navigation: "blender" (middle-drag orbits, Shift pans, Ctrl dollies) or "maya" (Alt with the
     // left, middle or right button orbits, pans or dollies); the wheel zooms toward the pointer in both.
     Q_PROPERTY(QString navigationScheme READ navigationScheme WRITE setNavigationScheme NOTIFY navigationChanged)
+    // Fly mode look: "mouse" (locked pointer, raw mouse deltas) or "steer" (the view turns toward
+    // the pointer's offset from the centre, for touchpads).
+    Q_PROPERTY(QString flyLook READ flyLook WRITE setFlyLook NOTIFY navigationChanged)
     // Orbit about the selection's centre when something is selected, else about the view's target.
     Q_PROPERTY(bool orbitAroundSelection READ orbitAroundSelection WRITE setOrbitAroundSelection NOTIFY navigationChanged)
     // While looking through the scene camera, orbit/pan/dolly move the camera clip rather than
@@ -132,6 +135,8 @@ public:
     void setScaleSnap(double step);
     QString navigationScheme() const { return m_navigationScheme; }
     void setNavigationScheme(const QString &scheme);
+    QString flyLook() const { return m_flyLook; }
+    void setFlyLook(const QString &look);
     bool orbitAroundSelection() const { return m_orbitAroundSelection; }
     void setOrbitAroundSelection(bool on);
     bool lockCameraToView() const { return m_lockCameraToView; }
@@ -399,6 +404,7 @@ private:
     bool m_flyEdited = false;
     bool m_flyBlocked = false;
     QString m_navigationScheme = QStringLiteral("blender");
+    QString m_flyLook = QStringLiteral("mouse");
     bool m_orbitAroundSelection = true;
     bool m_lockCameraToView = false;
     double m_editorFov = 32.0;
