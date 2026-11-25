@@ -228,6 +228,13 @@ ThemedContextMenu {
     ThemedMenuSeparator { visible: clipContextMenu.suggestions.length > 0 }
 
     ThemedMenuItem {
+        text: qsTr("Detach from %1").arg(clipContextMenu.owner.clipData.generatedBy || "")
+        icon.name: Theme.icons.unlink
+        visible: (clipContextMenu.owner.clipData.generatedBy || "") !== ""
+        height: visible ? implicitHeight : 0
+        onTriggered: EditorState.projectFile.folder.detachClip(clipContextMenu.owner.clipData.id)
+    }
+    ThemedMenuItem {
         text: qsTr("Properties")
         icon.name: Theme.icons.sliders
         onTriggered: {

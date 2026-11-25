@@ -97,6 +97,9 @@ struct Clip
     // A user/agent tag that survives renames; empty when unset. A split or duplicate numbers the
     // copy: "intro" -> "intro.2" (numberCopiedLabels).
     QString label;
+    // The project-folder script (scripts/x.lua) that produced this clip; empty for a clip the user made.
+    // A generated clip is locked in the editor and replaced when its script runs again.
+    QString generatedBy;
     QString textContent;
     // Text clips: a Lua script that returns the text for each frame. Empty = textContent is shown as is.
     QString textScript;

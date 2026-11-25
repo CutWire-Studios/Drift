@@ -101,7 +101,7 @@ void GeneratorsTest::kindsAndPresetsAreConsistent()
 
 void GeneratorsTest::projectRoundTrip()
 {
-    QCOMPARE(Project::kCurrentVersion, 34);
+    QCOMPARE(Project::kCurrentVersion, 35);
     Project project;
     project.tracks().clear();
     Track track;
@@ -129,7 +129,7 @@ void GeneratorsTest::projectRoundTrip()
     project.tracks().append(textTrack);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 34);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 35);
     QString error;
     const Project loaded = Project::fromJson(json, &error);
     QVERIFY2(error.isEmpty(), qPrintable(error));

@@ -134,6 +134,8 @@ struct MediaAsset
     // Audio Drift generated rather than imported (voiceover, sound effect): what made it —
     // {provider, kind, voice, model, text/prompt} — so it can be regenerated. Empty otherwise.
     QJsonObject generator;
+    // Set on an asset a project-folder script declared; see Clip::generatedBy.
+    QString generatedBy;
 
     // Size and modification time of `path` when it was last probed. Every cache that keys on the
     // path alone would otherwise go on serving a file replaced in place, so this is what tells

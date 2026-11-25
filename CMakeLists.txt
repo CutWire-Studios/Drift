@@ -593,6 +593,8 @@ add_library(driftcore STATIC
     src/core/project/folder/ProjectSchema.cpp
     src/core/project/folder/ProjectLint.h
     src/core/project/folder/ProjectLint.cpp
+    src/core/project/folder/ProjectData.h
+    src/core/project/folder/ProjectData.cpp
     src/core/project/GuideSet.cpp
     src/core/interchange/subtitles/SubtitleParse.h
     src/core/interchange/subtitles/SrtIO.h
@@ -1165,6 +1167,8 @@ add_library(driftengine STATIC
     src/engine/project/ProjectDependencies.cpp
     src/engine/projdir/ProjectLsp.h
     src/engine/projdir/ProjectLsp.cpp
+    src/engine/projdir/ProjectScripts.h
+    src/engine/projdir/ProjectScripts.cpp
     src/engine/projdir/ProjectFolderLint.h
     src/engine/projdir/ProjectFolderLint.cpp
     src/engine/projdir/ProjectGuide.h

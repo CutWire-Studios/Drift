@@ -420,6 +420,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("anchorZ"), keyframesToJson(clip.anchorZ));
     if (!clip.label.isEmpty())
         json.insert(QStringLiteral("label"), clip.label);
+    if (!clip.generatedBy.isEmpty())
+        json.insert(QStringLiteral("generatedBy"), clip.generatedBy);
     return json;
 }
 
@@ -502,6 +504,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int version, int canvasW = 1920, 
     clip.hiddenInLane = object.value(QStringLiteral("hiddenInLane")).toBool(false);
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.label = object.value(QStringLiteral("label")).toString();
+    clip.generatedBy = object.value(QStringLiteral("generatedBy")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.textScript = object.value(QStringLiteral("textScript")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
@@ -695,6 +698,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
     if (!asset.generator.isEmpty())
         object.insert(QStringLiteral("generator"), asset.generator);
+    if (!asset.generatedBy.isEmpty())
+        object.insert(QStringLiteral("generatedBy"), asset.generatedBy);
     // Only when known, like the keys above: an older project round-trips unchanged.
     if (drift::sourceFingerprintKnown(asset)) {
         object.insert(QStringLiteral("sourceSize"), static_cast<double>(asset.sourceSize));
@@ -747,6 +752,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.folderId = object.value(QStringLiteral("folderId")).toString();
     asset.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     asset.generator = object.value(QStringLiteral("generator")).toObject();
+    asset.generatedBy = object.value(QStringLiteral("generatedBy")).toString();
     asset.sourceSize = static_cast<qint64>(object.value(QStringLiteral("sourceSize")).toDouble());
     asset.sourceModifiedMs =
         static_cast<qint64>(object.value(QStringLiteral("sourceModifiedMs")).toDouble());
@@ -1616,6 +1622,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
             track.solo = trackObject.value(QStringLiteral("solo")).toBool(false);
             track.excludeFromExport = trackObject.value(QStringLiteral("excludeFromExport")).toBool(false);
+            track.generatedBy = trackObject.value(QStringLiteral("generatedBy")).toString();
             track.volume = trackObject.value(QStringLiteral("volume")).toDouble(1.0);
             track.pan = trackObject.value(QStringLiteral("pan")).toDouble(0.0);
             // Projects before clipDisplay only had a waveform-instead-of-filmstrip flag.
@@ -1751,6 +1758,10 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 23 added the teleprompter script. Nothing to migrate; the bump is a gate so an older
     // build does not silently drop the script on save.
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
+    // Version 35 added generatedBy on clips, tracks and assets: the project-folder script that made the
+    // item, which the editor locks and the script replaces. Nothing to migrate; the bump is a gate, as
+    // for versions 6 and 9. An older build would drop the key on load and save the item back as plain,
+    // unlocked data that the next script run duplicates.
     // Version 34 added ClipType::Generator and the text clip script (Clip::textScript). Nothing to
     // migrate; the bump is a gate, as for versions 6 and 9. An older build would load generators as
     // videos with no path and show a scripted text clip's placeholder text.
@@ -1893,6 +1904,8 @@ QJsonObject Project::toJson(bool includeTranscripts) const
             // Written only when set, so projects without it stay byte-identical.
             if (track.excludeFromExport)
                 trackObject.insert(QStringLiteral("excludeFromExport"), true);
+            if (!track.generatedBy.isEmpty())
+                trackObject.insert(QStringLiteral("generatedBy"), track.generatedBy);
             tracksArray.append(trackObject);
         }
         return tracksArray;

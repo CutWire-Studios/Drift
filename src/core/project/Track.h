@@ -50,6 +50,8 @@ struct Track
     // Shown and heard while editing, but never exported (a review lane: a VO script to read along,
     // notes). Export and composite flattening render Project::exportView, which drops it.
     bool excludeFromExport = false;
+    // Set on a track a project-folder script created; see Clip::generatedBy.
+    QString generatedBy;
     double volume = 1.0;
     double pan = 0.0;
     // view-only, video tracks: how clips draw. Video = filmstrip only, Both = filmstrip with a

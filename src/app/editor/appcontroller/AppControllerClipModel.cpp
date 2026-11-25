@@ -1175,6 +1175,7 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     row.outPoint = drift::usToSeconds(clip.srcOut);
     row.sourceDuration = sourceAsset ? drift::usToSeconds(sourceAsset->durationUs) : 0.0;
     row.enabled = clip.enabled;
+    row.generatedBy = clip.generatedBy;
     row.loop = clip.loops();
     if (row.loop) {
         row.loopPeriod = drift::usToSeconds(clip.loopPeriodUs());
