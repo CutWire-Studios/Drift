@@ -2183,6 +2183,93 @@
     </message>
 </context>
 <context>
+    <name>AndroidRemotePage</name>
+    <message>
+        <source>Remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnect to your desktop, or pair again with a new code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On your desktop open Settings, Control surfaces, then Pair phone. Type the code shown there, in the form 192.168.1.20:47890/ABCD2345.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pairing code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is not a pairing code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forget desktop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Назад</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Пауза</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Воспроизвести</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Остановить</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished">Далее</translation>
+    </message>
+    <message>
+        <source>Shadows</source>
+        <translation type="unfinished">Тени</translation>
+    </message>
+    <message>
+        <source>Midtones</source>
+        <translation type="unfinished">Средние тона</translation>
+    </message>
+    <message>
+        <source>Highlights</source>
+        <translation type="unfinished">Светлые участки</translation>
+    </message>
+    <message>
+        <source>Look pad: drag to turn the 3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steer with the gyroscope</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidShareTargetSheet</name>
     <message>
         <source>Add shared media</source>
@@ -2807,6 +2894,10 @@
         <translation>Отметить начало рабочей области</translation>
     </message>
     <message>
+        <source>Render queue…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Mark work area out</source>
         <translation>Отметить конец рабочей области</translation>
     </message>
@@ -3179,6 +3270,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Record camera or motion on play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look through the scene camera</source>
         <translation type="unfinished">Вид из камеры сцены</translation>
     </message>
@@ -3236,6 +3331,10 @@
     </message>
     <message>
         <source>Fly up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Land (finish flying)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5017,6 +5116,14 @@
     <message>
         <source>Align camera to view</source>
         <translation>Выровнять камеру по виду</translation>
+    </message>
+    <message>
+        <source>Record camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record motion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -9470,6 +9577,13 @@
     </message>
 </context>
 <context>
+    <name>ControllerTestView</name>
+    <message>
+        <source>No buttons held</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CrashReport</name>
     <message>
         <source>Drift crashed the last time it ran</source>
@@ -10642,6 +10756,18 @@
         <translation>Копия %1</translation>
     </message>
     <message>
+        <source>Open Project Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose where to create the project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .drift Bundle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import Kdenlive / Shotcut Project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10889,6 +11015,77 @@
     <message>
         <source>Customize layouts in Settings…</source>
         <translation type="unfinished">Настройка макетов в «Настройках»…</translation>
+    </message>
+</context>
+<context>
+    <name>EditorSurfaceTargets</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">Экспозиция</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Контраст</translation>
+    </message>
+    <message>
+        <source>Highlights</source>
+        <translation type="unfinished">Светлые участки</translation>
+    </message>
+    <message>
+        <source>Shadows</source>
+        <translation type="unfinished">Тени</translation>
+    </message>
+    <message>
+        <source>Whites</source>
+        <translation type="unfinished">Белые</translation>
+    </message>
+    <message>
+        <source>Blacks</source>
+        <translation type="unfinished">Чёрные</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">Температура</translation>
+    </message>
+    <message>
+        <source>Tint</source>
+        <translation type="unfinished">Оттенок</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Насыщенность</translation>
+    </message>
+    <message>
+        <source>Vibrance</source>
+        <translation type="unfinished">Красочность</translation>
+    </message>
+    <message>
+        <source>Shadows wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Midtones wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Highlights wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip rotation</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11697,6 +11894,26 @@
     <message>
         <source>Export cancelled.</source>
         <translation>Экспорт отменён.</translation>
+    </message>
+    <message>
+        <source>Sent to the render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the render queue. Press Start there to render it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to farm</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Some pre-rendered sections are out of date</source>
@@ -18289,6 +18506,93 @@
     </message>
 </context>
 <context>
+    <name>MidiProtocol</name>
+    <message>
+        <source>Mackie Control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HUI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generic MIDI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Остановить</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Воспроизвести</translation>
+    </message>
+    <message>
+        <source>Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Масштаб</translation>
+    </message>
+    <message>
+        <source>Scrub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rec %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select %1</source>
+        <translation type="unfinished">Выбрать %1</translation>
+    </message>
+    <message>
+        <source>V-pot press %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MissingAddonsDialog</name>
     <message>
         <source>Extra packs needed</source>
@@ -18370,6 +18674,10 @@
     <message>
         <source>Record voiceover on %1</source>
         <translation>Записать закадровый голос на %1</translation>
+    </message>
+    <message>
+        <source>%1 volume</source>
+        <translation type="unfinished">Громкость: %1</translation>
     </message>
 </context>
 <context>
@@ -19559,6 +19867,10 @@
 <context>
     <name>Preview3DMode</name>
     <message>
+        <source>Mouse looks · W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish</source>
         <translation>W/A/S/D — перемещение · Q/E — вниз/вверх · Shift — быстрее · Колесо — скорость (%1×) · Esc или щелчок — завершить</translation>
     </message>
@@ -20519,6 +20831,34 @@ If playback stutters, try another.</source>
         <translation>Распаковка медиафайлов проекта…</translation>
     </message>
     <message>
+        <source>%1 isn’t a project folder (there is no project.json in it)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Project folder loaded, but %n media file(s) could not be found</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project folder loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach generated items</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No recovery file found</source>
         <translation>Файл восстановления не найден</translation>
     </message>
@@ -20529,6 +20869,64 @@ If playback stutters, try another.</source>
     <message>
         <source>Started new session</source>
         <translation>Начат новый сеанс</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFolderBanner</name>
+    <message>
+        <source>Project folder — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished">Закрыть</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFolderController</name>
+    <message>
+        <source>%1 was changed on disk while you edited it; the version on disk was kept and yours is in .drift/conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source> and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The project folder has no project.json (moved or deleted?)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>External edit: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template render finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template render failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start the renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering a template needs a desktop build</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 already exists and isn’t empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved as project folder %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -21436,6 +21834,102 @@ If playback stutters, try another.</source>
         <source>In %1 → Out %2</source>
         <translation type="unfinished">Вход %1 → Выход %2</translation>
     </message>
+    <message>
+        <source>Note %1 (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pitch bend (ch %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>NRPN %1 (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CC %1 fine (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CC %1 (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fader %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>V-pot %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master fader</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jog wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select %1</source>
+        <translation type="unfinished">Выбрать %1</translation>
+    </message>
+    <message>
+        <source>Mute %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rec %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Воспроизвести</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Остановить</translation>
+    </message>
+    <message>
+        <source>Step back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 trackball X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 trackball Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look pad X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look pad Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -21893,6 +22387,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Render queue…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import / Export</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21902,6 +22400,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Open project from JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as project folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .drift bundle…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render with data…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22016,6 +22530,161 @@ If playback stutters, try another.</source>
     <message>
         <source>Auto-saved: %1</source>
         <translation>Автосохранение: %1</translation>
+    </message>
+</context>
+<context>
+    <name>RenderQueueDialog</name>
+    <message>
+        <source>Render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Закрыть</translation>
+    </message>
+    <message>
+        <source>Waiting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation type="unfinished">В очереди</translation>
+    </message>
+    <message>
+        <source>Rendering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Готово</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished">Сбой</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Отменено</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Пауза</translation>
+    </message>
+    <message>
+        <source>Finish the current render, then hold the rest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear finished</source>
+        <translation type="unfinished">Очистить завершённые</translation>
+    </message>
+    <message>
+        <source>Start immediately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render in a separate process</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing queued. Choose Add to queue in the Export dialog to render in the background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished">%1 %2%</translation>
+    </message>
+    <message>
+        <source>Farm %1/%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">Начало</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">Удержание</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Повторить</translation>
+    </message>
+    <message>
+        <source>Show the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Отмена</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">Переместить вверх</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">Переместить вниз</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <source>Coordinator listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The render farm is off. Turn it on in Settings, Render farm.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Token: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No workers yet. On another computer run: drift --headless --farm-worker %1 --token &lt;token&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n done</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -23387,6 +24056,121 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SettingsControllersPage</name>
+    <message>
+        <source>Controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Devices</source>
+        <translation type="unfinished">Устройства</translation>
+    </message>
+    <message>
+        <source>Use game controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly the 3D view and drive the timeline from a gamepad.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This build has no game controller support.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None found. Plug one in or pair it over Bluetooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> · gyro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> · rumble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation type="unfinished">Проверить</translation>
+    </message>
+    <message>
+        <source>Move the sticks and press buttons to see what the editor receives.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dead zone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How far a stick must move before it counts. Raise it if the view drifts on its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Response curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 is linear. Higher values give finer control near the centre.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Degrees per second at full right-stick deflection in 3D fly mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion and feedback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro aiming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt the controller to aim the camera in 3D fly mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro sensitivity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scales how far the view turns for a given tilt.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rumble feedback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short pulse when scrubbing crosses a cut or marker and when a gizmo snaps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Button bindings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gamepad buttons are bound like keys, in the Keyboard shortcuts page: add a binding and press a controller button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SettingsDialog</name>
     <message>
         <source>Settings</source>
@@ -23414,6 +24198,73 @@ If playback stutters, try another.</source>
     <message>
         <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
         <translation type="unfinished">Использовать аппаратный кодировщик H.264 на GPU при экспорте, если он доступен. Это быстрее, но соотношение качества к битрейту обычно ниже, чем у программного кодировщика.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsFarmPage</name>
+    <message>
+        <source>Render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Coordinator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let other computers render for this one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listens for render workers on your network. Jobs sent to the farm from the Export dialog are split up between them. Only turn this on in a network you trust.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Port</source>
+        <translation type="unfinished">Порт</translation>
+    </message>
+    <message>
+        <source>The TCP port workers connect to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers need this to join %1. Paste it on the worker with --token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers need this to join. Paste it on the worker with --token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Копировать</translation>
+    </message>
+    <message>
+        <source>New token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers using the old token are turned away the next time they connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Worker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media cache size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much of a coordinator&apos;s media a worker started on this computer keeps for the next job, in GB. The least recently used files go first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>GB</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23787,8 +24638,16 @@ If playback stutters, try another.</source>
         <translation>Горячие клавиши</translation>
     </message>
     <message>
+        <source>Control surfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview</source>
         <translation>Предпросмотр</translation>
+    </message>
+    <message>
+        <source>Controllers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Performance</source>
@@ -23801,6 +24660,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Export</source>
         <translation type="unfinished">Экспорт</translation>
+    </message>
+    <message>
+        <source>Render farm</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>
@@ -24283,6 +25146,38 @@ If playback stutters, try another.</source>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
         <translation>Способ декодирования видео для предпросмотра. Программное декодирование плавнее для большинства клипов, но сильнее нагружает ЦП. Аппаратное подходит для 4K высокого качества.</translation>
     </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the mouse turns the view in fly mode. Mouse look locks the pointer; steering turns toward the pointer and suits touchpads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mouse look (locked pointer)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steer toward pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording smoothing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much a recorded camera flight or clip motion is thinned into keyframes. Higher gives fewer, smoother keys.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation type="unfinished">Сглаживание</translation>
+    </message>
 </context>
 <context>
     <name>SettingsStoragePage</name>
@@ -24465,6 +25360,153 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset to defaults</source>
         <translation type="unfinished">Восстановить по умолчанию</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsSurfacesPage</name>
+    <message>
+        <source>Control surfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Learn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Learn mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a parameter in the editor, such as a slider, a colour wheel or a mixer fader, then move a knob, fader or button on your device to bind it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for a control. Move a fader or knob, or press a button, on a connected device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Отмена</translation>
+    </message>
+    <message>
+        <source>MIDI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MIDI controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open every MIDI controller that is plugged in, including ones that appear later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Protocol: Mackie Control and HUI faders and buttons drive the mixer and transport, and follow the editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OSC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OSC control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listen for OSC messages over UDP, for TouchOSC, Open Stage Control and scripts. Anything else a sender transmits shows up as a control to bind.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listen port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The UDP port Drift receives on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Feedback port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The UDP port on the sender&apos;s machine that Drift answers to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allowed hosts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One address or range per line, such as 192.168.1.40 or 10.0.0.0/24. Empty allows the local network only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OSC problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phone remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let a phone running Drift act as a jog wheel, fader bank and colour trackballs for this editor over your local network.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pair a phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan the code from the Drift app on your phone, or type the code into its Remote page. It works for a few minutes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop pairing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pair phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paired, not connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this phone as a remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pair with Drift on your computer to jog, fly the 3D view and set colours from here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Devices</source>
+        <translation type="unfinished">Устройства</translation>
+    </message>
+    <message>
+        <source>No control surfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plug in a MIDI controller, or enable OSC or the phone remote, and it appears here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not connected</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25673,6 +26715,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Press keys…</source>
         <translation>Нажмите клавиши…</translation>
+    </message>
+    <message>
+        <source>Press keys or a button…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>“%1” is already used by %2.</source>
@@ -28617,6 +29663,81 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>SurfaceDeviceBindings</name>
+    <message>
+        <source>Nothing is bound yet. Turn on learn mode, click a parameter in the editor, then move a control.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation type="unfinished">Положение</translation>
+    </message>
+    <message>
+        <source>Counter, 2&apos;s complement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Counter, sign and size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Counter around 64</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invert</source>
+        <translation type="unfinished">Инвертировать</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Скорость</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <source>Bind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Learn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">Экспортировать…</translation>
+    </message>
+    <message>
+        <source>Export bindings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bindings (*.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import…</source>
+        <translation type="unfinished">Импорт…</translation>
+    </message>
+    <message>
+        <source>Import bindings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That file is not a bindings file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">Очистить</translation>
+    </message>
+    <message>
+        <source>Forget device</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TeleprompterPanel</name>
     <message>
         <source>Teleprompter</source>
@@ -28669,6 +29790,65 @@ If playback stutters, try another.</source>
     <message>
         <source>Paste or type your script</source>
         <translation>Вставьте или введите текст сценария</translation>
+    </message>
+</context>
+<context>
+    <name>TemplateRenderDialog</name>
+    <message>
+        <source>Render with data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering…</source>
+        <translation type="unfinished">Рендеринг…</translation>
+    </message>
+    <message>
+        <source>Render</source>
+        <translation type="unfinished">Обработать</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n row(s) of data: one video per row.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No data file: the template renders once with its default parameters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose data file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Data file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CSV or JSON (*.csv *.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished">Строка</translation>
+    </message>
+    <message>
+        <source>Output file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>/path/to/renders/{row}.mp4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>{row} is the row number; {name} is any template parameter.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -30011,6 +31191,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Paste at current time</source>
         <translation type="unfinished">Вставить в текущую точку</translation>
+    </message>
+    <message>
+        <source>Detach from %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Properties</source>
@@ -33923,6 +35107,10 @@ If playback stutters, try another.</source>
         <translation>Свободный полёт (WASD — перемещение, Q/E — вниз/вверх, наведение указателем)</translation>
     </message>
     <message>
+        <source>Record: the next play keys the scene camera&apos;s flight, or the selected clip&apos;s stick-driven motion, as one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look through the scene camera</source>
         <translation>Вид из камеры сцены</translation>
     </message>
@@ -34644,6 +35832,130 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>drift::EditorSurfaceTargets</name>
+    <message>
+        <source>Playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jog (frames)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shuttle (spring fader)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playhead position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline zoom</source>
+        <translation type="unfinished">Масштаб таймлайна</translation>
+    </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn left and right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look up and down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly forward and back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly left and right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous strip bank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next strip bank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected clip</source>
+        <translation type="unfinished">Выбранный клип</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Цвет</translation>
+    </message>
+    <message>
+        <source>%1 hue X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 hue Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 brightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust with control surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::OscSurfaceService</name>
+    <message>
+        <source>OSC (port %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PhoneRemoteClient</name>
+    <message>
+        <source>The desktop did not accept this code. Pair again from Settings &gt; Control surfaces.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PhoneRemoteServer</name>
+    <message>
+        <source>Phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phone: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>drift::PortalScreenCapture</name>
     <message>
         <source>A screen recording is already starting.</source>
@@ -34687,6 +35999,33 @@ If playback stutters, try another.</source>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
         <translation>Работа Drift неожиданно завершилась во время предыдущего сеанса.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::farm::RenderQueue</name>
+    <message>
+        <source>Couldn’t copy the project into the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no project to queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation type="unfinished">Недопустимое место сохранения</translation>
+    </message>
+    <message>
+        <source>Couldn’t write the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This computer (worker process)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This computer (editor)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
