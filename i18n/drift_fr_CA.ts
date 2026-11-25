@@ -29686,6 +29686,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TemplateRenderDialog</name>
     <message>
+        <source>Render now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Render with data</source>
         <translation type="unfinished"></translation>
     </message>
@@ -29696,6 +29708,25 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Render</source>
         <translation type="unfinished">Rendre</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Ajouter</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n row(s) could not be queued: %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Sent to the render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the render queue</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>%n row(s) of data: one video per row.</source>
