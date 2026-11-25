@@ -7,6 +7,7 @@
 #include "engine/media/waveforms/WaveformBlockCache.h"
 #include "app/editor/TimelineClipsModel.h"
 #include "app/editor/keymap/Keymap.h"
+#include "app/surfaces/ControlSurfaceManager.h"
 #include "app/mcp/tools/McpMarket.h"
 #include "core/project/GuideSet.h"
 #include <QAtomicInt>
@@ -354,6 +355,7 @@ class AppController : public QObject
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
     Q_PROPERTY(drift::Keymap *keymap READ keymap CONSTANT)
+    Q_PROPERTY(drift::ControlSurfaceManager *surfaces READ surfaces CONSTANT)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
     Q_PROPERTY(bool workAreaActive READ workAreaActive NOTIFY workAreaChanged)
     Q_PROPERTY(double workAreaInSeconds READ workAreaInSeconds NOTIFY workAreaChanged)
@@ -434,6 +436,7 @@ public:
     VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
     drift::Keymap *keymap() const { return m_keymap; }
+    drift::ControlSurfaceManager *surfaces() const { return m_surfaces; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
@@ -2831,6 +2834,7 @@ protected:
     // Persists the library; an edit to an active set also changes what the project saves.
     void guideLibraryEdited(const QString &id);
     drift::Keymap *m_keymap = nullptr;
+    drift::ControlSurfaceManager *m_surfaces = nullptr;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
     QString m_lastMessage;

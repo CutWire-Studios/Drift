@@ -1435,6 +1435,14 @@ ApplicationWindow {
         }
     }
 
+    // Control-surface buttons dispatch exactly like a key press.
+    Connections {
+        target: EditorState.surfaces
+        function onActionRequested(id) {
+            window.dispatchAction(id)
+        }
+    }
+
     // The one place a bound action is dispatched, shared by dispatchChord (the Shortcut items
     // below and the editor FocusScope's arrow handling), the Mac menu bar and global search. A
     // handful of ids are QML state and have no triggerAction branch at all, so a second dispatch

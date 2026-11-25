@@ -565,6 +565,7 @@ PanelFrame {
                             required property var modelData
                             width: parent.width
                             label: modelData.label
+                            learnId: "color." + modelData.key
                             from: modelData.from
                             to: modelData.to
                             defaultValue: modelData.def
@@ -625,6 +626,7 @@ PanelFrame {
                             required property var modelData
                             width: parent.width
                             label: modelData.label
+                            learnId: "color." + modelData.key
                             from: modelData.from
                             to: modelData.to
                             defaultValue: modelData.def

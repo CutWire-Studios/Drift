@@ -167,6 +167,8 @@
     "timelineWaveformGuide": "#26ffffff",
     "timelineWaveformLive": "#d9ffffff",
     "timelineHeaderBackground": "#00000000",
+    "surfaceLearnFill": "#26F8B81C",
+    "surfaceLearnArmed": "#59F8B81C",
     "timelineRecordWash": "#14e91616",
     "timelineRecordPausedWash": "#1aebb308",
     "timelineZoneMutedRed": "#4a2c2c",
@@ -827,6 +829,13 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth"
+    },
+    "surfaceLearn": {
+      "border": "$semantic.primary",
+      "fill": "$palette.surfaceLearnFill",
+      "armedFill": "$palette.surfaceLearnArmed",
+      "borderWidth": 2,
+      "radius": "$metrics.radius.sm"
     },
     "settingsRow": {
       "foreground": "$semantic.panel.foreground",

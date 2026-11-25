@@ -1583,6 +1583,11 @@ target_sources(drift PRIVATE
     src/app/mcp/protocol/McpJson.h
 )
 target_sources(driftapp PRIVATE
+    src/app/surfaces/ControlSurfaceManager.h
+    src/app/surfaces/ControlSurfaceManager.cpp
+    src/app/surfaces/EditorSurfaceTargets.h
+    src/app/surfaces/EditorSurfaceTargets.cpp
+    src/app/surfaces/SurfaceTargets.h
     src/app/commandbar/CommandBarController.h
     src/app/commandbar/CommandBarController.cpp
     src/app/commandbar/CommandCatalog.h
@@ -2822,6 +2827,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/TouchDragGhost.qml
         src/qml/components/shell/SkeletonBox.qml
         src/qml/components/controls/ThemedSwitch.qml
+        src/qml/components/controls/SurfaceLearnArea.qml
         src/qml/components/controls/ThemedCheckBox.qml
         src/qml/components/controls/ThemedToggleButton.qml
         src/qml/components/controls/ThemedToolTip.qml
@@ -2852,6 +2858,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsNotificationsPage.qml
         src/qml/components/shell/SettingsPersonalizePage.qml
         src/qml/components/shell/SettingsStoragePage.qml
+        src/qml/components/shell/SettingsSurfacesPage.qml
+        src/qml/components/shell/SurfaceDeviceBindings.qml
         src/qml/components/shell/SettingsPage.qml
         src/qml/components/shell/SettingsPerformancePage.qml
         src/qml/components/shell/SettingsPreviewPage.qml

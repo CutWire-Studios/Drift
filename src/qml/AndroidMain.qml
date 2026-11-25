@@ -243,6 +243,13 @@ ApplicationWindow {
     }
 
     Connections {
+        target: EditorState.surfaces
+        function onActionRequested(id) {
+            EditorState.triggerAction(id)
+        }
+    }
+
+    Connections {
         target: EditorState.bin
         function onEditFinished(ok, message) {
             if (!ok || EditorState.bin.editIsConversion || window._pendingMediaEdit < 0)

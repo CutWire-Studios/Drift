@@ -17,7 +17,7 @@ Item {
     property string currentPage: "general"
     // The phone shell has no workspaces or keyboard to configure.
     property bool mobile: false
-    readonly property var mobileHiddenPages: ["workspaces", "personalize", "keymap"]
+    readonly property var mobileHiddenPages: ["workspaces", "personalize", "keymap", "surfaces"]
     readonly property string query: searchField.text.trim().toLowerCase()
     readonly property bool narrow: width < 640
     readonly property real sidebarWidth: 220
@@ -30,6 +30,7 @@ Item {
         { id: "workspaces", title: qsTr("Workspaces"), keywords: "workspace layout panel window monitor screen dock preset orientation landscape portrait" },
         { id: "timeline", title: qsTr("Timeline"), keywords: "scroll wheel horizontal vertical crossfade transition overview minimap toolbar buttons customize auto keyframes animation" },
         { id: "keymap", title: qsTr("Keyboard shortcuts"), keywords: "keymap keys hotkeys bindings" },
+        { id: "surfaces", title: qsTr("Control surfaces"), keywords: "midi osc mackie controller faders knobs jog hardware surface phone remote" },
         { id: "preview", title: qsTr("Preview"), keywords: "quality resolution decode guides background" },
         { id: "controllers", title: qsTr("Controllers"), keywords: "gamepad controller joystick xbox playstation dualsense gyro rumble stick dead zone", available: Gamepad.available },
         { id: "performance", title: qsTr("Performance"), keywords: "graphics card gpu faster preview zero copy advanced tuning cache memory ram vram buffer drop frames pool" },
@@ -45,7 +46,7 @@ Item {
         (page) => page.available !== false && !(mobile && mobileHiddenPages.includes(page.id)))
 
     readonly property bool searchHasMatches: {
-        for (const slot of [generalSlot, personalizeSlot, appearanceSlot, workspacesSlot, timelineSlot, keymapSlot,
+        for (const slot of [generalSlot, personalizeSlot, appearanceSlot, workspacesSlot, timelineSlot, keymapSlot, surfacesSlot,
                             previewSlot, controllersSlot, performanceSlot, storageSlot, exportSlot, audioSlot, aiSlot,
                             notificationsSlot, networkSlot, aboutSlot]) {
             if (slot.hasMatches)
@@ -240,6 +241,13 @@ Item {
                 pageId: "keymap"
                 allowed: !root.mobile
                 sourceComponent: SettingsKeymapPage { query: root.query }
+            }
+
+            PageSlot {
+                id: surfacesSlot
+                pageId: "surfaces"
+                allowed: !root.mobile
+                sourceComponent: SettingsSurfacesPage { query: root.query }
             }
 
             PageSlot {
