@@ -128,11 +128,17 @@ struct VideoRead
 {
     QString path;
     TimeUs sourceUs = 0;
+    bool reversedProxy = false;
+    TimeUs originalSourceUs = 0; // Before mirroring into a reversed proxy.
 };
 //
 // allowPreviewProxy is set only by live preview; export must leave it off so it always reads
 // full-quality pixels.
 VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs, bool allowPreviewProxy = false);
+
+// Resolve a source timestamp with a proxy that covers the entire requested range.
+VideoRead resolveVideoSourceRead(const Clip &clip, TimeUs sourceUs, bool allowPreviewProxy,
+                                 TimeUs coverIn, TimeUs coverOut);
 
 // The path a reversed clip reads its video from, without resolving a time. For retaining decoder
 // workers, where tearing down the proxy's worker would reopen the file every frame.

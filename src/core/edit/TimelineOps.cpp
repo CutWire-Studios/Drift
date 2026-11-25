@@ -398,7 +398,7 @@ ClipRef appendToMaskLane(Project &project, int parentIndex, const Clip &adjustme
 } // namespace
 
 QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timelineUs,
-                            const QString &hostClipId)
+                            const QString &hostClipId, std::optional<TimeUs> linkedTimeUs)
 {
     QList<LaneMask> result;
     for (const int laneIndex : adjustmentLaneIndexes(project, trackIndex)) {
@@ -408,7 +408,8 @@ QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timel
         for (const Clip &adjustment : lane.clips) {
             if (adjustment.adjustmentKind != AdjustmentKind::Mask)
                 continue;
-            if (!adjustment.containsTime(timelineUs))
+            const TimeUs adjustmentTimeUs = adjustment.linkedClipId.isEmpty() ? timelineUs : linkedTimeUs.value_or(timelineUs);
+            if (!adjustment.containsTime(adjustmentTimeUs))
                 continue;
             if (!adjustment.linkedClipId.isEmpty() && adjustment.linkedClipId != hostClipId)
                 continue;
@@ -419,7 +420,7 @@ QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timel
             // cannot diverge from export. Keys are relative to the adjustment's own start.
             const Mask &mask = adjustment.mask;
             result.append(LaneMask{
-                mask.isAnimated() ? mask.resolvedAt(timelineUs - adjustment.timelineStart) : mask,
+                mask.isAnimated() ? mask.resolvedAt(adjustmentTimeUs - adjustment.timelineStart) : mask,
                 adjustment.id, adjustment.timelineStart, adjustment.srcIn});
         }
     }

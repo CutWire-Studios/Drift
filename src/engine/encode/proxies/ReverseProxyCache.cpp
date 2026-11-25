@@ -423,27 +423,28 @@ void ReverseProxyCache::sweep(qint64 maxBytes)
 
 VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs, bool allowPreviewProxy)
 {
-    const TimeUs sourceUs = clip.timelineToSourceUs(timelineUs);
-    VideoRead read{clip.path, sourceUs};
-    bool reversed = false;
+    return resolveVideoSourceRead(clip, clip.timelineToSourceUs(timelineUs), allowPreviewProxy, clip.srcIn, clip.srcOut);
+}
+
+VideoRead resolveVideoSourceRead(const Clip &clip, TimeUs sourceUs, bool allowPreviewProxy,
+                                 TimeUs coverIn, TimeUs coverOut)
+{
     if (clip.reverse && clip.type == ClipType::Video && !clip.path.isEmpty()) {
         TimeUs coverEndUs = 0;
         const QString proxy =
-            ReverseProxyCache::instance().lookup(clip.path, clip.srcIn, clip.srcOut, &coverEndUs);
+            ReverseProxyCache::instance().lookup(clip.path, coverIn, coverOut, &coverEndUs);
         // The proxy holds [coverIn, coverOut] flipped end-for-end, so a source time maps to its
         // mirror. timelineToSourceUs already walked down from srcOut, and this undoes that walk —
         // the composite reads the proxy strictly forwards.
-        if (!proxy.isEmpty()) {
-            read = {proxy, coverEndUs - sourceUs};
-            reversed = true;
-        }
+        if (!proxy.isEmpty())
+            return {proxy, coverEndUs - sourceUs, true, sourceUs};
     }
     // A preview proxy shares the source's timestamps, so only the path changes.
-    if (!reversed && allowPreviewProxy) {
+    if (allowPreviewProxy) {
         if (const QString proxy = previewProxyPath(clip); !proxy.isEmpty())
-            read.path = proxy;
+            return {proxy, sourceUs, false, sourceUs};
     }
-    return read;
+    return {clip.path, sourceUs, false, sourceUs};
 }
 
 QString videoReadPath(const Clip &clip, bool allowPreviewProxy)
