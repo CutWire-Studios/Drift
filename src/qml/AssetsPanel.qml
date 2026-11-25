@@ -896,7 +896,7 @@ PanelFrame {
         Theme.icons.mask,
         Theme.icons.store,
         Theme.icons.micVocal,
-        Theme.icons.sparkles
+        Theme.icons.asterism
     ]
     property int activeTab: locked ? tabIndexOf(lockedTab) : tabIndexOf(LayoutMemory.layoutString("assets/tab", "media"))
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
