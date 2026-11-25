@@ -99,6 +99,11 @@ public:
     Q_INVOKABLE int importFromFile(const QUrl &file, const QString &deviceId = QString());
     Q_INVOKABLE void resetPickup();
 
+    // Drive a target directly, with no device or binding in between (OSC's fixed address space).
+    void runAction(const QString &actionId) { trigger(actionId); }
+    void setTargetAbsolute(const QString &targetId, double normalized) { m_targets->setAbsolute(targetId, normalized); }
+    void nudgeTarget(const QString &targetId, double ticks) { m_targets->nudge(targetId, ticks); }
+
 signals:
     void devicesChanged();
     void learnChanged();

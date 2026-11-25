@@ -1325,7 +1325,13 @@ if(NOT EMSCRIPTEN)
         src/app/surfaces/midi/MidiSurfaceService.h
         src/app/surfaces/midi/MidiSurfaceService.cpp
     )
-    target_compile_definitions(driftsurfaces PRIVATE DRIFT_SURFACE_MIDI)
+    target_compile_definitions(driftsurfaces PRIVATE DRIFT_SURFACE_MIDI DRIFT_SURFACE_OSC)
+    target_sources(driftsurfaces PRIVATE
+        src/app/surfaces/osc/OscCodec.h
+        src/app/surfaces/osc/OscCodec.cpp
+        src/app/surfaces/osc/OscSurfaceService.h
+        src/app/surfaces/osc/OscSurfaceService.cpp
+    )
     if(ANDROID)
         target_sources(driftsurfaces PRIVATE src/app/surfaces/midi/AndroidMidiIo.cpp)
     else()

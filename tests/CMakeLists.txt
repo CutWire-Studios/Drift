@@ -352,6 +352,7 @@ qt_add_executable(tst_mcp
     ../src/playback/preview/ClipPreviewImageStore.cpp
     ../src/ui/imageproviders/multicam/MulticamImageStore.cpp
     ../src/app/editor/AppController.cpp
+    ../src/app/surfaces/EditorSurfaceTargets.cpp
     ../src/app/editor/appcontroller/AppControllerClipModel.cpp
     ../src/app/editor/appcontroller/AppControllerInternal.cpp
     ../src/app/editor/appcontroller/AppControllerTimeline.cpp
@@ -471,7 +472,7 @@ qt_add_executable(tst_mcp
     ../src/app/mcp/transport/McpStdioServer.cpp
 )
 target_include_directories(tst_mcp PRIVATE ../src)
-target_link_libraries(tst_mcp PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Network Qt6::Multimedia Qt6::Concurrent driftcore driftengine)
+target_link_libraries(tst_mcp PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Network Qt6::Multimedia Qt6::Concurrent driftcore driftengine driftsurfaces)
 target_compile_definitions(tst_mcp PRIVATE DRIFT_VERSION="${PROJECT_VERSION}"
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 qt_add_resources(tst_mcp "procedural_docs"
@@ -736,3 +737,8 @@ qt_add_executable(tst_midisurfaces tst_midisurfaces.cpp)
 target_include_directories(tst_midisurfaces PRIVATE ../src)
 target_link_libraries(tst_midisurfaces PRIVATE Qt6::Test Qt6::Core driftsurfaces)
 add_test(NAME MidiSurfaces COMMAND tst_midisurfaces)
+
+qt_add_executable(tst_osc tst_osc.cpp)
+target_include_directories(tst_osc PRIVATE ../src)
+target_link_libraries(tst_osc PRIVATE Qt6::Test Qt6::Core Qt6::Network driftsurfaces)
+add_test(NAME Osc COMMAND tst_osc)

@@ -159,6 +159,16 @@ QStringList EditorSurfaceTargets::stripLabels() const
     return out;
 }
 
+double EditorSurfaceTargets::playheadSeconds() const
+{
+    return m_app->playheadSeconds();
+}
+
+void EditorSurfaceTargets::seek(double seconds)
+{
+    m_app->setPlayheadSeconds(std::max(0.0, seconds));
+}
+
 QList<SurfaceTarget> EditorSurfaceTargets::targets() const
 {
     QList<SurfaceTarget> out;

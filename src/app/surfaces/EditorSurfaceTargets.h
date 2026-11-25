@@ -29,6 +29,8 @@ public:
     void nudge(const QString &id, double ticks) override;
     double current(const QString &id) const override;
     QStringList stripLabels() const override;
+    double playheadSeconds() const override;
+    void seek(double seconds) override;
     QString idForProperty(const QString &key, double min, double max) const override;
 
 private:

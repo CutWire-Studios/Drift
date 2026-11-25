@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <cmath>
 #include <functional>
 
 namespace drift {
@@ -42,6 +43,10 @@ public:
         Q_UNUSED(key) Q_UNUSED(min) Q_UNUSED(max)
         return {};
     }
+
+    // The playhead in seconds, NaN without a project; for transports that report or set it.
+    virtual double playheadSeconds() const { return std::nan(""); }
+    virtual void seek(double seconds) { Q_UNUSED(seconds) }
 
     // Set by the manager. invalidated: what a pickup was compared against moved under it
     // (selection, mixer bank). labelsChanged: stripLabels() differs. requestAction: forward a
