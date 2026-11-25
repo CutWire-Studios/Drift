@@ -1,5 +1,6 @@
 #include "app/HeadlessApp.h"
 #include "app/ProjectDirCli.h"
+#include "engine/projdir/ProjectTemplate.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
@@ -178,7 +179,10 @@ int runHeadless(int argc, char *argv[])
     drift::ReverseProxyCache::instance().sweep(drift::ReverseProxyCache::kDefaultMaxBytes);
 
     const QString glLine = describeOpenGl();
-    if (farmCommand.mode != drift::farm::FarmCommand::Mode::Mcp) {
+    // Farm and templates share `--render`; a template folder goes to the template path below.
+    const bool isTemplateRender = farmCommand.mode == drift::farm::FarmCommand::Mode::Render
+        && drift::projdir::isTemplateFolder(farmCommand.project);
+    if (farmCommand.mode != drift::farm::FarmCommand::Mode::Mcp && !isTemplateRender) {
         std::fprintf(stderr, "Drift %s — headless, %s, opengl %s\n", DRIFT_VERSION,
                      qPrintable(QGuiApplication::platformName()), qPrintable(glLine));
         QString gpuLine = glLine;
