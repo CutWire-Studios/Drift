@@ -72,6 +72,10 @@ public:
     // into the queue's own folder.
     QString addProjectFile(const QString &projectFile, const QString &output, const QVariantMap &settings,
                            JobTarget target, bool hold, const QJsonObject &source = {});
+    // From "Render with data": one job per row of the template at `folder`. `target` is "local" or
+    // "farm". Returns {queued, failures, error}.
+    Q_INVOKABLE QVariantMap addTemplateBatch(const QString &folder, const QUrl &dataFile, const QString &output,
+                                             int row, bool all, const QString &target);
     Q_INVOKABLE void start(const QString &id);
     Q_INVOKABLE void startAll();
     Q_INVOKABLE void hold(const QString &id);

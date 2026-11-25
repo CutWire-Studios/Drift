@@ -2,6 +2,9 @@
 #include "app/farm/FarmHttp.h"
 #include "app/farm/RenderQueue.h"
 #include "app/farm/RenderTask.h"
+#include "app/farm/TemplateBatch.h"
+#include "core/project/Project.h"
+#include "core/project/folder/ProjectFolder.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -23,6 +26,7 @@ private slots:
     void queueStartReleasesHeld();
     void httpRequiresToken();
     void joinedChunksKeepEveryFrame();
+    void templateBatchQueuesOneUnchunkedJobPerRow();
 };
 
 namespace {
@@ -147,6 +151,60 @@ void TestFarm::joinedChunksKeepEveryFrame()
     QString error;
     QVERIFY2(joinChunks(chunks, frames, 30, 1, audio, output, &error), qPrintable(error));
     QCOMPARE(countVideoFrames(output), qint64(75));
+}
+
+
+void TestFarm::templateBatchQueuesOneUnchunkedJobPerRow()
+{
+    QTemporaryDir dir;
+    const QString root = dir.filePath(QStringLiteral("tpl"));
+    drift::Project project;
+    project.setName(QStringLiteral("Template"));
+    project.tracks().clear();
+    drift::projdir::FileMap files = drift::projdir::splitProject(project.toJson(true), root);
+    files.insert(QStringLiteral("scripts/main.lua"),
+                 QByteArray("title { id = \"headline\", text = param \"headline\", duration = sec(param \"seconds\") }\n"));
+    files.insert(QStringLiteral("template.json"), QByteArray(R"({
+  "params": [
+    {"name": "headline", "type": "text", "default": "Hello"},
+    {"name": "seconds", "type": "number", "default": 2}
+  ],
+  "data": "data/rows.csv"
+})"));
+    files.insert(QStringLiteral("data/rows.csv"), QByteArray("headline,seconds\nFirst,3\nBroken,x\nThird,4\n"));
+    QVERIFY(drift::projdir::writeProjectFolder(root, files).error.isEmpty());
+
+    RenderQueue queue(dir.filePath(QStringLiteral("q")));
+    TemplateBatch batch;
+    batch.folder = root;
+    batch.output = dir.filePath(QStringLiteral("out-{row}.mp4"));
+    batch.all = true;
+    batch.target = JobTarget::Farm;
+    batch.hold = true;
+    const TemplateBatchResult result = queueTemplateBatch(queue, batch);
+    QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
+    QCOMPARE(result.jobs.size(), 2);
+    QCOMPARE(result.failures.size(), 1);
+    QVERIFY(result.failures.first().startsWith(QLatin1String("row 2")));
+    QCOMPARE(result.jobs.at(0).row, 1);
+    QCOMPARE(result.jobs.at(1).row, 3);
+    QCOMPARE(result.jobs.at(1).output, dir.filePath(QStringLiteral("out-3.mp4")));
+
+    const RenderJob *job = queue.find(result.jobs.at(1).id);
+    QVERIFY(job);
+    QCOMPARE(job->target, JobTarget::Farm);
+    QCOMPARE(job->state, JobState::Held);
+    QCOMPARE(job->source.value(QStringLiteral("row")).toObject().value(QStringLiteral("headline")).toString(),
+             QStringLiteral("Third"));
+    QCOMPARE(QFileInfo(job->source.value(QStringLiteral("template")).toString()), QFileInfo(root));
+    QVERIFY(QFileInfo::exists(job->projectPath));
+    QFile snapshot(job->projectPath);
+    QVERIFY(snapshot.open(QIODevice::ReadOnly));
+    QVERIFY(snapshot.readAll().contains("Third"));
+
+    batch.all = false;
+    batch.row = 9;
+    QVERIFY(!queueTemplateBatch(queue, batch).error.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestFarm)

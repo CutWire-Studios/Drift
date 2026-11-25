@@ -84,6 +84,7 @@ FarmCoordinator::JobPlan prepareJobPlan(const RenderJob &job, const QString &wor
     plan.workDir = QDir(workRoot).filePath(job.id);
     QDir().mkpath(plan.workDir);
     plan.output = job.output;
+    plan.wholeOnly = !job.source.isEmpty();
 
     drift::Project project;
     if (!loadProjectDocument(job.projectPath, &project, &plan.error))
@@ -421,7 +422,7 @@ void FarmCoordinator::planTasks(JobPlan &plan)
     const double fps = double(plan.fpsNum) / double(plan.fpsDen);
     const qint64 minChunk = qMax<qint64>(30, static_cast<qint64>(std::ceil(fps * 2.0)));
     const int workers = qMax<int>(2, static_cast<int>(m_workers.size()));
-    const bool safe = chunkSafeCodec(settings.videoCodecId) && !settings.audioOnly && !settings.gifExport;
+    const bool safe = !plan.wholeOnly && chunkSafeCodec(settings.videoCodecId) && !settings.audioOnly && !settings.gifExport;
     const qint64 chunks = qMin<qint64>(qint64(workers) * 2, plan.totalFrames / minChunk);
 
     plan.chunked = false;
@@ -472,7 +473,7 @@ void FarmCoordinator::planTasks(JobPlan &plan)
             return;
         }
         plan.notes.append(QStringLiteral("Slices came to %1 frames, not %2; rendering whole").arg(sum).arg(plan.totalFrames));
-    } else if (!safe) {
+    } else if (!safe && !plan.wholeOnly) {
         plan.notes.append(QStringLiteral("%1 cannot be joined without re-encoding; rendering whole")
                               .arg(settings.videoCodecId));
     }

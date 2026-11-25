@@ -31,5 +31,6 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 - Headless rendering without a display server: `drift --headless --render project.drift -o out.mp4` picks a GPU through EGL (`--list-gpus`, `--gpu`), no xvfb needed.
 - Render queue: "Add to queue" in the export dialog, a queue window to reorder, hold, retry and watch jobs, rendered in the editor or in a separate background process so editing stays responsive.
 - Render farm on the local network: run `drift --headless --farm-coordinator` (or the editor) and `--farm-worker` on other machines with a shared token. Media streams to workers by hash, long exports split into chunks and are joined losslessly. Settings are on a new Render farm page.
+- Template batches on the queue and the farm: "Render with data" can add one queue job per row or send them to the render farm, `drift --headless --farm-coordinator --render <template folder> --all` submits a batch, and `template_render` takes `target: queue|farm`.
 
 ## 🎨 Improved

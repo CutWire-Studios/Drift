@@ -25,6 +25,21 @@ namespace drift::mcp::projectfolder {
 
 using namespace drift::projdir;
 
+namespace {
+
+TemplateQueueHook &queueHook()
+{
+    static TemplateQueueHook hook;
+    return hook;
+}
+
+} // namespace
+
+void setTemplateQueueHook(TemplateQueueHook hook)
+{
+    queueHook() = std::move(hook);
+}
+
 QJsonObject guide()
 {
     const QString text = projectFolderGuide();
@@ -102,6 +117,18 @@ QJsonObject renderTemplate(const QJsonObject &args)
         pattern = QDir(QFileInfo(contents.rootDir).absolutePath()).filePath(pattern);
     if (selected.size() > 1 && !pattern.contains(QLatin1String("{row}")))
         return err("bad_args", QStringLiteral("output needs {row} to tell %1 renders apart").arg(selected.size()));
+
+    const QString target = args.value(QStringLiteral("target")).toString(QStringLiteral("now"));
+    if (target != QLatin1String("now")) {
+        if (!queueHook())
+            return err("unsupported", QStringLiteral("target %1 needs the editor's render queue; this process has none").arg(target));
+        QJsonObject queued = queueHook()(contents.rootDir, data, pattern, row, all,
+                                         target == QLatin1String("farm") ? QStringLiteral("farm") : QStringLiteral("local"));
+        const QString error = queued.take(QStringLiteral("error")).toString();
+        if (!error.isEmpty())
+            return err("queue_failed", error);
+        return ok(queued);
+    }
 
     QJsonArray outputs;
     for (const int r : std::as_const(selected)) {

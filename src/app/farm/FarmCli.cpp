@@ -4,8 +4,10 @@
 #include "app/farm/FarmWorker.h"
 #include "app/farm/RenderQueue.h"
 #include "app/farm/RenderTask.h"
+#include "app/farm/TemplateBatch.h"
 #include "engine/encode/export/Exporter.h"
 #include "core/base/CacheRoot.h"
+#include "engine/projdir/ProjectTemplate.h"
 
 #include <QDir>
 #include <QHostInfo>
@@ -22,6 +24,7 @@
 #include <iostream>
 #include <mutex>
 #include <string>
+#include <memory>
 #include <thread>
 
 namespace drift::farm {
@@ -57,6 +60,12 @@ FarmCommand parseFarmCommand(int argc, char *argv[])
             command.project = value(i);
         } else if (arg == "-o" || arg == "--output") {
             command.output = value(i);
+        } else if (arg == "--data") {
+            command.data = value(i);
+        } else if (arg == "--row") {
+            command.row = value(i).toInt();
+        } else if (arg == "--all") {
+            command.all = true;
         } else if (arg == "--preset") {
             command.settings.insert(QStringLiteral("preset"), value(i));
         } else if (arg == "--codec") {
@@ -79,7 +88,7 @@ FarmCommand parseFarmCommand(int argc, char *argv[])
 
 bool isFarmValueFlag(const QByteArray &arg)
 {
-    static const QList<QByteArray> flags{"--gpu", "--render", "-o", "--output", "--preset", "--codec", "--crf",
+    static const QList<QByteArray> flags{"--gpu", "--render", "--data", "--row", "-o", "--output", "--preset", "--codec", "--crf",
                                          "--height", "--fps", "--start", "--end", "--farm-worker", "--port", "--token", "--name",
                                          "--cache-gb"};
     return flags.contains(arg);
@@ -224,7 +233,45 @@ int runCoordinator(const FarmCommand &command, QCoreApplication &app, const QStr
     std::fflush(stdout);
 
     int exitCode = 0;
-    if (command.hasRender()) {
+    if (command.hasRender() && drift::projdir::isTemplateFolder(command.project)) {
+        QVariantMap settings;
+        if (!resolvePreset(command.settings, &settings))
+            return 2;
+        TemplateBatch batch;
+        batch.folder = command.project;
+        batch.dataFile = command.data;
+        batch.output = command.output;
+        batch.row = command.row;
+        batch.all = command.all;
+        batch.settings = settings;
+        batch.target = JobTarget::Farm;
+        const TemplateBatchResult result = queueTemplateBatch(queue, batch);
+        for (const QString &failure : result.failures)
+            std::fprintf(stderr, "%s\n", qPrintable(failure));
+        if (!result.error.isEmpty()) {
+            std::fprintf(stderr, "%s\n", qPrintable(result.error));
+            return 2;
+        }
+        auto pending = std::make_shared<QSet<QString>>();
+        for (const TemplateBatchJob &job : result.jobs) {
+            pending->insert(job.id);
+            std::fprintf(stdout, "%d\t%s\n", job.row, qPrintable(job.output));
+        }
+        std::fflush(stdout);
+        exitCode = result.failures.isEmpty() ? 0 : 1;
+        QObject::connect(&queue, &RenderQueue::jobFinished, &app, [&, pending](const QString &finished, bool ok) {
+            if (!pending->remove(finished))
+                return;
+            if (!ok) {
+                std::fprintf(stderr, "render failed: %s\n", qPrintable(queue.find(finished)->error));
+                exitCode = 1;
+            }
+            if (pending->isEmpty())
+                QCoreApplication::quit();
+        });
+        for (const TemplateBatchJob &job : result.jobs)
+            queue.start(job.id);
+    } else if (command.hasRender()) {
         if (command.output.isEmpty()) {
             std::fprintf(stderr, "--render needs -o <file>\n");
             return 2;

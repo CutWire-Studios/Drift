@@ -22,6 +22,10 @@ struct FarmCommand
     QString project;
     QString output;
     QVariantMap settings;
+    // A template folder as `project`: one farm job per row.
+    QString data;
+    int row = 0;
+    bool all = false;
 
     // FarmCoordinator / FarmWorker
     int port = 4800;

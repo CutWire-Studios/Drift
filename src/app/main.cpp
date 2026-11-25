@@ -31,6 +31,9 @@
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
 #include "app/farm/FarmCoordinator.h"
 #include "app/farm/RenderQueue.h"
+#include "app/farm/TemplateBatch.h"
+#include "app/mcp/tools/McpProjectFolder.h"
+#include <QJsonArray>
 #endif
 #include "app/crash/CrashReporter.h"
 #include "app/platform/CrashHandler.h"
@@ -995,6 +998,26 @@ int main(int argc, char *argv[])
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     drift::farm::RenderQueue renderQueue;
     drift::farm::FarmCoordinator renderFarm(&renderQueue);
+    drift::mcp::projectfolder::setTemplateQueueHook(
+        [&renderQueue](const QString &folder, const QString &data, const QString &output, int row, bool all,
+                       const QString &target) {
+            drift::farm::TemplateBatch batch;
+            batch.folder = folder;
+            batch.dataFile = data;
+            batch.output = output;
+            batch.row = row;
+            batch.all = all;
+            batch.target = target == QLatin1String("farm") ? drift::farm::JobTarget::Farm : drift::farm::JobTarget::Local;
+            const drift::farm::TemplateBatchResult result = drift::farm::queueTemplateBatch(renderQueue, batch);
+            QJsonArray jobs;
+            for (const drift::farm::TemplateBatchJob &job : result.jobs)
+                jobs.append(QJsonObject{{QStringLiteral("row"), job.row},
+                                        {QStringLiteral("id"), job.id},
+                                        {QStringLiteral("output"), job.output}});
+            return QJsonObject{{QStringLiteral("error"), result.error},
+                               {QStringLiteral("jobs"), jobs},
+                               {QStringLiteral("failures"), QJsonArray::fromStringList(result.failures)}};
+        });
     renderQueue.setSnapshotProvider([&editorState] { return editorState.exportSnapshotJson(); });
 #endif
     drift::PointerDevices pointerDevices;

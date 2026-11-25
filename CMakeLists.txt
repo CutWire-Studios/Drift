@@ -1777,6 +1777,8 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         src/app/farm/RenderJob.cpp
         src/app/farm/RenderQueue.h
         src/app/farm/RenderQueue.cpp
+        src/app/farm/TemplateBatch.h
+        src/app/farm/TemplateBatch.cpp
         src/app/farm/WorkerProcess.h
         src/app/farm/WorkerProcess.cpp
         src/app/farm/FarmHttp.h

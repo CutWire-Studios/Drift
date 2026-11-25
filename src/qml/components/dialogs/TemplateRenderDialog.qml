@@ -11,9 +11,21 @@ ThemedDialog {
     property var info: ({})
     property url dataFile
     readonly property int rowCount: info.rowCount || 0
+    readonly property bool farmSupported: Qt.platform.os !== "android" && Qt.platform.os !== "wasm"
+    readonly property var targets: {
+        const list = [{ id: "now", text: qsTr("Render now") }]
+        if (farmSupported) {
+            list.push({ id: "queue", text: qsTr("Add to render queue") })
+            if (RenderFarm.running)
+                list.push({ id: "farm", text: qsTr("Send to render farm") })
+        }
+        return list
+    }
+    readonly property string target: targets[Math.max(0, targetBox.currentIndex)].id
 
     title: qsTr("Render with data")
-    acceptText: root.folder.rendering ? qsTr("Rendering…") : qsTr("Render")
+    acceptText: root.folder.rendering ? qsTr("Rendering…")
+                : root.target === "now" ? qsTr("Render") : qsTr("Add")
     preferredWidth: Theme.dialogWidthMd
 
     function openDialog() {
@@ -21,6 +33,7 @@ ThemedDialog {
         refresh()
         outputField.text = info.output || ""
         allRows.checked = true
+        targetBox.currentIndex = 0
         rowField.text = "1"
         open()
     }
@@ -30,7 +43,18 @@ ThemedDialog {
     }
 
     onAccepted: {
-        if (!root.folder.rendering)
+        if (root.target !== "now") {
+            const result = RenderQueue.addTemplateBatch(root.folder.folderPath, root.dataFile, outputField.text,
+                                                        parseInt(rowField.text) || 0,
+                                                        root.rowCount === 0 || allRows.checked,
+                                                        root.target === "farm" ? "farm" : "local")
+            if (result.error !== "")
+                Toasts.error(result.error)
+            else if (result.failures.length > 0)
+                Toasts.error(qsTr("%n row(s) could not be queued: %1", "", result.failures.length).arg(result.failures[0]))
+            else
+                Toasts.info(root.target === "farm" ? qsTr("Sent to the render farm") : qsTr("Added to the render queue"))
+        } else if (!root.folder.rendering)
             root.folder.renderTemplate(root.dataFile, outputField.text, parseInt(rowField.text) || 0,
                                        root.rowCount === 0 || allRows.checked)
     }
@@ -92,6 +116,14 @@ ThemedDialog {
                 width: 80
                 inputMethodHints: Qt.ImhDigitsOnly
             }
+        }
+
+        ThemedComboBox {
+            id: targetBox
+            width: parent.width
+            visible: root.farmSupported
+            textRole: "text"
+            model: root.targets
         }
 
         ThemedLabel {

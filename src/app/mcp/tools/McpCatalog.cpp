@@ -1469,13 +1469,15 @@ const QList<Op> &ops()
           "data row, without touching the open project. data is a CSV or JSON file of rows (default: the "
           "template's own); row (1-based) or all picks the rows; output is a file pattern with {row} and "
           "{param}. Returns {outputs:[paths], log, pid} at once, or with wait:true the exit code and the "
-          "tail of the log when it is done.",
+          "tail of the log when it is done. target queue or farm adds one job per row to the editor's render "
+          "queue (farm: run by the render farm) and returns {jobs:[{row,id,output}], failures}.",
           objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Template folder"))},
                         {QStringLiteral("data"), stringProp(QStringLiteral("Data file (CSV or JSON array); default: the template's"))},
                         {QStringLiteral("row"), integerProp(QStringLiteral("One row, counting from 1"), 1, 1000000)},
                         {QStringLiteral("all"), boolProp(QStringLiteral("Every row"))},
                         {QStringLiteral("output"), stringProp(QStringLiteral("Output pattern, e.g. /renders/{row}.mp4"))},
-                        {QStringLiteral("wait"), boolProp(QStringLiteral("Block until the render ends (default false)"))}},
+                        {QStringLiteral("wait"), boolProp(QStringLiteral("Block until the render ends (default false)"))},
+                        {QStringLiteral("target"), enumProp(QStringLiteral("now (default), queue or farm"), {QStringLiteral("now"), QStringLiteral("queue"), QStringLiteral("farm")})}},
                        {QStringLiteral("folder")}) },
 
         { "list_animated_properties", "keyframes", "See what already has keys",

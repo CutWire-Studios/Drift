@@ -1,5 +1,6 @@
 #include "app/farm/RenderQueue.h"
 
+#include "app/farm/TemplateBatch.h"
 #include "app/farm/WorkerProcess.h"
 
 #include <QCoreApplication>
@@ -233,6 +234,22 @@ QString RenderQueue::addCurrent(const QUrl &output, const QVariantMap &settings,
                                       target == QLatin1String("farm") ? JobTarget::Farm : JobTarget::Local, hold);
     QFile::remove(staging);
     return id;
+}
+
+QVariantMap RenderQueue::addTemplateBatch(const QString &folder, const QUrl &dataFile, const QString &output, int row,
+                                          bool all, const QString &target)
+{
+    TemplateBatch batch;
+    batch.folder = folder;
+    batch.dataFile = dataFile.isLocalFile() ? dataFile.toLocalFile() : QString();
+    batch.output = output;
+    batch.row = row;
+    batch.all = all;
+    batch.target = target == QLatin1String("farm") ? JobTarget::Farm : JobTarget::Local;
+    const TemplateBatchResult result = queueTemplateBatch(*this, batch);
+    return {{QStringLiteral("queued"), int(result.jobs.size())},
+            {QStringLiteral("failures"), result.failures},
+            {QStringLiteral("error"), result.error}};
 }
 
 void RenderQueue::start(const QString &id)

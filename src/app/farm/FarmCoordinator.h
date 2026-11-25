@@ -106,6 +106,7 @@ public:
         QString jobId;
         bool preparing = true;
         bool chunked = false;
+        bool wholeOnly = false;
         bool joining = false;
         bool audioRunning = false;
         bool audioDone = true;
