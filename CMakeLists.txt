@@ -591,6 +591,8 @@ add_library(driftcore STATIC
     src/core/project/folder/ProjectFormat.h
     src/core/project/folder/ProjectSchema.h
     src/core/project/folder/ProjectSchema.cpp
+    src/core/project/folder/ProjectLint.h
+    src/core/project/folder/ProjectLint.cpp
     src/core/project/GuideSet.cpp
     src/core/interchange/subtitles/SubtitleParse.h
     src/core/interchange/subtitles/SrtIO.h
@@ -1161,6 +1163,12 @@ add_library(driftengine STATIC
     src/engine/project/ProjectBundle.cpp
     src/engine/project/ProjectDependencies.h
     src/engine/project/ProjectDependencies.cpp
+    src/engine/projdir/ProjectLsp.h
+    src/engine/projdir/ProjectLsp.cpp
+    src/engine/projdir/ProjectFolderLint.h
+    src/engine/projdir/ProjectFolderLint.cpp
+    src/engine/projdir/ProjectGuide.h
+    src/engine/projdir/ProjectGuide.cpp
     src/engine/gpu/device/GpuPreference.h
     src/engine/gpu/device/GpuPreference.cpp
     src/engine/gpu/device/GpuDevice.h
@@ -1717,6 +1725,8 @@ target_sources(driftapp PRIVATE
     src/app/mcp/tools/McpEffectAuthoring.cpp
     src/app/mcp/tools/McpProceduralAuthoring.h
     src/app/mcp/tools/McpProceduralAuthoring.cpp
+    src/app/mcp/tools/McpProjectFolder.h
+    src/app/mcp/tools/McpProjectFolder.cpp
     src/app/procedural/ProceduralAuthoringService.h
     src/app/procedural/ProceduralAuthoringService.cpp
     src/app/procedural/ProceduralEditorController.h
@@ -1747,6 +1757,8 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
     target_sources(drift PRIVATE
         src/app/HeadlessApp.h
         src/app/HeadlessApp.cpp
+        src/app/ProjectDirCli.h
+        src/app/ProjectDirCli.cpp
     )
     target_sources(driftapp PRIVATE
         src/app/mcp/transport/McpStdio.h
@@ -1955,10 +1967,10 @@ qt_add_resources(drift "drift_addon_catalog"
 qt_add_resources(drift "drift_procedural_docs"
     PREFIX "/docs"
     BASE docs
-    FILES docs/procedural.md
+    FILES docs/procedural.md docs/project-folder.md
 )
 # A resource file is a target source, and lupdate parses a source it has no parser for as C++.
-set_property(TARGET drift APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION docs/procedural.md)
+set_property(TARGET drift APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION docs/procedural.md docs/project-folder.md)
 
 qt_add_resources(drift "drift_search_index"
     PREFIX "/"

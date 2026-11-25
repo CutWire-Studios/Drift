@@ -453,6 +453,7 @@ qt_add_executable(tst_mcp
     ../src/app/forge/PackageInstaller.cpp
     ../src/app/mcp/tools/McpEffectAuthoring.cpp
     ../src/app/mcp/tools/McpProceduralAuthoring.cpp
+    ../src/app/mcp/tools/McpProjectFolder.cpp
     ../src/app/procedural/ProceduralAuthoringService.cpp
     ../src/app/mcp/protocol/McpValidate.cpp
     ../src/app/mcp/tools/McpMarket.cpp
@@ -479,12 +480,12 @@ target_compile_definitions(tst_mcp PRIVATE DRIFT_VERSION="${PROJECT_VERSION}"
 qt_add_resources(tst_mcp "procedural_docs"
     PREFIX "/docs"
     BASE "${CMAKE_SOURCE_DIR}/docs"
-    FILES "${CMAKE_SOURCE_DIR}/docs/procedural.md"
+    FILES "${CMAKE_SOURCE_DIR}/docs/procedural.md" "${CMAKE_SOURCE_DIR}/docs/project-folder.md"
 )
 # lupdate parses a source it has no parser for as C++. The exclusion is compared against the
 # source path as written, so the resource is named without "..".
 set_property(TARGET tst_mcp APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION
-    "${CMAKE_SOURCE_DIR}/docs/procedural.md")
+    "${CMAKE_SOURCE_DIR}/docs/procedural.md" "${CMAKE_SOURCE_DIR}/docs/project-folder.md")
 add_test(NAME Mcp COMMAND tst_mcp)
 drift_copy_effects(tst_mcp)
 drift_copy_transitions(tst_mcp)

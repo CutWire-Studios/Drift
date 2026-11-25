@@ -462,7 +462,7 @@ void McpTest::catalogOpsIncludeWhen()
     const qsizetype compactSize = QJsonDocument(compact).toJson(QJsonDocument::Compact).size();
     // Raise for the bake ops, new_timeline/close_timeline, get/set_teleprompter, use_as_mask/convert_clip_to_mask,
     // slip_clip, mask_faces, the capture ops, the generator and text script ops, title templates and the beat-sync ops.
-    QVERIFY2(compactSize < 27600, qPrintable(QString::number(compactSize)));
+    QVERIFY2(compactSize < 28000, qPrintable(QString::number(compactSize)));
     const qsizetype briefSize = QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                                     .toJson(QJsonDocument::Compact).size();
     QVERIFY2(briefSize < 13700, qPrintable(QString::number(briefSize))); // raise for the bake, animation, timeline, teleprompter, mask, generator, text script, title template and beat-sync ops

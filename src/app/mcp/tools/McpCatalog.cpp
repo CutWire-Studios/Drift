@@ -1449,6 +1449,35 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("limit"), integerProp(QStringLiteral("Rows at most (default 200)"), 1, 1000)}}),
           true, false, true },
 
+        { "project_lint", "project", "Check a project folder's files",
+          "Lint a project folder (<name>.driftproj): types, unknown keys, duplicate and unknown ids, "
+          "clips overlapping on a track, keyframes outside their clip, unknown effects and parameters, "
+          "orphan sidecars, missing media and script errors. Returns {problems:[{file, line, column, "
+          "severity: error|warning|info, message}], errors, warnings, text} with text as "
+          "file:line:col: severity: message lines. folder defaults to the open project folder. Run it after "
+          "every edit to the files; project_folder_guide has the format.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Project folder; default: the open one"))},
+                        {QStringLiteral("info"), boolProp(QStringLiteral("Also list info rows (parameters left at their default)"))}}),
+          true, false, true },
+        { "project_folder_guide", "project", "How project folders work",
+          "Read before editing a project folder with your file tools. Returns {guide} - the full text of "
+          "docs/project-folder.md: the folder layout, units (microseconds), ids, a hand-written clip, what "
+          "the editor does when a file changes, lint, Lua scripts and templates.",
+          objectSchema({}), true, false, true },
+        { "template_render", "project", "Render a template once per data row",
+          "Render a template folder (one with template.json) in a headless Drift process, one output per "
+          "data row, without touching the open project. data is a CSV or JSON file of rows (default: the "
+          "template's own); row (1-based) or all picks the rows; output is a file pattern with {row} and "
+          "{param}. Returns {outputs:[paths], log, pid} at once, or with wait:true the exit code and the "
+          "tail of the log when it is done.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Template folder"))},
+                        {QStringLiteral("data"), stringProp(QStringLiteral("Data file (CSV or JSON array); default: the template's"))},
+                        {QStringLiteral("row"), integerProp(QStringLiteral("One row, counting from 1"), 1, 1000000)},
+                        {QStringLiteral("all"), boolProp(QStringLiteral("Every row"))},
+                        {QStringLiteral("output"), stringProp(QStringLiteral("Output pattern, e.g. /renders/{row}.mp4"))},
+                        {QStringLiteral("wait"), boolProp(QStringLiteral("Block until the render ends (default false)"))}},
+                       {QStringLiteral("folder")}) },
+
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "

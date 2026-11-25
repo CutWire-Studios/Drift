@@ -9,6 +9,9 @@
 #include "app/procedural/ProceduralEditorController.h"
 #include "app/procedural/ProceduralHighlighter.h"
 #include "app/editor/ProjectFileController.h"
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+#include "app/ProjectDirCli.h"
+#endif
 #include "app/mcp/McpController.h"
 #include "engine/packages/assets/EmojiCatalog.h"
 #include "engine/packages/assets/FontCatalog.h"
@@ -662,6 +665,12 @@ int main(int argc, char *argv[])
         qputenv("QT_LOGGING_RULES", "qt.scenegraph.time.renderloop.debug=true");
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    // `drift lint <folder>` and `drift --lsp` are command-line tools: no window, no editor, nothing else started.
+    {
+        int projdirExit = 0;
+        if (drift::projdir::handleProjectDirCli(argc, argv, &projdirExit))
+            return projdirExit;
+    }
     // --headless is checked first: it also accepts --mcp-stdio, as the transport to serve
     // rather than as a request to attach to an editor running elsewhere.
     for (int i = 1; i < argc; ++i) {

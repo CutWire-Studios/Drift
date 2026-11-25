@@ -29,6 +29,7 @@
 #include "core/text/TextLook.h"
 #include "app/mcp/tools/McpEffectAuthoring.h"
 #include "app/mcp/tools/McpProceduralAuthoring.h"
+#include "app/mcp/tools/McpProjectFolder.h"
 #include "core/project/sources/GeneratorKinds.h"
 #include "core/text/TextScriptPresets.h"
 #include "app/mcp/protocol/McpJson.h"
@@ -4368,6 +4369,13 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return authoring::exportPackage(args);
     if (tool == QLatin1String("import_effect"))
         return authoring::importPackage(m_controller, args);
+
+    if (tool == QLatin1String("project_folder_guide"))
+        return projectfolder::guide();
+    if (tool == QLatin1String("project_lint"))
+        return projectfolder::lint(m_controller, args);
+    if (tool == QLatin1String("template_render"))
+        return projectfolder::renderTemplate(args);
 
     if (tool == QLatin1String("procedural_authoring_guide"))
         return procedural::guide();
