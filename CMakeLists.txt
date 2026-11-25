@@ -2543,6 +2543,7 @@ qt_add_qml_module(drift
         src/qml/components/ImageViewer.qml
         src/qml/components/dialogs/ImageViewerDialog.qml
         src/qml/components/dialogs/BakesDialog.qml
+        src/qml/components/dialogs/RenderQueueDialog.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/timeline/PlayheadInterpolator.qml
         src/qml/components/timeline/TimelineTrackArea.qml
@@ -3011,6 +3012,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsGroupHeader.qml
         src/qml/components/shell/SettingsKeymapPage.qml
         src/qml/components/shell/SettingsExportPage.qml
+        src/qml/components/shell/SettingsFarmPage.qml
         src/qml/components/shell/SettingsNetworkPage.qml
         src/qml/components/shell/SettingsNotificationsPage.qml
         src/qml/components/shell/SettingsPersonalizePage.qml

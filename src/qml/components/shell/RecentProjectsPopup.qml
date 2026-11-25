@@ -15,6 +15,7 @@ Popup {
     signal openRecentRequested(string path)
     signal saveAsRequested()
     signal exportRequested()
+    signal renderQueueRequested()
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
@@ -250,6 +251,13 @@ Popup {
             glyph: Theme.icons.upload
             text: qsTr("Export video…")
             onTriggered: root.exportRequested()
+        }
+
+        RecentProjectsActionRow {
+            popup: root
+            glyph: Theme.icons.layers
+            text: qsTr("Render queue…")
+            onTriggered: root.renderQueueRequested()
         }
 
         RecentProjectsActionRow {

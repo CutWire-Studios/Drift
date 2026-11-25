@@ -40,6 +40,7 @@ const QList<ActionDef> kActions = {
     {"newProject", QT_TRANSLATE_NOOP("AppController", "New project"), "app"},
     {"importMedia", QT_TRANSLATE_NOOP("AppController", "Import media to timeline…"), "app"},
     {"export", QT_TRANSLATE_NOOP("AppController", "Export…"), "app"},
+    {"renderQueue", QT_TRANSLATE_NOOP("AppController", "Render queue…"), "app"},
     {"openSettings", QT_TRANSLATE_NOOP("AppController", "Open settings"), "app"},
     {"openKeymap", QT_TRANSLATE_NOOP("AppController", "Open keyboard shortcuts"), "app"},
     {"open", QT_TRANSLATE_NOOP("AppController", "Open project"), "app"},

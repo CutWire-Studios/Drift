@@ -1581,6 +1581,10 @@ ApplicationWindow {
             if (editorHeader.visible && !EditorState.exportInProgress)
                 editorHeader.exportVideo()
             return true
+        case "renderQueue":
+            if (editorHeader.visible && Qt.platform.os !== "android")
+                editorHeader.openRenderQueue()
+            return true
         case "openSettings":
             window.openSettings()
             return true

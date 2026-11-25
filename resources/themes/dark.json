@@ -1530,6 +1530,14 @@
       "divider": "$semantic.panel.border",
       "radius": "$metrics.radius.sm"
     },
+    "renderQueueRow": {
+      "backgroundHover": "$semantic.panel.muted",
+      "divider": "$semantic.panel.border",
+      "radius": "$metrics.radius.sm",
+      "done": "$semantic.constructive",
+      "failed": "$semantic.destructive",
+      "held": "$semantic.warning"
+    },
     "timelineBakeStrip": {
       "fresh": "$semantic.constructive",
       "stale": "$semantic.warning",

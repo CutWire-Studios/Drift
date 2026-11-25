@@ -65,7 +65,7 @@ Item {
 
     function closeTopDialog() {
         const dialogs = [unsavedDialog, exportDialogLoader.item, exportProgressDialogLoader.item,
-                         projectPropertiesDialogLoader.item, projectHealthDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item,
+                         projectPropertiesDialogLoader.item, projectHealthDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item, renderQueueDialogLoader.item,
                          languageChooserDialogLoader.item, packageProgressDialog]
         for (var i = 0; i < dialogs.length; ++i) {
             const d = dialogs[i]
@@ -284,6 +284,10 @@ Item {
         exportDialogLoader.ensure().openDialog()
     }
 
+    function openRenderQueue() {
+        renderQueueDialogLoader.ensure().openDialog()
+    }
+
     // True once the user has dismissed the progress dialog while an export is
     // still running; drives the circular-progress badge next to Export.
     property bool exportProgressDismissed: false
@@ -401,6 +405,11 @@ Item {
     }
 
     LazyLoader {
+        id: renderQueueDialogLoader
+        sourceComponent: Component { RenderQueueDialog { } }
+    }
+
+    LazyLoader {
         id: bakesDialogLoader
         sourceComponent: Component { BakesDialog { } }
     }
@@ -453,6 +462,7 @@ Item {
                 onCloseProjectRequested: root.closeProject()
                 onSaveAsRequested: root.saveProjectAs()
                 onExportRequested: root.exportVideo()
+                onRenderQueueRequested: root.openRenderQueue()
                 onPackageRequested: root.packageProject()
                 onSaveJsonRequested: root.saveProjectJson()
                 onOpenJsonRequested: root.openProjectJson()

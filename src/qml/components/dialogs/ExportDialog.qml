@@ -371,7 +371,7 @@ ThemedDialog {
         startExport("all")
     }
 
-    function startExport(bakeMode) {
+    function pickOutput() {
         var container = isGifExport ? "gif"
                 : isAudioOnly
                   ? EditorState.exportPreferredAudioOnlyContainer(audioCodecId)
@@ -384,9 +384,13 @@ ThemedDialog {
         var suggestedName = Qt.platform.os === "android"
                 ? EditorState.projectFile.projectName + " " + Qt.formatDateTime(new Date(), "yyyyMMdd_HHmmss")
                 : EditorState.projectFile.projectName
-        var url = FileDialogs.saveFile(dialogTitle, filters,
-                                       suggestedName, suffix,
-                                       EditorState.lastExportFolder())
+        return FileDialogs.saveFile(dialogTitle, filters,
+                                    suggestedName, suffix,
+                                    EditorState.lastExportFolder())
+    }
+
+    function startExport(bakeMode) {
+        var url = pickOutput()
         if (url != "") {
             const settings = buildSettings()
             settings.bakes = useBakes ? bakeMode : "none"
@@ -396,6 +400,31 @@ ThemedDialog {
             Toasts.info(qsTr("Export cancelled."))
         }
     }
+
+    // Queued renders use the editor's frozen copy of the project, so the dialog can close at once.
+    function queueExport(target) {
+        var url = pickOutput()
+        if (url == "")
+            return
+        const jobId = RenderQueue.addCurrent(url, buildSettings(), target)
+        if (jobId === "")
+            return
+        Toasts.info(target === "farm" ? qsTr("Sent to the render farm")
+                    : RenderQueue.autoStart ? qsTr("Added to the render queue")
+                    : qsTr("Added to the render queue. Press Start there to render it."))
+        root.close()
+    }
+
+    readonly property bool queueAvailable: Qt.platform.os !== "android" && Qt.platform.os !== "wasm"
+    extraButtons: {
+        if (!queueAvailable)
+            return []
+        const buttons = [{ id: "queue", text: qsTr("Add to queue") }]
+        if (RenderFarm.running)
+            buttons.push({ id: "farm", text: qsTr("Send to farm") })
+        return buttons
+    }
+    onExtraClicked: (id) => queueExport(id === "farm" ? "farm" : "local")
 
     ThemedDialog {
         id: staleBakesDialog
