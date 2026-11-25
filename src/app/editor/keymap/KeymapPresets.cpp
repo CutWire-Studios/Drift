@@ -19,6 +19,7 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("playPause"), {QStringLiteral("Space")}},
         {QStringLiteral("importMedia"), {QStringLiteral("Ctrl+I")}},
         {QStringLiteral("export"), {QStringLiteral("Ctrl+E")}},
+        {QStringLiteral("renderQueue"), {}},
         {QStringLiteral("openSettings"), {QStringLiteral("Ctrl+,")}},
         {QStringLiteral("openKeymap"), {QStringLiteral("F1")}},
         {QStringLiteral("stop"), {QStringLiteral("K")}},
