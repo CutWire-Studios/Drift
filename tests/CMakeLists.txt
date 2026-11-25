@@ -755,3 +755,20 @@ target_include_directories(tst_projectfolder PRIVATE ../src)
 target_link_libraries(tst_projectfolder PRIVATE Qt6::Test driftcore driftengine)
 target_compile_definitions(tst_projectfolder PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests/data")
 add_test(NAME ProjectFolder COMMAND tst_projectfolder)
+
+if(NOT ANDROID AND NOT EMSCRIPTEN)
+    # The extra sources are what driftapp's MCP and marketplace objects need once RenderTask pulls them in.
+    qt_add_executable(tst_farm
+        tst_farm.cpp
+        ../src/app/online/addons/AddonManager.cpp
+        ../src/app/mcp/protocol/McpProtocol.cpp
+        ../src/ui/theme/ThemeManager.cpp
+        ../src/app/online/marketplace/MarketSourceBrowser.cpp
+        ../src/app/online/marketplace/MarketTransport.cpp
+        ../src/app/online/market/MarketIdentity.cpp
+    )
+    target_include_directories(tst_farm PRIVATE ../src)
+    target_link_libraries(tst_farm PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Multimedia Qt6::Concurrent Qt6::Network driftapp driftcore driftengine)
+    target_compile_definitions(tst_farm PRIVATE DRIFT_VERSION="${PROJECT_VERSION}")
+    add_test(NAME Farm COMMAND tst_farm)
+endif()

@@ -28,6 +28,10 @@
 #include "app/online/addons/AddonManager.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+#include "app/farm/FarmCoordinator.h"
+#include "app/farm/RenderQueue.h"
+#endif
 #include "app/crash/CrashReporter.h"
 #include "app/platform/CrashHandler.h"
 #include "app/platform/FileDialogs.h"
@@ -988,6 +992,11 @@ int main(int argc, char *argv[])
     ForgeController forge(&editorState, &workspaceStore);
     AudioForgeController audioForge(&editorState, &workspaceStore);
     drift::Haptics haptics;
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    drift::farm::RenderQueue renderQueue;
+    drift::farm::FarmCoordinator renderFarm(&renderQueue);
+    renderQueue.setSnapshotProvider([&editorState] { return editorState.exportSnapshotJson(); });
+#endif
     drift::PointerDevices pointerDevices;
     drift::PointerLock pointerLock;
     drift::Gamepad gamepad;
@@ -1023,6 +1032,11 @@ int main(int argc, char *argv[])
     searchIndex.setSources(&editorState, &workspaceStore, &addonManager, ThemeManager::shared());
     qmlRegisterSingletonInstance("Drift", 1, 0, "SearchIndex", &searchIndex);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    qmlRegisterSingletonInstance("Drift", 1, 0, "RenderQueue", &renderQueue);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "RenderFarm", &renderFarm);
+    renderFarm.restore();
+#endif
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerDevices", &pointerDevices);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerLock", &pointerLock);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Gamepad", &gamepad);

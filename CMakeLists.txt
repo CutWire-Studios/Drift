@@ -1766,6 +1766,43 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         src/app/ProjectDirCli.h
         src/app/ProjectDirCli.cpp
     )
+    # Render queue and farm: one task runner behind the CLI, the in-process queue, the local
+    # worker process and the LAN workers.
+    target_sources(driftapp PRIVATE
+        src/app/farm/RenderTask.h
+        src/app/farm/RenderTask.cpp
+        src/app/farm/FarmCli.h
+        src/app/farm/FarmCli.cpp
+        src/app/farm/RenderJob.h
+        src/app/farm/RenderJob.cpp
+        src/app/farm/RenderQueue.h
+        src/app/farm/RenderQueue.cpp
+        src/app/farm/WorkerProcess.h
+        src/app/farm/WorkerProcess.cpp
+        src/app/farm/FarmHttp.h
+        src/app/farm/FarmHttp.cpp
+        src/app/farm/FarmCoordinator.h
+        src/app/farm/FarmCoordinator.cpp
+        src/app/farm/FarmWorker.h
+        src/app/farm/FarmWorker.cpp
+        src/app/farm/ChunkJoin.h
+        src/app/farm/ChunkJoin.cpp
+    )
+    # The native EGL Qt platform: contexts with no display server. Private QPA headers, so it
+    # needs Qt6::GuiPrivate; without that (or off Linux) --headless keeps using the stock platforms.
+    if(UNIX AND NOT APPLE)
+        find_package(Qt6 COMPONENTS GuiPrivate QUIET)
+        if(TARGET Qt6::GuiPrivate)
+            target_sources(drift PRIVATE
+                src/app/headless/EglPlatform.h
+                src/app/headless/EglPlatform.cpp
+            )
+            target_link_libraries(drift PRIVATE Qt6::GuiPrivate)
+            target_compile_definitions(drift PRIVATE DRIFT_HEADLESS_EGL)
+            set_source_files_properties(src/app/headless/EglPlatform.cpp PROPERTIES
+                COMPILE_DEFINITIONS QT_STATICPLUGIN)
+        endif()
+    endif()
     target_sources(driftapp PRIVATE
         src/app/mcp/transport/McpStdio.h
         src/app/mcp/transport/McpStdio.cpp

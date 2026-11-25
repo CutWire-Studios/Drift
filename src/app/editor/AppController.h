@@ -2104,6 +2104,9 @@ public:
     Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
                                         bool rememberChoice = true);
     Q_INVOKABLE void cancelExport();
+    // The main timeline as an export renders it (review tracks hidden and muted), as project JSON:
+    // what the render queue stores so a job outlives later edits.
+    QByteArray exportSnapshotJson() const;
     // Copies the finished export into the shared media collection and hands it to the system share
     // sheet. Deferred to this point rather than done as part of the export because it is a second
     // full copy of the video, and most exports are never shared. Android only; false/no-op elsewhere.

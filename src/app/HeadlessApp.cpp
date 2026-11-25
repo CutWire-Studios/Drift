@@ -15,6 +15,12 @@
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
 #include "app/online/marketplace/MarketServices.h"
+#include "app/farm/FarmCli.h"
+#ifdef DRIFT_HEADLESS_EGL
+#include "app/headless/EglPlatform.h"
+#include <QtPlugin>
+Q_IMPORT_PLUGIN(EglIntegrationPlugin)
+#endif
 
 // QApplication rather than QGuiApplication: the model layer is shared with the GUI build
 // and this keeps the two paths on one application type. Nothing here opens a window.
@@ -85,6 +91,10 @@ void printBanner(std::FILE *out, const QString &glLine, bool stdioServing,
 {
     QString text = QStringLiteral("Drift %1 — headless\n").arg(QStringLiteral(DRIFT_VERSION));
     text += QStringLiteral("  platform  %1\n").arg(QGuiApplication::platformName());
+#ifdef DRIFT_HEADLESS_EGL
+    if (const QString egl = drift::headless::activeEglDescription(); !egl.isEmpty())
+        text += QStringLiteral("  gpu       %1\n").arg(egl);
+#endif
     text += QStringLiteral("  opengl    %1\n").arg(glLine);
     text += QStringLiteral("  project   %1\n")
                 .arg(projectPath.isEmpty() ? QStringLiteral("(empty timeline)") : projectPath);
@@ -122,10 +132,26 @@ int runHeadless(int argc, char *argv[])
             httpToken = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--isolated-session") {
             isolated = true;
+        } else if (drift::farm::isFarmValueFlag(arg)) {
+            ++i;
         } else if (!arg.startsWith('-')) {
             positional.append(QString::fromLocal8Bit(arg));
         }
     }
+    const drift::farm::FarmCommand farmCommand = drift::farm::parseFarmCommand(argc, argv);
+#ifdef DRIFT_HEADLESS_EGL
+    if (farmCommand.mode == drift::farm::FarmCommand::Mode::ListGpus) {
+        const QList<drift::headless::EglDevice> devices = drift::headless::listEglDevices();
+        for (const drift::headless::EglDevice &device : devices) {
+            std::printf("%d  %s%s%s\n", device.index, qPrintable(device.renderer),
+                        device.drmNode.isEmpty() ? "" : qPrintable(QStringLiteral("  (%1)").arg(device.drmNode)),
+                        device.software ? "  [software]" : "");
+        }
+        return devices.isEmpty() ? 1 : 0;
+    }
+    drift::headless::selectNativeEglPlatform(argc, argv, farmCommand.gpu);
+#endif
+
     // stdio is the default transport. --mcp-port on its own means HTTP only, so a daemon
     // started with stdin on /dev/null does not quit the instant it reads EOF.
     const bool serveStdio = stdioRequested || httpPort == 0;
@@ -152,6 +178,18 @@ int runHeadless(int argc, char *argv[])
     drift::ReverseProxyCache::instance().sweep(drift::ReverseProxyCache::kDefaultMaxBytes);
 
     const QString glLine = describeOpenGl();
+    if (farmCommand.mode != drift::farm::FarmCommand::Mode::Mcp) {
+        std::fprintf(stderr, "Drift %s — headless, %s, opengl %s\n", DRIFT_VERSION,
+                     qPrintable(QGuiApplication::platformName()), qPrintable(glLine));
+        QString gpuLine = glLine;
+#ifdef DRIFT_HEADLESS_EGL
+        if (const QString egl = drift::headless::activeEglDescription(); !egl.isEmpty())
+            gpuLine = egl;
+#endif
+        std::signal(SIGINT, onTerminate);
+        std::signal(SIGTERM, onTerminate);
+        return drift::farm::runFarmCommand(farmCommand, app, gpuLine);
+    }
 
     static AssetLibrary assetLibrary;
     static EditorState editorState(&assetLibrary);
