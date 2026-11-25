@@ -379,6 +379,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/PreferencesController.cpp
     ../src/app/GraphicsApiChoice.cpp
     ../src/app/editor/ProjectFileController.cpp
+    ../src/app/editor/ProjectFolderController.cpp
     ../src/app/bin/AssetPreviewController.cpp
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp

@@ -2,6 +2,7 @@
 
 #include "core/edit/commands/ProjectCommands.h"
 #include "core/project/Project.h"
+#include "core/project/folder/ProjectFolder.h"
 #include "engine/project/ProjectBundle.h"
 
 #include <limits>
@@ -24,6 +25,7 @@
 
 class QTimer;
 class AppController;
+class ProjectFolderController;
 
 // Project-file lifecycle and project setup: save, load, packaging, collect-media,
 // autosave and the startup queue. Reached from QML as EditorState.projectFile.
@@ -31,7 +33,9 @@ class AppController;
 class ProjectFileController : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("app/editor/ProjectFolderController.h")
     friend class EditorStateTest;
+    friend class ProjectFolderController;
 
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(QString projectName READ projectName WRITE setProjectName NOTIFY projectNameChanged)
@@ -58,6 +62,8 @@ class ProjectFileController : public QObject
     // that session relies on alone: the crash-recovery file, lastSessionPath, recents. Set
     // before the QML engine loads and never changed after.
     Q_PROPERTY(bool isolatedSession READ isolatedSession CONSTANT)
+    // A project kept as a folder of JSON files. EditorState.projectFile.folder.
+    Q_PROPERTY(ProjectFolderController *folder READ folder CONSTANT)
 
 public:
     explicit ProjectFileController(AppController *app, QObject *parent = nullptr);
@@ -93,6 +99,31 @@ public:
     bool recoveryAvailable() const { return m_recoveryAvailable; }
     QVariantMap recoveryInfo() const { return m_recoveryInfo; }
     QVariantList recentProjects() const;
+
+    ProjectFolderController *folder() const { return m_folder; }
+    // Opens a <name>.driftproj folder as the project of record (loadProject routes directories here).
+    void loadProjectFolder(const QString &path);
+    struct FolderCapture
+    {
+        std::shared_ptr<const drift::Project> project;
+        QJsonObject guides;
+        quint64 revision = 0;
+    };
+    // Called by the folder controller; they reach AppController, which only this class may touch.
+    FolderCapture captureFolder() const;
+    quint64 documentRevision() const { return m_dirtyRevision; }
+    QJsonObject currentDocument() const;
+    // The folder changed on disk: the open project becomes `project` as one undo step.
+    void applyFolderProject(drift::Project project, const QJsonObject &root, const QString &label);
+    // Clears generatedBy on one clip (and its track), or on everything `script` made (every script when
+    // empty). One undo step; not subject to the lock that generated clips are under.
+    void detachGenerated(const QString &clipId, const QString &script);
+    void markFolderClean(const std::shared_ptr<const drift::Project> &project);
+    // The open project is now the folder at `path`, which holds `files`.
+    void adoptFolder(const QString &path, const drift::projdir::FileMap &files,
+                     const std::shared_ptr<const drift::Project> &project);
+    void exportBundleCopy(const QUrl &url);
+    void notify(const QString &message, const QString &kind);
 
     // Writes a .drift bundle keeping each asset's current storage mode, so a referencing project
     // stays instant to save and a packaged one stays self-contained.
@@ -199,6 +230,8 @@ public:
     void detectRecoveryFile();
 
 signals:
+    // Every edit to the document, however small; the folder sync debounces it.
+    void documentEdited();
     void projectNameChanged();
     void projectMetadataChanged();
     void packagingChanged();
@@ -361,6 +394,7 @@ private:
     QUrl m_lastExternalProject;
     bool m_uiReady = false;
     bool m_isolatedSession = false;
+    ProjectFolderController *m_folder = nullptr;
 
     static constexpr int kAutosaveIntervalMs = 15000;
     static constexpr int kMaxRecentProjects = 10;

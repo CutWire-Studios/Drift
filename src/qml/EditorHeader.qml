@@ -171,6 +171,31 @@ Item {
         })
     }
 
+    // A project as a folder of JSON files that editors and agents can change on disk.
+    function openProjectFolder() {
+        if (ShellBridge.main.rejectIfProjectOpenPending())
+            return
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openDirectory(qsTr("Open Project Folder"))
+            if (url != "")
+                EditorState.projectFile.loadProject(url)
+        })
+    }
+
+    function saveProjectAsFolder() {
+        var url = FileDialogs.openDirectory(qsTr("Choose where to create the project folder"))
+        if (url != "")
+            EditorState.projectFile.folder.saveAsFolder(url, EditorState.projectFile.projectName)
+    }
+
+    function exportDriftBundle() {
+        var url = FileDialogs.saveFile(qsTr("Export .drift Bundle"), root.projectFilter,
+                                       EditorState.projectFile.projectName, "drift", "",
+                                       root.projectMimeTypes)
+        if (url != "")
+            EditorState.projectFile.folder.exportBundle(url)
+    }
+
     function openKdenliveProject() {
         root.confirmIfDirty(function () {
             var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
@@ -343,6 +368,11 @@ Item {
     }
 
     LazyLoader {
+        id: templateRenderDialogLoader
+        sourceComponent: Component { TemplateRenderDialog { } }
+    }
+
+    LazyLoader {
         id: projectPropertiesDialogLoader
         sourceComponent: Component { ProjectPropertiesDialog { } }
     }
@@ -426,6 +456,10 @@ Item {
                 onPackageRequested: root.packageProject()
                 onSaveJsonRequested: root.saveProjectJson()
                 onOpenJsonRequested: root.openProjectJson()
+                onOpenFolderRequested: root.openProjectFolder()
+                onSaveFolderRequested: root.saveProjectAsFolder()
+                onExportBundleRequested: root.exportDriftBundle()
+                onRenderTemplateRequested: templateRenderDialogLoader.ensure().openDialog()
                 onImportKdenliveRequested: root.openKdenliveProject()
                 onImportOtioRequested: root.openOtioTimeline()
                 onPropertiesRequested: projectPropertiesDialogLoader.ensure().openDialog()

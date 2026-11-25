@@ -586,6 +586,11 @@ add_library(driftcore STATIC
     src/core/project/Transcript.h
     src/core/project/Transcript.cpp
     src/core/project/GuideSet.h
+    src/core/project/folder/ProjectFolder.h
+    src/core/project/folder/ProjectFolder.cpp
+    src/core/project/folder/ProjectFormat.h
+    src/core/project/folder/ProjectSchema.h
+    src/core/project/folder/ProjectSchema.cpp
     src/core/project/GuideSet.cpp
     src/core/interchange/subtitles/SubtitleParse.h
     src/core/interchange/subtitles/SrtIO.h
@@ -1557,6 +1562,8 @@ target_sources(driftapp PRIVATE
     src/app/GraphicsApiChoice.cpp
     src/app/editor/ProjectFileController.h
     src/app/editor/ProjectFileController.cpp
+    src/app/editor/ProjectFolderController.h
+    src/app/editor/ProjectFolderController.cpp
     src/app/bin/AssetPreviewController.h
     src/app/bin/AssetPreviewController.cpp
     src/app/editor/sessions/SpeedCurveController.h
@@ -3023,6 +3030,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/EditorHeaderSeparator.qml
         src/qml/components/shell/EditorHeaderSearchField.qml
         src/qml/components/shell/EditorHeaderProjectsButton.qml
+        src/qml/components/shell/ProjectFolderBanner.qml
         src/qml/components/shell/EditorHeaderNotificationsButton.qml
         src/qml/components/shell/EditorHeaderHairline.qml
         src/qml/components/shell/EditorHeaderExtrasWave.qml
