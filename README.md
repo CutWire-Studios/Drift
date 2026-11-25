@@ -72,6 +72,25 @@ What you see in the preview is what you export. One compositor, one look, no sur
 flatpak install flathub org.cutwire.Drift
 flatpak run org.cutwire.Drift
 ```
+
+**NixOS:** run it from the flake:
+
+```bash
+nix run github:CutWire-Studios/Drift
+```
+
+Or add the flake to your configuration:
+
+```nix
+inputs.drift.url = "github:CutWire-Studios/Drift";
+# optional: reuse the system nixpkgs instead of a second copy
+inputs.drift.inputs.nixpkgs.follows = "nixpkgs";
+
+environment.systemPackages = [
+  inputs.drift.packages.${pkgs.stdenv.hostPlatform.system}.default
+];
+```
+
 **macOS** — install via Homebrew:
 
 ```bash
