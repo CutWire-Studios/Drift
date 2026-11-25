@@ -65,6 +65,20 @@ Column {
                 font.pixelSize: Theme.fontSizeSm
                 elide: Text.ElideRight
             }
+            ThemedComboBox {
+                Layout.preferredWidth: 120
+                visible: row.modelData.controlKind === "absolute"
+                textRole: "label"
+                valueRole: "id"
+                model: [
+                    { id: "", label: qsTr("Position") },
+                    { id: "twos", label: qsTr("Counter, 2's complement") },
+                    { id: "signmag", label: qsTr("Counter, sign and size") },
+                    { id: "offset", label: qsTr("Counter around 64") }
+                ]
+                currentIndex: Math.max(0, indexOfValue(row.modelData.encoder))
+                onActivated: root.surfaces.setBindingOption(root.device.id, row.modelData.control, "encoder", currentValue)
+            }
             ThemedCheckBox {
                 text: qsTr("Invert")
                 checked: row.modelData.invert

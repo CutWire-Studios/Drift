@@ -85,6 +85,8 @@ QJsonObject ControlSurfaceManager::deviceJson(const QString &id, const DeviceSta
             o.insert(QStringLiteral("invert"), true);
         if (b.sensitivity != 1.0)
             o.insert(QStringLiteral("sensitivity"), b.sensitivity);
+        if (!b.mode.isEmpty())
+            o.insert(QStringLiteral("encoder"), b.mode);
         list.append(o);
     }
     return {{QStringLiteral("id"), id}, {QStringLiteral("name"), state.info.name},
@@ -140,6 +142,7 @@ int ControlSurfaceManager::importJson(const QString &json, const QString &device
             b.label = o.value(QStringLiteral("label")).toString();
             b.invert = o.value(QStringLiteral("invert")).toBool();
             b.sensitivity = o.value(QStringLiteral("sensitivity")).toDouble(1.0);
+            b.mode = o.value(QStringLiteral("encoder")).toString();
             state.bindings.append(b);
             ++count;
         }
@@ -307,6 +310,18 @@ void ControlSurfaceManager::apply(bool motorized, Binding &b, SurfaceControl::Ki
             m_targets->setAbsolute(b.target, b.invert ? 0.0 : 1.0);
         return;
     case SurfaceControl::Absolute: {
+        if (!b.mode.isEmpty()) {
+            const int raw = static_cast<int>(std::lround(v * 127.0));
+            double ticks = 0.0;
+            if (b.mode == QLatin1String("twos"))
+                ticks = raw < 64 ? raw : raw - 128;
+            else if (b.mode == QLatin1String("signmag"))
+                ticks = (raw & 0x40) ? -(raw & 0x3F) : (raw & 0x3F);
+            else
+                ticks = raw - 64;
+            applyRelative(b, ticks);
+            return;
+        }
         const double n = b.invert ? 1.0 - v : v;
         const double last = b.last;
         b.last = n;
@@ -329,18 +344,25 @@ void ControlSurfaceManager::apply(bool motorized, Binding &b, SurfaceControl::Ki
         return;
     }
     case SurfaceControl::Relative:
-        if (v == 0.0)
-            return;
-        if (tk == SurfaceTarget::Action) {
-            trigger(b.target);
-        } else if (tk == SurfaceTarget::Relative) {
-            m_targets->nudge(b.target, v * sign * b.sensitivity);
-        } else {
-            const double cur = m_targets->current(b.target);
-            if (!std::isnan(cur))
-                m_targets->setAbsolute(b.target, std::clamp(cur + v * sign * b.sensitivity * 0.01, 0.0, 1.0));
-        }
+        applyRelative(b, v);
         return;
+    }
+}
+
+void ControlSurfaceManager::applyRelative(Binding &b, double ticks)
+{
+    if (ticks == 0.0)
+        return;
+    const SurfaceTarget::Kind tk = m_targets->describe(b.target).kind;
+    const double sign = b.invert ? -1.0 : 1.0;
+    if (tk == SurfaceTarget::Action) {
+        trigger(b.target);
+    } else if (tk == SurfaceTarget::Relative) {
+        m_targets->nudge(b.target, ticks * sign * b.sensitivity);
+    } else {
+        const double cur = m_targets->current(b.target);
+        if (!std::isnan(cur))
+            m_targets->setAbsolute(b.target, std::clamp(cur + ticks * sign * b.sensitivity * 0.01, 0.0, 1.0));
     }
 }
 
@@ -406,6 +428,8 @@ void ControlSurfaceManager::setBindingOption(const QString &deviceId, const QStr
         b->invert = value.toBool();
     else if (key == QLatin1String("sensitivity"))
         b->sensitivity = std::clamp(value.toDouble(), 0.01, 100.0);
+    else if (key == QLatin1String("encoder"))
+        b->mode = value.toString();
     changed();
 }
 
@@ -505,7 +529,8 @@ QVariantList ControlSurfaceManager::bindings(const QString &deviceId) const
                                {QStringLiteral("target"), b.target},
                                {QStringLiteral("targetLabel"), b.label.isEmpty() ? b.target : b.label},
                                {QStringLiteral("invert"), b.invert},
-                               {QStringLiteral("sensitivity"), b.sensitivity}});
+                               {QStringLiteral("sensitivity"), b.sensitivity},
+                               {QStringLiteral("encoder"), b.mode}});
     }
     return out;
 }

@@ -145,6 +145,40 @@ private slots:
         QVERIFY(std::abs(t.sets.last() - (0.5 - 5 * 0.01 * 2.0)) < 1e-9);
     }
 
+    void encoderModesReadCounters()
+    {
+        FakeTargets t;
+        ControlSurfaceManager m(&t);
+        m.registerDevice(device());
+        m.bind("dev", "fader", "jog");
+        const auto raw = [&](int value) { m.absolute("dev", "fader", value / 127.0); };
+
+        m.setBindingOption("dev", "fader", "encoder", "twos");
+        raw(1);
+        QCOMPARE(t.nudges.last(), 1.0);
+        raw(127);
+        QCOMPARE(t.nudges.last(), -1.0);
+        raw(3);
+        QCOMPARE(t.nudges.last(), 3.0);
+
+        m.setBindingOption("dev", "fader", "encoder", "signmag");
+        raw(0x41);
+        QCOMPARE(t.nudges.last(), -1.0);
+        raw(0x02);
+        QCOMPARE(t.nudges.last(), 2.0);
+
+        m.setBindingOption("dev", "fader", "encoder", "offset");
+        raw(65);
+        QCOMPARE(t.nudges.last(), 1.0);
+        raw(63);
+        QCOMPARE(t.nudges.last(), -1.0);
+        const int before = t.nudges.size();
+        raw(64);
+        QCOMPARE(t.nudges.size(), before);
+
+        QVERIFY(m.exportJson("dev").contains("\"encoder\": \"offset\""));
+    }
+
     void absoluteToRelativeUsesTravel()
     {
         FakeTargets t;

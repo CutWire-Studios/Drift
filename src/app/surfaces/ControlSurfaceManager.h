@@ -28,6 +28,9 @@ struct SurfaceBindingDef {
     QString label;
     bool invert = false;
     double sensitivity = 1.0;
+    // For an Absolute control that is really an endless encoder sending a counter: "twos" (1 up,
+    // 127 down), "signmag" (bit 6 is the sign) or "offset" (64 is still). Empty reads it as a position.
+    QString mode;
 };
 
 struct SurfaceDevice {
@@ -123,6 +126,7 @@ private:
 
     void input(const QString &deviceId, const QString &controlId, SurfaceControl::Kind kind, double v);
     void apply(bool motorized, Binding &b, SurfaceControl::Kind kind, double v);
+    void applyRelative(Binding &b, double ticks);
     void trigger(const QString &target);
     Binding *find(const QString &deviceId, const QString &controlId);
     void bindInternal(const QString &deviceId, const QString &controlId, const QString &targetId,

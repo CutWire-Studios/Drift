@@ -727,9 +727,12 @@ target_link_libraries(tst_commandbar PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::
 target_compile_definitions(tst_commandbar PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data" DRIFT_VERSION="${PROJECT_VERSION}")
 add_test(NAME CommandBar COMMAND tst_commandbar)
 
-qt_add_executable(tst_controlsurfaces
-    tst_controlsurfaces.cpp
-    ../src/app/surfaces/ControlSurfaceManager.cpp)
+qt_add_executable(tst_controlsurfaces tst_controlsurfaces.cpp)
 target_include_directories(tst_controlsurfaces PRIVATE ../src)
-target_link_libraries(tst_controlsurfaces PRIVATE Qt6::Test Qt6::Core)
+target_link_libraries(tst_controlsurfaces PRIVATE Qt6::Test Qt6::Core driftsurfaces)
 add_test(NAME ControlSurfaces COMMAND tst_controlsurfaces)
+
+qt_add_executable(tst_midisurfaces tst_midisurfaces.cpp)
+target_include_directories(tst_midisurfaces PRIVATE ../src)
+target_link_libraries(tst_midisurfaces PRIVATE Qt6::Test Qt6::Core driftsurfaces)
+add_test(NAME MidiSurfaces COMMAND tst_midisurfaces)

@@ -1252,6 +1252,88 @@ if(DRIFT_WITH_SKIA)
     target_compile_definitions(driftengine PRIVATE QT_NO_FOREACH)
 endif()
 
+# --- control surfaces --------------------------------------------------------
+# Bindings, MIDI, OSC and the phone remote. libremidi is the one dependency: MIT, ALSA sequencer on
+# Linux, WinMM on Windows, CoreMIDI on macOS. Android reads MIDI through android.media.midi from
+# Java instead (libremidi's Android backend wants API 31, minSdk here is 28) and wasm has no
+# transports at all. Like JUCE it is fetched unless DRIFT_LIBREMIDI_DIR points at a source tree,
+# which is what an offline build sets.
+option(DRIFT_FETCH_LIBREMIDI "Download libremidi when DRIFT_LIBREMIDI_DIR is not set" ON)
+set(DRIFT_LIBREMIDI_DIR "" CACHE STRING
+    "libremidi source tree, absolute or relative to this file; overrides DRIFT_FETCH_LIBREMIDI")
+set(DRIFT_LIBREMIDI_TAG "v5.4.3" CACHE STRING "libremidi release tag to fetch when DRIFT_LIBREMIDI_DIR is unset")
+
+if(NOT EMSCRIPTEN AND NOT ANDROID)
+    set(LIBREMIDI_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(LIBREMIDI_TESTS OFF CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_JACK ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_PIPEWIRE ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_NETWORK ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_KEYBOARD ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_UDEV ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_WINUWP ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_WINMIDI ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_BOOST ON CACHE BOOL "" FORCE)
+    # libremidi installs its own headers and CMake package; Drift installs neither.
+    set(CMAKE_SKIP_INSTALL_RULES ON)
+    if(DRIFT_LIBREMIDI_DIR)
+        if(IS_ABSOLUTE "${DRIFT_LIBREMIDI_DIR}")
+            set(_drift_libremidi_dir "${DRIFT_LIBREMIDI_DIR}")
+        else()
+            set(_drift_libremidi_dir "${CMAKE_CURRENT_SOURCE_DIR}/${DRIFT_LIBREMIDI_DIR}")
+        endif()
+        if(NOT EXISTS "${_drift_libremidi_dir}/CMakeLists.txt")
+            message(FATAL_ERROR
+                "DRIFT_LIBREMIDI_DIR=${DRIFT_LIBREMIDI_DIR} does not point at a libremidi source tree "
+                "(looked in ${_drift_libremidi_dir}).")
+        endif()
+        message(STATUS "libremidi: using ${_drift_libremidi_dir}")
+        add_subdirectory("${_drift_libremidi_dir}" "${CMAKE_BINARY_DIR}/libremidi-build")
+    elseif(DRIFT_FETCH_LIBREMIDI)
+        message(STATUS "libremidi: fetching ${DRIFT_LIBREMIDI_TAG}")
+        include(FetchContent)
+        FetchContent_Declare(libremidi
+            GIT_REPOSITORY https://github.com/celtera/libremidi.git
+            GIT_TAG ${DRIFT_LIBREMIDI_TAG}
+            GIT_SHALLOW TRUE
+            GIT_PROGRESS TRUE)
+        FetchContent_MakeAvailable(libremidi)
+    else()
+        message(FATAL_ERROR
+            "libremidi not available. Point DRIFT_LIBREMIDI_DIR at a libremidi source tree, "
+            "or enable DRIFT_FETCH_LIBREMIDI to download it automatically.")
+    endif()
+    unset(CMAKE_SKIP_INSTALL_RULES)
+endif()
+
+add_library(driftsurfaces STATIC
+    src/app/surfaces/ControlSurfaceManager.h
+    src/app/surfaces/ControlSurfaceManager.cpp
+    src/app/surfaces/FaderScale.h
+    src/app/surfaces/SurfaceTargets.h
+    src/app/surfaces/SurfaceHub.h
+    src/app/surfaces/SurfaceHub.cpp
+)
+target_include_directories(driftsurfaces PUBLIC src)
+target_link_libraries(driftsurfaces PUBLIC Qt6::Core)
+if(NOT EMSCRIPTEN)
+    target_link_libraries(driftsurfaces PUBLIC Qt6::Network)
+    target_sources(driftsurfaces PRIVATE
+        src/app/surfaces/midi/MidiIo.h
+        src/app/surfaces/midi/MidiProtocols.h
+        src/app/surfaces/midi/MidiProtocols.cpp
+        src/app/surfaces/midi/MidiSurfaceService.h
+        src/app/surfaces/midi/MidiSurfaceService.cpp
+    )
+    target_compile_definitions(driftsurfaces PRIVATE DRIFT_SURFACE_MIDI)
+    if(ANDROID)
+        target_sources(driftsurfaces PRIVATE src/app/surfaces/midi/AndroidMidiIo.cpp)
+    else()
+        target_sources(driftsurfaces PRIVATE src/app/surfaces/midi/LibremidiIo.cpp)
+        target_link_libraries(driftsurfaces PRIVATE libremidi)
+    endif()
+endif()
+
 # --- application ------------------------------------------------------------
 # The app sources tst_editorstate also needs, compiled once. Files that read the endpoint/version
 # defines drift sets (or that carry QML_ELEMENT) stay in drift and are compiled separately by the
@@ -1267,6 +1349,7 @@ target_link_libraries(driftapp PUBLIC
     driftcore
     driftengine
     driftforge
+    driftsurfaces
 )
 if(ANDROID)
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
@@ -1583,11 +1666,8 @@ target_sources(drift PRIVATE
     src/app/mcp/protocol/McpJson.h
 )
 target_sources(driftapp PRIVATE
-    src/app/surfaces/ControlSurfaceManager.h
-    src/app/surfaces/ControlSurfaceManager.cpp
     src/app/surfaces/EditorSurfaceTargets.h
     src/app/surfaces/EditorSurfaceTargets.cpp
-    src/app/surfaces/SurfaceTargets.h
     src/app/commandbar/CommandBarController.h
     src/app/commandbar/CommandBarController.cpp
     src/app/commandbar/CommandCatalog.h
