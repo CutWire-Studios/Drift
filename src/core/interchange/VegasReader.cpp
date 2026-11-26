@@ -7,6 +7,7 @@
 #include "engine/decode/probe/MediaProbe.h"
 
 #include <QDir>
+#include <QColor>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
@@ -15,7 +16,10 @@
 #include <QRegularExpression>
 #include <QStringList>
 #include <QUuid>
+#include <algorithm>
+#include <cmath>
 #include <cstring>
+#include <memory>
 
 namespace drift::vegas {
 
@@ -80,7 +84,7 @@ static const uint8_t kGuidMarker[16] = {
 
 inline quint32 readU32LE(const uint8_t *p)
 {
-    return static_cast<quint32>(p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24));
+    return quint32(p[0]) | (quint32(p[1]) << 8) | (quint32(p[2]) << 16) | (quint32(p[3]) << 24);
 }
 
 inline quint64 readU64LE(const uint8_t *p)
@@ -106,17 +110,46 @@ inline float readFloatLE(const uint8_t *p)
     return f;
 }
 
+// Chunk sizes come from the file, so callers check them against the bytes left before advancing.
+inline quint64 alignedSize(quint64 size)
+{
+    return (size + 7) & ~quint64(7);
+}
+
+inline TimeUs ticksToUs(quint64 ticks)
+{
+    constexpr quint64 kMaxUs = 10'000'000'000'000ULL;
+    return static_cast<TimeUs>(std::min<quint64>(ticks / 10, kMaxUs));
+}
+
+QString utf16Copy(const uint8_t *data, qsizetype chars)
+{
+    QString s(chars, Qt::Uninitialized);
+    std::memcpy(s.data(), data, size_t(chars) * 2);
+    return s;
+}
+
 QString readUtf16String(const uint8_t *data, qsizetype size, qsizetype offset)
 {
-    if (offset + 2 > size)
+    if (offset < 0 || offset + 2 > size)
         return {};
-    const auto *chars = reinterpret_cast<const char16_t *>(data + offset);
+    const uint8_t *p = data + offset;
     const qsizetype maxChars = (size - offset) / 2;
     qsizetype len = 0;
-    while (len < maxChars && chars[len] != 0) {
+    while (len < maxChars && (p[len * 2] | p[len * 2 + 1]) != 0)
         ++len;
-    }
-    return QString::fromUtf16(chars, len);
+    return utf16Copy(p, len);
+}
+
+double readUnitDouble(const uint8_t *p)
+{
+    const double v = readDoubleLE(p);
+    return std::isnan(v) ? 0.0 : qBound(0.0, v, 1.0);
+}
+
+QColor readRgbaColor(const uint8_t *p)
+{
+    return QColor::fromRgbF(readUnitDouble(p), readUnitDouble(p + 8), readUnitDouble(p + 16), readUnitDouble(p + 24));
 }
 
 struct ParsedMarker
@@ -170,21 +203,22 @@ std::optional<ParsedMarker> parseMarkerPayload(const uint8_t *p, qsizetype avail
 
     if (posTicks < 0)
         posTicks = 0;
+    if (lenTicks < 0)
+        lenTicks = 0;
 
     ParsedMarker m;
     m.id = ident;
-    m.posUs = static_cast<TimeUs>(posTicks / 10);
+    m.posUs = ticksToUs(quint64(posTicks));
     if (lenTicks > 0) {
         m.isRegion = true;
-        m.durUs = static_cast<TimeUs>(lenTicks / 10);
+        m.durUs = ticksToUs(quint64(lenTicks));
     } else {
         m.isRegion = false;
         m.durUs = 0;
     }
 
-    if (nameBytes > 0 && namePtr && (namePtr - p) + static_cast<qsizetype>(nameBytes) <= avail) {
-        m.name = readUtf16String(namePtr, nameBytes, 0).trimmed();
-    }
+    if (nameBytes > 0 && quint64(nameBytes) <= quint64(avail - (namePtr - p)))
+        m.name = readUtf16String(namePtr, qsizetype(nameBytes), 0).trimmed();
 
     return m;
 }
@@ -481,10 +515,7 @@ bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
     if (cb <= ob)
         return false;
 
-    const QString rtfStr = QString::fromUtf16(
-        reinterpret_cast<const char16_t *>(payload + ob),
-        (cb - ob) / 2
-    );
+    const QString rtfStr = utf16Copy(payload + ob, (cb - ob) / 2);
 
     const VegasParsedRtf parsed = parseVegasRtf(rtfStr);
     if (outText)
@@ -503,12 +534,7 @@ bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
     if (tcPos >= 0) {
         const qsizetype valPos = tcPos + static_cast<qsizetype>(std::strlen("TextColor") * 2) + 2;
         if (valPos + 32 <= payloadSize) {
-            textColor = QColor::fromRgbF(
-                qBound(0.0, readDoubleLE(payload + valPos), 1.0),
-                qBound(0.0, readDoubleLE(payload + valPos + 8), 1.0),
-                qBound(0.0, readDoubleLE(payload + valPos + 16), 1.0),
-                qBound(0.0, readDoubleLE(payload + valPos + 24), 1.0)
-            );
+            textColor = readRgbaColor(payload + valPos);
         }
     }
     if (outStyle)
@@ -525,7 +551,10 @@ bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
         if (locPos >= 0) {
             const qsizetype valPos = locPos + static_cast<qsizetype>(std::strlen("Location") * 2) + 2;
             if (valPos + 16 <= payloadSize) {
-                *outLocation = QPointF(readDoubleLE(payload + valPos), readDoubleLE(payload + valPos + 8));
+                const double lx = readDoubleLE(payload + valPos);
+                const double ly = readDoubleLE(payload + valPos + 8);
+                if (std::isfinite(lx) && std::isfinite(ly))
+                    *outLocation = QPointF(lx, ly);
             }
         }
     }
@@ -545,12 +574,7 @@ bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
             if (ocPos >= 0) {
                 const qsizetype ocVal = ocPos + static_cast<qsizetype>(std::strlen("OutlineColor") * 2) + 2;
                 if (ocVal + 32 <= payloadSize) {
-                    outlineColor = QColor::fromRgbF(
-                        qBound(0.0, readDoubleLE(payload + ocVal), 1.0),
-                        qBound(0.0, readDoubleLE(payload + ocVal + 8), 1.0),
-                        qBound(0.0, readDoubleLE(payload + ocVal + 16), 1.0),
-                        qBound(0.0, readDoubleLE(payload + ocVal + 24), 1.0)
-                    );
+                    outlineColor = readRgbaColor(payload + ocVal);
                 }
             }
             outStyle->layers.prepend(strokeLayer(ow * 10.0, outlineColor));
@@ -568,12 +592,7 @@ bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
                 if (scPos >= 0) {
                     const qsizetype scVal = scPos + static_cast<qsizetype>(std::strlen("ShadowColor") * 2) + 2;
                     if (scVal + 32 <= payloadSize) {
-                        shadowColor = QColor::fromRgbF(
-                            qBound(0.0, readDoubleLE(payload + scVal), 1.0),
-                            qBound(0.0, readDoubleLE(payload + scVal + 8), 1.0),
-                            qBound(0.0, readDoubleLE(payload + scVal + 16), 1.0),
-                            qBound(0.0, readDoubleLE(payload + scVal + 24), 1.0)
-                        );
+                        shadowColor = readRgbaColor(payload + scVal);
                     }
                 }
                 const double ox = parseDoubleParam(payload, payloadSize, "ShadowOffsetX", 0.05) * 50.0;
@@ -587,26 +606,15 @@ bool extractTitlesAndText(const uint8_t *payload, qsizetype payloadSize,
     return true;
 }
 
-bool extractSolidColor(const uint8_t *payload, qsizetype payloadSize, QColor *outColor)
+QColor extractSolidColor(const uint8_t *payload, qsizetype payloadSize)
 {
     const qsizetype cPos = findUtf16(payload, payloadSize, "Color");
     if (cPos >= 0) {
         const qsizetype valPos = cPos + static_cast<qsizetype>(std::strlen("Color") * 2) + 2;
-        if (valPos + 32 <= payloadSize) {
-            if (outColor) {
-                *outColor = QColor::fromRgbF(
-                    qBound(0.0, readDoubleLE(payload + valPos), 1.0),
-                    qBound(0.0, readDoubleLE(payload + valPos + 8), 1.0),
-                    qBound(0.0, readDoubleLE(payload + valPos + 16), 1.0),
-                    qBound(0.0, readDoubleLE(payload + valPos + 24), 1.0)
-                );
-            }
-            return true;
-        }
+        if (valPos + 32 <= payloadSize)
+            return readRgbaColor(payload + valPos);
     }
-    if (outColor)
-        *outColor = Qt::black;
-    return true;
+    return Qt::black;
 }
 
 QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
@@ -721,7 +729,7 @@ QString extractPathFromPayload(const uint8_t *data, qsizetype size)
     return {};
 }
 
-QString cleanMediaFilename(const QString &rawPath)
+QString cleanMediaPath(const QString &rawPath)
 {
     QString s = rawPath;
     s.replace(QLatin1Char('\\'), QLatin1Char('/'));
@@ -734,152 +742,65 @@ QString cleanMediaFilename(const QString &rawPath)
         if (inside.contains(QLatin1Char('/')) || inside.contains(QLatin1Char('.')))
             s = inside;
     }
+    return s;
+}
 
-    QString diskName = QFileInfo(s).fileName();
+QString cleanMediaFilename(const QString &rawPath)
+{
+    QString diskName = QFileInfo(cleanMediaPath(rawPath)).fileName();
     const int braceIdx = diskName.indexOf(QLatin1Char('}'));
     if (braceIdx > 0 && !diskName.startsWith(QLatin1Char('{')))
         diskName = diskName.left(braceIdx);
     return diskName;
 }
 
-QString resolveMediaFile(const QString &winPath, const QString &diskName,
-                         const QString &sourceDir, const QList<QDir> &searchDirs,
+// The stored path when it exists here, else the same file found under the project's own folder,
+// else the stored path unchanged so the asset shows up as missing media.
+QString resolveMediaFile(const QString &winPath, const QString &diskName, const QString &sourceDir,
                          const QHash<QString, QStringList> &indexedFiles)
 {
     if (diskName.isEmpty())
         return {};
 
-    const QString normWin = QString(winPath).replace(QLatin1Char('\\'), QLatin1Char('/'));
-    const QFileInfo diskInfo(diskName);
-    const QString baseName = diskInfo.completeBaseName();
-    const QString ext = diskInfo.suffix().toLower();
-    const QString movName = baseName + QStringLiteral(".mov");
+    const QString stored = cleanMediaPath(winPath);
+    const QFileInfo storedInfo(stored);
+    if (storedInfo.isAbsolute() && storedInfo.exists())
+        return storedInfo.canonicalFilePath();
 
-    const bool isMov = (ext == QLatin1String("mov"));
-    // Audio, images, or documents should not be redirected to .mov
-    const bool isVideoCandidate = !isMov && (ext == QLatin1String("mts") || ext == QLatin1String("m2ts")
-                                            || ext == QLatin1String("m2t") || ext == QLatin1String("ts")
-                                            || ext == QLatin1String("mp4") || ext == QLatin1String("m4v")
-                                            || ext == QLatin1String("avi") || ext == QLatin1String("mkv")
-                                            || ext == QLatin1String("wmv") || ext == QLatin1String("flv")
-                                            || ext == QLatin1String("webm") || ext == QLatin1String("vob")
-                                            || ext.isEmpty());
-
-    // Subpath relative matches from winPath
-    // E.g. "G:/Against the Odds/Episode 4/Day 4/00017.MTS" -> checks "Day 4/00017.mov" vs "Day 4/00017.MTS"
-    QStringList movSubpathCandidates;
-    QStringList origSubpathCandidates;
-    const QStringList winParts = normWin.split(QLatin1Char('/'), Qt::SkipEmptyParts);
-    for (int i = 1; i <= std::min(qsizetype(4), winParts.size()); ++i) {
-        const QString sub = winParts.mid(winParts.size() - i).join(QLatin1Char('/'));
-        origSubpathCandidates.append(sub);
-        const QFileInfo subInfo(sub);
-        const QString subDir = subInfo.path();
-        const QString movSub = (subDir.isEmpty() || subDir == QLatin1String("."))
-                               ? (subInfo.completeBaseName() + QStringLiteral(".mov"))
-                               : (subDir + QLatin1Char('/') + subInfo.completeBaseName() + QStringLiteral(".mov"));
-        movSubpathCandidates.append(movSub);
-    }
-
-    // 1. If video media, check for converted ProRes .mov FIRST (in same dir, Transcodes_ProRes, or matching subpaths)
-    if (isVideoCandidate) {
-        for (const QDir &dir : searchDirs) {
-            if (!dir.exists())
-                continue;
-            for (const QString &movSub : movSubpathCandidates) {
-                if (dir.exists(movSub))
-                    return dir.filePath(movSub);
-            }
-            // Bare movName is valid if in sourceDir or in a Transcodes_ProRes directory
-            if (dir == QDir(sourceDir) || dir.dirName() == QLatin1String("Transcodes_ProRes")) {
-                if (dir.exists(movName))
-                    return dir.filePath(movName);
-            }
-        }
-
-        // Fast lookup from project tree index for .mov only when matching parent subdirectory
-        const QString movLow = movName.toLower();
-        if (indexedFiles.contains(movLow)) {
-            const QStringList &candidates = indexedFiles.value(movLow);
-            for (const QString &c : candidates) {
-                if (winParts.size() >= 2 && c.contains(winParts.at(winParts.size() - 2), Qt::CaseInsensitive))
-                    return c;
-            }
-        }
-
-        const QString remapFrom = qEnvironmentVariable("DRIFT_MEDIA_REMAP_FROM");
-        const QString remapTo = qEnvironmentVariable("DRIFT_MEDIA_REMAP_TO");
-        if (!remapFrom.isEmpty() && !remapTo.isEmpty() && !sourceDir.isEmpty()) {
-            QString altSource = sourceDir;
-            if (altSource.startsWith(remapFrom))
-                altSource.replace(0, remapFrom.size(), remapTo);
-
-            if (altSource != sourceDir && QDir(altSource).exists()) {
-                const QDir altDir(altSource);
-                for (const QString &movSub : movSubpathCandidates) {
-                    if (altDir.exists(movSub))
-                        return altDir.filePath(movSub);
-                }
-                if (altDir == QDir(altSource) || altDir.dirName() == QLatin1String("Transcodes_ProRes")) {
-                    if (altDir.exists(movName))
-                        return altDir.filePath(movName);
-                }
-            }
-        }
-    }
-
-    // 2. Direct absolute path match for original file
-    const QFileInfo direct(diskName);
-    if (direct.isAbsolute() && direct.exists())
-        return direct.canonicalFilePath();
-
-    const QFileInfo winInfo(normWin);
-    if (winInfo.isAbsolute() && winInfo.exists())
-        return winInfo.canonicalFilePath();
-
-    // 3. Search directories for original file
-    for (const QDir &dir : searchDirs) {
-        if (!dir.exists())
-            continue;
-        for (const QString &sub : origSubpathCandidates) {
+    const QStringList parts = stored.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    if (!sourceDir.isEmpty()) {
+        const QDir dir(sourceDir);
+        for (int i = std::min<int>(4, parts.size()); i >= 1; --i) {
+            const QString sub = parts.mid(parts.size() - i).join(QLatin1Char('/'));
             if (dir.exists(sub))
                 return dir.filePath(sub);
         }
-        if (dir.exists(diskName))
-            return dir.filePath(diskName);
-    }
 
-    // 4. Fast lookup from project tree index for original filename
-    const QString lowName = diskName.toLower();
-    if (indexedFiles.contains(lowName)) {
-        const QStringList &candidates = indexedFiles.value(lowName);
-        for (const QString &c : candidates) {
-            if (winParts.size() >= 2 && c.contains(winParts.at(winParts.size() - 2), Qt::CaseInsensitive))
-                return c;
-        }
-        return candidates.first();
-    }
-
-    const QString remapFrom = qEnvironmentVariable("DRIFT_MEDIA_REMAP_FROM");
-    const QString remapTo = qEnvironmentVariable("DRIFT_MEDIA_REMAP_TO");
-    if (!remapFrom.isEmpty() && !remapTo.isEmpty() && !sourceDir.isEmpty()) {
-        QString altSource = sourceDir;
-        if (altSource.startsWith(remapFrom))
-            altSource.replace(0, remapFrom.size(), remapTo);
-
-        if (altSource != sourceDir && QDir(altSource).exists()) {
-            const QDir altDir(altSource);
-            for (const QString &sub : origSubpathCandidates) {
-                if (altDir.exists(sub))
-                    return altDir.filePath(sub);
+        const auto it = indexedFiles.constFind(diskName.toLower());
+        if (it != indexedFiles.constEnd()) {
+            if (parts.size() >= 2) {
+                for (const QString &c : it.value()) {
+                    if (c.contains(parts.at(parts.size() - 2), Qt::CaseInsensitive))
+                        return c;
+                }
             }
-            if (altDir.exists(diskName))
-                return altDir.filePath(diskName);
+            return it.value().first();
         }
     }
 
-    return diskName;
+    return stored.isEmpty() ? diskName : stored;
 }
+
+struct ImportContext
+{
+    QSet<QString> stack;
+    QHash<QString, std::shared_ptr<const Project>> parsed;
+    int depth = 0;
+    int skipped = 0;
+};
+
+std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourceDir, QString *error,
+                                    ImportContext &ctx);
 
 } // namespace
 
@@ -901,31 +822,51 @@ bool isVegasProject(const QString &filePath)
     return isVegasData(header);
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error,
-                                   QSet<QString> visitedPaths, int depth)
-{
-    const QString canon = QFileInfo(filePath).canonicalFilePath();
-    if (!canon.isEmpty())
-        visitedPaths.insert(canon);
+namespace {
 
+std::optional<Project> readFileImpl(const QString &filePath, QString *error, ImportContext &ctx)
+{
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         if (error)
-            *error = QStringLiteral("Could not open file: ") + filePath;
+            *error = QObject::tr("Could not open file: %1").arg(filePath);
         return std::nullopt;
     }
     const QByteArray data = file.readAll();
-    const QString sourceDir = QFileInfo(filePath).canonicalPath();
-    return readProjectData(data, sourceDir, error, visitedPaths, depth);
+    const QFileInfo info(filePath);
+    const QString canon = info.canonicalFilePath();
+    if (!canon.isEmpty())
+        ctx.stack.insert(canon);
+    auto result = readDataImpl(data, info.canonicalPath(), error, ctx);
+    ctx.stack.remove(canon);
+    return result;
 }
 
-std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir,
-                                       QString *error,
-                                       QSet<QString> visitedPaths, int depth)
+std::shared_ptr<const Project> loadNestedProject(ImportContext &ctx, const QString &canon, const QString &path)
+{
+    if (canon.isEmpty() || ctx.stack.contains(canon) || ctx.depth >= 8)
+        return nullptr;
+    const auto cached = ctx.parsed.constFind(canon);
+    if (cached != ctx.parsed.constEnd())
+        return cached.value();
+
+    ++ctx.depth;
+    QString nestedError;
+    auto parsed = readFileImpl(path, &nestedError, ctx);
+    --ctx.depth;
+    std::shared_ptr<const Project> result;
+    if (parsed)
+        result = std::make_shared<const Project>(std::move(*parsed));
+    ctx.parsed.insert(canon, result);
+    return result;
+}
+
+std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourceDir, QString *error,
+                                    ImportContext &ctx)
 {
     if (data.size() < 64 || !isVegasData(data)) {
         if (error)
-            *error = QStringLiteral("Not a valid Sony/MAGIX Wave64 RIFF project");
+            *error = QObject::tr("Not a valid VEGAS Pro project file");
         return std::nullopt;
     }
 
@@ -934,9 +875,9 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
     // Chunk 0: Project settings (starts at offset 40)
     const quint64 c0Size = readU64LE(bytes + 56);
-    if (c0Size < 24 || 64 + c0Size - 24 > static_cast<quint64>(totalSize)) {
+    if (c0Size < 24 || c0Size > quint64(totalSize - 40)) {
         if (error)
-            *error = QStringLiteral("Corrupted Wave64 project header");
+            *error = QObject::tr("The VEGAS Pro project header is corrupted");
         return std::nullopt;
     }
 
@@ -970,62 +911,14 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     project.setFps(qRound(fps));
     project.setSampleRate(static_cast<int>(sampleRate));
 
-    // Search directories for media resolution
-    QList<QDir> searchDirs;
-    if (!sourceDir.isEmpty()) {
-        const QDir dir(sourceDir);
-        searchDirs.append(dir);
-        searchDirs.append(QDir(dir.filePath(QStringLiteral("Transcodes_ProRes"))));
-        searchDirs.append(QDir(dir.filePath(QStringLiteral("../Transcodes_ProRes/") + dir.dirName())));
-        searchDirs.append(QDir(dir.filePath(QStringLiteral("../Transcodes_ProRes"))));
-        searchDirs.append(QDir(dir.filePath(QStringLiteral("../../Transcodes_ProRes/") + dir.dirName())));
-        searchDirs.append(QDir(dir.filePath(QStringLiteral("../../Transcodes_ProRes"))));
-        searchDirs.append(QDir(dir.filePath(QStringLiteral(".."))));
-        searchDirs.append(QDir(dir.filePath(QStringLiteral("../.."))));
-        const QString extraPaths = qEnvironmentVariable("DRIFT_MEDIA_SEARCH_PATH");
-        if (!extraPaths.isEmpty()) {
-            const QStringList paths = extraPaths.split(QDir::listSeparator(), Qt::SkipEmptyParts);
-            for (const QString &p : paths) {
-                searchDirs.append(QDir(p));
-                searchDirs.append(QDir(QDir(p).filePath(QStringLiteral("Transcodes_ProRes"))));
-            }
-        }
-    }
-
-    // Index filenames in sourceDir and nearby project directories for fast resolution
     QHash<QString, QStringList> indexedFiles;
     if (!sourceDir.isEmpty()) {
-        auto indexDirectory = [&](const QString &dirPath) {
-            if (dirPath.isEmpty() || !QDir(dirPath).exists())
-                return;
-            QDirIterator it(dirPath, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-            int count = 0;
-            while (it.hasNext() && count < 10000) {
-                it.next();
-                ++count;
-                indexedFiles[it.fileName().toLower()].append(it.filePath());
-            }
-        };
-
-        indexDirectory(sourceDir);
-        QDir parentDir(sourceDir);
-        if (parentDir.cdUp()) {
-            indexDirectory(parentDir.absolutePath());
-            QDir grandParent(parentDir);
-            if (grandParent.cdUp())
-                indexDirectory(grandParent.absolutePath());
-        }
-
-        const QString remapFrom = qEnvironmentVariable("DRIFT_MEDIA_REMAP_FROM");
-        const QString remapTo = qEnvironmentVariable("DRIFT_MEDIA_REMAP_TO");
-        QString altDir = sourceDir;
-        if (!remapFrom.isEmpty() && !remapTo.isEmpty() && altDir.startsWith(remapFrom))
-            altDir.replace(0, remapFrom.size(), remapTo);
-        if (altDir != sourceDir && QDir(altDir).exists()) {
-            indexDirectory(altDir);
-            QDir altParent(altDir);
-            if (altParent.cdUp())
-                indexDirectory(altParent.absolutePath());
+        QDirIterator it(sourceDir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+        int count = 0;
+        while (it.hasNext() && count < 10000) {
+            it.next();
+            ++count;
+            indexedFiles[it.fileName().toLower()].append(it.filePath());
         }
     }
 
@@ -1047,22 +940,27 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         QList<Effect> mediaEffects;
     };
     QMap<quint32, MediaEntry> mediaPool;
+    QHash<QString, MediaEntry> nestedEntries;
+    qsizetype mediaPoolStart = 0;
+    qsizetype mediaPoolEnd = 0;
 
     qsizetype pos = 40;
     while (pos + 24 <= totalSize) {
         const uint8_t *ptr = bytes + pos;
         const quint64 chunkSize = readU64LE(ptr + 16);
-        if (chunkSize < 24 || pos + static_cast<qsizetype>(chunkSize) > totalSize)
+        if (chunkSize < 24 || chunkSize > quint64(totalSize - pos))
             break;
 
         if (std::memcmp(ptr, kGuidW64List, 16) == 0 && pos + 40 <= totalSize
             && std::memcmp(ptr + 24, kTypeMediaPool, 16) == 0) {
             qsizetype cpos = pos + 40;
             const qsizetype cend = pos + static_cast<qsizetype>(chunkSize);
+            mediaPoolStart = pos;
+            mediaPoolEnd = cend;
             while (cpos + 24 <= cend) {
                 const uint8_t *cptr = bytes + cpos;
                 const quint64 csize = readU64LE(cptr + 16);
-                if (csize < 24 || cpos + static_cast<qsizetype>(csize) > cend)
+                if (csize < 24 || csize > quint64(cend - cpos))
                     break;
 
                 const uint8_t *payload = cptr + 24;
@@ -1089,18 +987,18 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                             entry.rawFilename = QStringLiteral("Title");
                         entry.mediaEffects = extractVideoEffects(payload, payloadSize);
                         mediaPool.insert(mid, entry);
-                        cpos += (csize + 7) & ~7;
+                        cpos += alignedSize(csize);
                         continue;
                     }
 
                     if (isSolid) {
                         MediaEntry entry;
                         entry.isSolidColorGenerator = true;
-                        extractSolidColor(payload, payloadSize, &entry.solidColor);
+                        entry.solidColor = extractSolidColor(payload, payloadSize);
                         entry.rawFilename = QStringLiteral("Solid Color");
                         entry.mediaEffects = extractVideoEffects(payload, payloadSize);
                         mediaPool.insert(mid, entry);
-                        cpos += (csize + 7) & ~7;
+                        cpos += alignedSize(csize);
                         continue;
                     }
 
@@ -1108,62 +1006,67 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     if (diskName.isEmpty() || diskName.startsWith(QLatin1Char('{')))
                         diskName = QStringLiteral("media_%1").arg(mid);
 
-                    const QString resolved = resolveMediaFile(winPath, diskName, sourceDir, searchDirs, indexedFiles);
+                    const QString resolved = resolveMediaFile(winPath, diskName, sourceDir, indexedFiles);
                     const QString assetId = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
                     const bool isVeg = resolved.endsWith(QLatin1String(".veg"), Qt::CaseInsensitive);
-                    if (isVeg && QFile::exists(resolved) && depth < 8) {
+                    if (isVeg && QFile::exists(resolved)) {
                         const QString canon = QFileInfo(resolved).canonicalFilePath();
-                        if (!canon.isEmpty() && !visitedPaths.contains(canon)) {
-                            QSet<QString> childVisited = visitedPaths;
-                            childVisited.insert(canon);
-                            QString nestedError;
-                            auto optNested = readProject(resolved, &nestedError, childVisited, depth + 1);
-                            if (optNested.has_value() && !optNested->tracks().isEmpty()) {
-                                drift::Project nestedProj = std::move(*optNested);
-                                const QString seqId = project.addSequence(nestedProj.tracks());
-
-                                for (const auto &nAsset : nestedProj.assets()) {
-                                    if (!project.assets().contains(nAsset.id)) {
-                                        project.assets().insert(nAsset.id, nAsset);
-                                        project.assetOrder().append(nAsset.id);
-                                    }
-                                }
-
-                                for (const QString &subSeqId : nestedProj.sequenceIds()) {
-                                    if (!project.hasSequence(subSeqId)) {
-                                        project.addSequence(nestedProj.sequenceTracks(subSeqId), subSeqId);
-                                    }
-                                }
-
-                                MediaAsset asset;
-                                asset.id = assetId;
-                                asset.kind = MediaKind::Composite;
-                                asset.sequenceId = seqId;
-                                asset.name = QFileInfo(resolved).completeBaseName();
-                                asset.path = resolved;
-                                asset.durationUs = nestedProj.sequenceDurationUs({});
-                                asset.width = nestedProj.width() > 0 ? nestedProj.width() : canvasWidth;
-                                asset.height = nestedProj.height() > 0 ? nestedProj.height() : canvasHeight;
-                                asset.fps = nestedProj.fps() > 0 ? nestedProj.fps() : fps;
-                                asset.editFriendly = true;
-
-                                project.assets().insert(asset.id, asset);
-                                project.assetOrder().append(asset.id);
-
-                                MediaEntry entry;
-                                entry.rawFilename = diskName;
-                                entry.resolvedPath = resolved;
-                                entry.assetId = assetId;
-                                entry.sequenceId = seqId;
-                                entry.isNestedProject = true;
-                                entry.mediaEffects = extractVideoEffects(payload, payloadSize);
-                                mediaPool.insert(mid, entry);
-
-                                cpos += (csize + 7) & ~7;
-                                continue;
-                            }
+                        const auto imported = nestedEntries.constFind(canon);
+                        if (imported != nestedEntries.constEnd()) {
+                            MediaEntry entry = *imported;
+                            entry.mediaEffects = extractVideoEffects(payload, payloadSize);
+                            mediaPool.insert(mid, entry);
+                            cpos += alignedSize(csize);
+                            continue;
                         }
+
+                        const std::shared_ptr<const Project> nested = loadNestedProject(ctx, canon, resolved);
+                        if (nested && !nested->tracks().isEmpty()) {
+                            const Project &nestedProj = *nested;
+                            const QString seqId = project.addSequence(nestedProj.tracks());
+
+                            for (const auto &nAsset : nestedProj.assets()) {
+                                if (!project.assets().contains(nAsset.id)) {
+                                    project.assets().insert(nAsset.id, nAsset);
+                                    project.assetOrder().append(nAsset.id);
+                                }
+                            }
+
+                            for (const QString &subSeqId : nestedProj.sequenceIds()) {
+                                if (!project.hasSequence(subSeqId))
+                                    project.addSequence(nestedProj.sequenceTracks(subSeqId), subSeqId);
+                            }
+
+                            MediaAsset asset;
+                            asset.id = assetId;
+                            asset.kind = MediaKind::Composite;
+                            asset.sequenceId = seqId;
+                            asset.name = QFileInfo(resolved).completeBaseName();
+                            asset.path = resolved;
+                            asset.durationUs = nestedProj.sequenceDurationUs({});
+                            asset.width = nestedProj.width() > 0 ? nestedProj.width() : canvasWidth;
+                            asset.height = nestedProj.height() > 0 ? nestedProj.height() : canvasHeight;
+                            asset.fps = nestedProj.fps() > 0 ? nestedProj.fps() : fps;
+                            asset.editFriendly = true;
+
+                            project.assets().insert(asset.id, asset);
+                            project.assetOrder().append(asset.id);
+
+                            MediaEntry entry;
+                            entry.rawFilename = diskName;
+                            entry.resolvedPath = resolved;
+                            entry.assetId = assetId;
+                            entry.sequenceId = seqId;
+                            entry.isNestedProject = true;
+                            nestedEntries.insert(canon, entry);
+                            entry.mediaEffects = extractVideoEffects(payload, payloadSize);
+                            mediaPool.insert(mid, entry);
+
+                            cpos += alignedSize(csize);
+                            continue;
+                        }
+                        ++ctx.skipped;
                     }
 
                     MediaEntry entry;
@@ -1252,11 +1155,11 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     project.assets().insert(asset.id, asset);
                     project.assetOrder().append(asset.id);
                 }
-                cpos += (csize + 7) & ~7;
+                cpos += alignedSize(csize);
             }
             break;
         }
-        pos += (chunkSize + 7) & ~7;
+        pos += alignedSize(chunkSize);
     }
 
     // 2. Parse Event Group List (kTypeEventGroupList)
@@ -1265,7 +1168,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     while (pos + 24 <= totalSize) {
         const uint8_t *ptr = bytes + pos;
         const quint64 chunkSize = readU64LE(ptr + 16);
-        if (chunkSize < 24 || pos + static_cast<qsizetype>(chunkSize) > totalSize)
+        if (chunkSize < 24 || chunkSize > quint64(totalSize - pos))
             break;
 
         if (std::memcmp(ptr, kGuidW64List, 16) == 0 && pos + 40 <= totalSize
@@ -1275,7 +1178,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             while (gpos + 24 <= gend) {
                 const uint8_t *gptr = bytes + gpos;
                 const quint64 gsize = readU64LE(gptr + 16);
-                if (gsize < 24 || gpos + static_cast<qsizetype>(gsize) > gend)
+                if (gsize < 24 || gsize > quint64(gend - gpos))
                     break;
 
                 if (std::memcmp(gptr, kChunkEventGroup, 16) == 0) {
@@ -1283,7 +1186,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     const qsizetype gpayloadSize = static_cast<qsizetype>(gsize - 24);
                     if (gpayloadSize >= 16) {
                         const quint32 eventCount = readU32LE(gpayload + 8);
-                        if (eventCount > 0 && gpayloadSize >= static_cast<qsizetype>(16 + eventCount * 8)) {
+                        if (eventCount > 0 && quint64(eventCount) * 8 + 16 <= quint64(gpayloadSize)) {
                             QList<quint32> groupEvents;
                             groupEvents.reserve(eventCount);
                             for (quint32 i = 0; i < eventCount; ++i) {
@@ -1294,11 +1197,11 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                         }
                     }
                 }
-                gpos += (gsize + 7) & ~7;
+                gpos += alignedSize(gsize);
             }
             break;
         }
-        pos += (chunkSize + 7) & ~7;
+        pos += alignedSize(chunkSize);
     }
 
     // 3. Parse Timeline Tracks & Events
@@ -1309,7 +1212,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     while (pos + 24 <= totalSize) {
         const uint8_t *ptr = bytes + pos;
         const quint64 chunkSize = readU64LE(ptr + 16);
-        if (chunkSize < 24 || pos + static_cast<qsizetype>(chunkSize) > totalSize)
+        if (chunkSize < 24 || chunkSize > quint64(totalSize - pos))
             break;
 
         if (std::memcmp(ptr, kGuidW64List, 16) == 0 && pos + 40 <= totalSize
@@ -1318,7 +1221,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             const qsizetype tend = pos + static_cast<qsizetype>(chunkSize);
             while (tpos + 40 <= tend) {
                 const quint64 tsize = readU64LE(bytes + tpos + 16);
-                if (tsize < 40 || tpos + static_cast<qsizetype>(tsize) > tend)
+                if (tsize < 40 || tsize > quint64(tend - tpos))
                     break;
 
                 if (std::memcmp(bytes + tpos, kGuidW64List, 16) == 0
@@ -1331,7 +1234,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
                     if (tpos + 64 <= tend) {
                         const quint64 tcsize = readU64LE(bytes + tpos + 56);
-                        if (tcsize >= 24 && tpos + 40 + static_cast<qsizetype>(tcsize) <= tend) {
+                        if (tcsize >= 24 && tcsize <= quint64(tend - tpos - 40)) {
                             const uint8_t *cpayload = bytes + tpos + 64;
                             const qsizetype cpayloadSize = static_cast<qsizetype>(tcsize - 24);
 
@@ -1342,10 +1245,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                             }
                             if (cpayloadSize >= 20) {
                                 const quint32 nameBytes = readU32LE(cpayload + 16);
-                                if (nameBytes > 0 && cpayloadSize >= 56 + static_cast<qsizetype>(nameBytes)) {
-                                    const qsizetype strLen = std::min<qsizetype>(cpayloadSize - 56, nameBytes);
-                                    trackCustomName = readUtf16String(cpayload + 56, strLen, 0).trimmed();
-                                }
+                                if (nameBytes > 0 && cpayloadSize >= 56 && quint64(nameBytes) <= quint64(cpayloadSize - 56))
+                                    trackCustomName = readUtf16String(cpayload + 56, qsizetype(nameBytes), 0).trimmed();
                             }
                             if (cpayloadSize >= 36) {
                                 const quint32 trackTypeCode = readU32LE(cpayload + 32);
@@ -1373,7 +1274,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     const qsizetype evend = tpos + static_cast<qsizetype>(tsize);
                     while (evpos + 40 <= evend) {
                         const quint64 evsize = readU64LE(bytes + evpos + 16);
-                        if (evsize < 40 || evpos + static_cast<qsizetype>(evsize) > evend)
+                        if (evsize < 40 || evsize > quint64(evend - evpos))
                             break;
 
                         if (std::memcmp(bytes + evpos, kGuidW64List, 16) == 0
@@ -1382,7 +1283,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                             const qsizetype eend = evpos + static_cast<qsizetype>(evsize);
                             while (epos + 40 <= eend) {
                                 const quint64 esize = readU64LE(bytes + epos + 16);
-                                if (esize < 40 || epos + static_cast<qsizetype>(esize) > eend)
+                                if (esize < 40 || esize > quint64(eend - epos))
                                     break;
 
                                 if (std::memcmp(bytes + epos, kGuidW64List, 16) == 0
@@ -1400,7 +1301,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     while (cpos + 24 <= cend) {
                                         const uint8_t *cptr = bytes + cpos;
                                         const quint64 csize = readU64LE(cptr + 16);
-                                        if (csize < 24 || cpos + static_cast<qsizetype>(csize) > cend)
+                                        if (csize < 24 || csize > quint64(cend - cpos))
                                             break;
 
                                         const uint8_t *cpayload = cptr + 24;
@@ -1424,7 +1325,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                                 mid = readU32LE(cpayload + 36);
                                             }
                                         }
-                                        cpos += (csize + 7) & ~7;
+                                        cpos += alignedSize(csize);
                                     }
 
                                     if (durTicks > 0) {
@@ -1483,12 +1384,12 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                         }
 
                                         // Convert 100ns ticks to microseconds
-                                        clip.timelineStart = static_cast<TimeUs>(startTicks / 10);
-                                        clip.timelineDuration = static_cast<TimeUs>(durTicks / 10);
-                                        clip.srcIn = static_cast<TimeUs>(srcInTicks / 10);
-                                        clip.srcOut = static_cast<TimeUs>((srcInTicks + durTicks) / 10);
-                                        clip.fadeInUs = static_cast<TimeUs>(fadeInTicks / 10);
-                                        clip.fadeOutUs = static_cast<TimeUs>(fadeOutTicks / 10);
+                                        clip.timelineStart = ticksToUs(startTicks);
+                                        clip.timelineDuration = std::max<TimeUs>(ticksToUs(durTicks), 1);
+                                        clip.srcIn = ticksToUs(srcInTicks);
+                                        clip.srcOut = clip.srcIn + clip.timelineDuration;
+                                        clip.fadeInUs = std::min(ticksToUs(fadeInTicks), clip.timelineDuration);
+                                        clip.fadeOutUs = std::min(ticksToUs(fadeOutTicks), clip.timelineDuration);
 
                                         track.clips.append(clip);
                                         if (eventId > 0) {
@@ -1496,7 +1397,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                         }
                                     }
                                 }
-                                epos += (esize + 7) & ~7;
+                                epos += alignedSize(esize);
                             }
                         } else if (evsize >= 40 && std::memcmp(bytes + evpos, kGuidW64List, 16) == 0
                                    && std::memcmp(bytes + evpos + 24, kListAudioTrack, 16) == 0) {
@@ -1505,7 +1406,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                             while (apos + 24 <= aend) {
                                 const uint8_t *aptr = bytes + apos;
                                 const quint64 asize = readU64LE(aptr + 16);
-                                if (asize < 24 || apos + static_cast<qsizetype>(asize) > aend)
+                                if (asize < 24 || asize > quint64(aend - apos))
                                     break;
 
                                 if (std::memcmp(aptr, kChunkAudioTrackProps, 16) == 0) {
@@ -1524,7 +1425,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                             track.pan = qBound(-1.0, static_cast<double>(pan), 1.0);
                                     }
                                 }
-                                apos += (asize + 7) & ~7;
+                                apos += alignedSize(asize);
                             }
                         } else if (std::memcmp(bytes + evpos, kChunkAudioTrackProps, 16) == 0) {
                             const uint8_t *apayload = bytes + evpos + 24;
@@ -1542,7 +1443,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                                     track.pan = qBound(-1.0, static_cast<double>(pan), 1.0);
                             }
                         }
-                        evpos += (evsize + 7) & ~7;
+                        evpos += alignedSize(evsize);
                     }
 
                     detectTransitionsForTrack(track);
@@ -1561,16 +1462,16 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
                     project.tracks().append(track);
                 }
-                tpos += (tsize + 7) & ~7;
+                tpos += alignedSize(tsize);
             }
             break;
         }
-        pos += (chunkSize + 7) & ~7;
+        pos += alignedSize(chunkSize);
     }
 
     if (project.tracks().isEmpty()) {
         if (error)
-            *error = QStringLiteral("No timeline tracks found in VEGAS project");
+            *error = QObject::tr("No timeline tracks found in the VEGAS Pro project");
         return std::nullopt;
     }
 
@@ -1666,7 +1567,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     }
 
     // 4. Parse Timeline Markers and Regions (kTypeMarkerList and kGuidMarker)
-    if (depth == 0) {
+    if (ctx.depth == 0) {
         qsizetype markerListStart = -1;
         qsizetype markerListEnd = -1;
 
@@ -1674,7 +1575,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         while (lpos + 24 <= totalSize) {
             const uint8_t *lptr = bytes + lpos;
             const quint64 chunkSize = readU64LE(lptr + 16);
-            if (chunkSize < 24 || lpos + static_cast<qsizetype>(chunkSize) > totalSize)
+            if (chunkSize < 24 || chunkSize > quint64(totalSize - lpos))
                 break;
 
             if (std::memcmp(lptr, kGuidW64List, 16) == 0 && lpos + 40 <= totalSize
@@ -1683,7 +1584,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                 markerListEnd = lpos + static_cast<qsizetype>(chunkSize);
                 break;
             }
-            lpos += (chunkSize + 7) & ~7;
+            lpos += alignedSize(chunkSize);
         }
 
         qsizetype scanPos = 40;
@@ -1694,6 +1595,11 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             const qsizetype idx = static_cast<const uint8_t *>(found) - bytes;
             if (idx + 16 > totalSize)
                 break;
+
+            if (idx >= mediaPoolStart && idx < mediaPoolEnd) {
+                scanPos = mediaPoolEnd;
+                continue;
+            }
 
             if (std::memcmp(bytes + idx, kGuidMarker, 16) == 0) {
                 const bool inMarkerList = (markerListStart >= 0 && idx >= markerListStart && idx < markerListEnd);
@@ -1733,16 +1639,13 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
         if (!project.bookmarks().isEmpty()) {
             QList<Bookmark> uniqueBookmarks;
+            QSet<QString> seen;
             for (const Bookmark &bm : project.bookmarks()) {
-                bool exists = false;
-                for (const Bookmark &u : uniqueBookmarks) {
-                    if (u.timeUs == bm.timeUs && u.label == bm.label) {
-                        exists = true;
-                        break;
-                    }
-                }
-                if (!exists)
-                    uniqueBookmarks.append(bm);
+                const QString key = QString::number(bm.timeUs) + QLatin1Char('|') + bm.label;
+                if (seen.contains(key))
+                    continue;
+                seen.insert(key);
+                uniqueBookmarks.append(bm);
             }
             std::sort(uniqueBookmarks.begin(), uniqueBookmarks.end(),
                       [](const Bookmark &a, const Bookmark &b) {
@@ -1761,6 +1664,27 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
     project.ensureTrackIds();
     return project;
+}
+
+} // namespace
+
+std::optional<Project> readProject(const QString &filePath, QString *error, int *skippedOut)
+{
+    ImportContext ctx;
+    auto result = readFileImpl(filePath, error, ctx);
+    if (skippedOut)
+        *skippedOut = ctx.skipped;
+    return result;
+}
+
+std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
+                                       int *skippedOut)
+{
+    ImportContext ctx;
+    auto result = readDataImpl(data, sourceDir, error, ctx);
+    if (skippedOut)
+        *skippedOut = ctx.skipped;
+    return result;
 }
 
 } // namespace drift::vegas

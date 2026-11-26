@@ -4,7 +4,6 @@
 
 #include <optional>
 #include <QByteArray>
-#include <QSet>
 #include <QString>
 
 namespace drift::vegas {
@@ -16,13 +15,13 @@ bool isVegasProject(const QString &filePath);
 bool isVegasData(const QByteArray &data);
 
 // Reads a Sony/MAGIX VEGAS Pro project (.veg) from disk and converts it to a drift::Project.
-// Recursively imports nested .veg timelines as Drift composite sequences.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr,
-                                   QSet<QString> visitedPaths = {}, int depth = 0);
+// Nested .veg timelines are imported as composite sequences, each parsed once per call.
+// skippedOut receives how many referenced .veg projects could not be imported.
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr, int *skippedOut = nullptr);
 
 // Reads raw binary VEGAS project data and converts it to a drift::Project.
+// sourceDir is used to resolve media and nested projects relative to the project file.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                       QString *error = nullptr,
-                                       QSet<QString> visitedPaths = {}, int depth = 0);
+                                       QString *error = nullptr, int *skippedOut = nullptr);
 
 } // namespace drift::vegas
