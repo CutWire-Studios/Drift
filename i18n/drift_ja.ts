@@ -20496,6 +20496,12 @@ If playback stutters, try another.</source>
         </translation>
     </message>
     <message numerus="yes">
+        <source>Relinked %n clip(s) to ProRes transcodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
             <numerusform>プロジェクトの JSON を読み込みましたが、%n 個のメディアファイルが見つかりませんでした</numerusform>

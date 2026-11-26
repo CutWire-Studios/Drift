@@ -18,6 +18,8 @@
 #include "core/interchange/premiere/PrprojReader.h"
 #include "core/interchange/ResolveReader.h"
 #include "engine/addons/AddonRegistry.h"
+#include "app/editor/AppControllerDetail.h"
+#include "engine/decode/probe/MediaProbe.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/packages/animations/AnimationCatalog.h"
@@ -1609,10 +1611,21 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         return;
     }
 
-    // Remap non-edit-friendly camera sources to co-located ProRes .mov transcodes when present
-    // alongside the source, in Transcodes_ProRes/, or in ../Transcodes_ProRes/<dir>/.
-    const auto autoRelinkCoLocatedProRes = [this]() {
-        QHash<QString, QString> autoRemap;
+    // Remap non-edit-friendly camera sources to ProRes .mov transcodes kept in Transcodes_ProRes/
+    // next to the source, in ../Transcodes_ProRes/<dir>/, or under the project's own
+    // Transcodes_ProRes/. A candidate counts only when it probes as ProRes of the same length.
+    // Returns how many assets were relinked.
+    const auto autoRelinkCoLocatedProRes = [this](const QString &projectFile) -> int {
+        const QString projectDir =
+            QFileInfo(projectFile).isFile() ? QFileInfo(projectFile).absolutePath() : QString();
+        struct Relink
+        {
+            QString assetId;
+            QString from;
+            QString to;
+            MediaInfo info;
+        };
+        QList<Relink> relinks;
         for (const auto &asset : m_app->m_project.assets()) {
             if (asset.kind != drift::MediaKind::Video || asset.editFriendly || asset.path.isEmpty()
                 || m_embeddedSources.contains(asset.path))
@@ -1621,35 +1634,86 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
             if (info.suffix().compare(QLatin1String("mov"), Qt::CaseInsensitive) == 0)
                 continue;
 
-            const QString dir = info.absolutePath();
-            const QString base = info.completeBaseName();
-            const QString candidates[] = {
-                QDir(dir).filePath(base + QStringLiteral(".mov")),
-                QDir(dir).filePath(QStringLiteral("Transcodes_ProRes/") + base + QStringLiteral(".mov")),
-                QDir(dir).filePath(QStringLiteral("../Transcodes_ProRes/") + QDir(dir).dirName()
-                                   + QLatin1Char('/') + base + QStringLiteral(".mov")),
-            };
-            for (const QString &candidate : candidates) {
+            const QDir dir(info.absolutePath());
+            const QString movName = info.completeBaseName() + QStringLiteral(".mov");
+            QStringList candidates;
+            if (!projectDir.isEmpty()) {
+                const QString relDir = QDir(projectDir).relativeFilePath(dir.absolutePath());
+                if (relDir != QLatin1String("..") && !relDir.startsWith(QLatin1String("../")))
+                    candidates << QDir::cleanPath(projectDir + QStringLiteral("/Transcodes_ProRes/")
+                                                  + relDir + QLatin1Char('/') + movName);
+            }
+            candidates << dir.filePath(QStringLiteral("Transcodes_ProRes/") + movName)
+                       << dir.filePath(QStringLiteral("../Transcodes_ProRes/") + dir.dirName()
+                                       + QLatin1Char('/') + movName);
+            for (const QString &candidate : std::as_const(candidates)) {
                 const QFileInfo movInfo(candidate);
-                if (movInfo.exists() && movInfo.size() > 0) {
-                    autoRemap.insert(asset.path, movInfo.absoluteFilePath());
-                    break;
-                }
+                if (!movInfo.isFile() || movInfo.size() <= 0)
+                    continue;
+                const MediaInfo probed = MediaProbe::probe(movInfo.absoluteFilePath());
+                if (!probed.ok || qAbs(probed.durationUs - asset.durationUs) > 500'000)
+                    continue;
+                const bool prores = std::any_of(
+                    probed.streams.cbegin(), probed.streams.cend(), [](const StreamInfo &stream) {
+                        return stream.type == StreamInfo::Type::Video && !stream.attachedPicture
+                            && stream.codecName == QLatin1String("prores");
+                    });
+                if (!prores)
+                    continue;
+                relinks.append({asset.id, asset.path, movInfo.absoluteFilePath(), probed});
+                break;
             }
         }
-        if (autoRemap.isEmpty())
-            return;
+        if (relinks.isEmpty())
+            return 0;
 
-        remapProjectPaths(autoRemap);
-        for (auto it = autoRemap.constBegin(); it != autoRemap.constEnd(); ++it) {
-            for (drift::MediaAsset &asset : m_app->m_project.assets()) {
-                if (asset.path == it.value())
-                    asset.editFriendly = true;
+        QHash<QString, QString> remap;
+        for (const Relink &relink : std::as_const(relinks))
+            remap.insert(relink.from, relink.to);
+        remapProjectPaths(remap);
+        for (const Relink &relink : std::as_const(relinks)) {
+            drift::MediaAsset *asset = m_app->m_project.asset(relink.assetId);
+            if (!asset)
+                continue;
+            const int oldBinCorrection = drift::rotationCorrectionOf(*asset);
+            for (const StreamInfo &stream : relink.info.streams) {
+                if (stream.type != StreamInfo::Type::Video || stream.attachedPicture)
+                    continue;
+                asset->width = stream.width;
+                asset->height = stream.height;
+                asset->fps = stream.fps;
+                asset->rotationDegrees = stream.rotationDegrees;
+                asset->codecName = stream.codecName;
+                break;
             }
+            asset->durationUs = relink.info.durationUs;
+            asset->frameRateKnown = true;
+            asset->variableFrameRate = false;
+            asset->editFriendly = true;
+            const int newBinCorrection = drift::rotationCorrectionOf(*asset);
+            m_app->m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
+                for (drift::Track &track : tracks) {
+                    for (drift::Clip &clip : track.clips) {
+                        if (clip.assetId != relink.assetId)
+                            continue;
+                        clip.rotationCorrection =
+                            ((clip.rotationCorrection - oldBinCorrection + newBinCorrection) % 360 + 360) % 360;
+                        drift::appdetail::refreshClipFrame(m_app->m_project, clip);
+                    }
+                }
+            });
         }
         if (m_app->m_assetLibrary)
             m_app->m_assetLibrary->setProject(&m_app->m_project);
         m_app->notifyTracksChanged();
+        return int(relinks.size());
+    };
+    const auto withRelinkNote = [this](const QString &message, int relinked) {
+        if (relinked <= 0)
+            return message;
+        setDirty(true);
+        return QStringLiteral("%1. %2")
+            .arg(message, tr("Relinked %n clip(s) to ProRes transcodes", nullptr, relinked));
     };
 
     if (result->kind == LoadResult::Kind::Json) {
@@ -1657,16 +1721,17 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         // Referenced media only — a previous packaged project's extraction paths must not hitch a
         // ride into the next Save.
         m_embeddedSources.clear();
-        autoRelinkCoLocatedProRes();
+        const int relinked = autoRelinkCoLocatedProRes(QString());
         // Untitled: Save must not write a .drift bundle over this .json, and recents stay .drift.
         setCurrentProjectPath(QString());
         setDirty(true);
         deleteRecoveryFile();
         m_app->setProjectLayoutChosen(true);
         const int missing = m_app->m_assetLibrary->missingCount();
-        const QString message = missing > 0
-            ? tr("Project JSON loaded, but %n media file(s) could not be found", nullptr, missing)
-            : tr("Project JSON loaded");
+        const QString message = withRelinkNote(
+            missing > 0 ? tr("Project JSON loaded, but %n media file(s) could not be found", nullptr, missing)
+                        : tr("Project JSON loaded"),
+            relinked);
         m_app->setLastMessage(message, missing > 0 ? QStringLiteral("warning") : QStringLiteral("success"));
         finishProjectLoad(true, message);
         return;
@@ -1690,20 +1755,21 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
             && entry.resourceOf.isEmpty())
             m_embeddedSources.insert(remap.value(entry.originalPath, entry.originalPath));
     }
-    autoRelinkCoLocatedProRes();
 
     // Not the staged path: on Android that lives in the cache the startup sweep clears, and
     // Save-in-place has to write back to the document the user actually opened. projectLocation
     // upgrades the picker's one-shot grant to a persistable read+write one on the way.
     const QString location = projectLocation(url);
+    const int relinked = autoRelinkCoLocatedProRes(location);
     setCurrentProjectPath(location);
     addRecentProject(location);
     deleteRecoveryFile();
     m_app->setProjectLayoutChosen(true);
     const int missing = m_app->m_assetLibrary->missingCount();
-    const QString message = missing > 0
-        ? tr("Project loaded, but %n media file(s) could not be found", nullptr, missing)
-        : tr("Project loaded");
+    const QString message = withRelinkNote(
+        missing > 0 ? tr("Project loaded, but %n media file(s) could not be found", nullptr, missing)
+                    : tr("Project loaded"),
+        relinked);
     m_app->setLastMessage(message, missing > 0 ? QStringLiteral("warning") : QStringLiteral("success"));
     reportMissingAddons(bundle.addons);
     finishProjectLoad(true, message);
