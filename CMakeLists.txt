@@ -575,6 +575,10 @@ add_library(driftcore STATIC
     src/core/animation/FadeShape.cpp
     src/core/animation/Easing.h
     src/core/animation/Easing.cpp
+    src/core/animation/AutoZoom.h
+    src/core/animation/AutoZoom.cpp
+    src/core/input/InputLog.h
+    src/core/input/InputLog.cpp
     src/core/animation/EasingPresetStore.h
     src/core/animation/EasingPresetStore.cpp
     src/core/animation/ClipAnimation.h
