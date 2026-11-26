@@ -7,6 +7,7 @@
 #include "engine/media/waveforms/WaveformBlockCache.h"
 #include "app/editor/TimelineClipsModel.h"
 #include "app/editor/keymap/Keymap.h"
+#include "app/surfaces/ControlSurfaceManager.h"
 #include "app/mcp/tools/McpMarket.h"
 #include "core/project/GuideSet.h"
 #include <QAtomicInt>
@@ -50,6 +51,7 @@ class TeleprompterController;
 class ColorController;
 class BlendPreviewController;
 class DenoiseController;
+class CaptureController;
 class AudioAlignController;
 class DepthController;
 class BakeController;
@@ -100,6 +102,7 @@ class AppController : public QObject
     friend class DepthController;
     friend class BakeController;
     friend class DenoiseController;
+    friend class CaptureController;
     friend class AudioAlignController;
     friend class ColorController;
     friend class BlendPreviewController;
@@ -131,6 +134,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/color/ColorController.h")
     Q_MOC_INCLUDE("app/editor/BlendPreviewController.h")
     Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
+    Q_MOC_INCLUDE("app/jobs/capture/CaptureController.h")
     Q_MOC_INCLUDE("app/jobs/audio/AudioAlignController.h")
     Q_MOC_INCLUDE("app/jobs/vision/DepthController.h")
     Q_MOC_INCLUDE("app/jobs/render/BakeController.h")
@@ -180,6 +184,7 @@ class AppController : public QObject
     Q_PROPERTY(BakeController *bakes READ bakes CONSTANT)
     // Noise removal for a clip's audio. QML: EditorState.denoise.
     Q_PROPERTY(DenoiseController *denoise READ denoise CONSTANT)
+    Q_PROPERTY(CaptureController *capture READ capture CONSTANT)
     // Silence removal and audio sync. QML: EditorState.audioAlign.
     Q_PROPERTY(AudioAlignController *audioAlign READ audioAlign CONSTANT)
     // Colour grade, finishing effects and looks. QML: EditorState.color.
@@ -350,6 +355,7 @@ class AppController : public QObject
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
     Q_PROPERTY(drift::Keymap *keymap READ keymap CONSTANT)
+    Q_PROPERTY(drift::ControlSurfaceManager *surfaces READ surfaces CONSTANT)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
     Q_PROPERTY(bool workAreaActive READ workAreaActive NOTIFY workAreaChanged)
     Q_PROPERTY(double workAreaInSeconds READ workAreaInSeconds NOTIFY workAreaChanged)
@@ -413,6 +419,7 @@ public:
     DepthController *depth() const { return m_depth; }
     BakeController *bakes() const { return m_bakes; }
     DenoiseController *denoise() const { return m_denoise; }
+    CaptureController *capture() const { return m_capture; }
     AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
     BlendPreviewController *blendPreview() const { return m_blendPreview; }
@@ -429,6 +436,7 @@ public:
     VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
     drift::Keymap *keymap() const { return m_keymap; }
+    drift::ControlSurfaceManager *surfaces() const { return m_surfaces; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
@@ -1002,6 +1010,22 @@ public:
     Q_INVOKABLE void splitSelectionOnBeats(int trackIndex, int clipIndex, const QString &unit);
     Q_INVOKABLE void snapSelectionToBeats(int trackIndex, int clipIndex, const QString &unit);
     Q_INVOKABLE void addMarkersAtBeats(const QString &unit);
+    // Beat tracking on one clip's own audio, ignoring the rest of the mix. A failure comes back as
+    // {error, message} in `failure`; the analysis is empty then. Blocks in a nested event loop.
+    AudioBeatAnalysis analyzeClipBeats(const QString &clipId, QVariantMap *failure);
+    // Markers on every `every`-th beat of the clip, counted from its bar lines; every <= 0 is one per
+    // bar. Returns {added, beats, bpm, confidence} or {error, message}. One undo step.
+    QVariantMap addBeatMarkersForClip(const QString &clipId, int every);
+    // Lays the video and image clips of `clipIds` end to end on a new track so each cut lands on a
+    // beat of the music clip: every `beatsPerCut` beats, from the music's start or the playhead,
+    // optionally only on bar lines. Footage longer than its slot is trimmed; shorter footage leaves a
+    // gap. Returns {placed, track, bpm, short, unused} or {error, message}. One undo step.
+    QVariantMap autoCutToBeat(const QString &musicClipId, const QStringList &clipIds, int beatsPerCut,
+                              bool fromPlayhead, bool syncDownbeats);
+    Q_INVOKABLE int beatCutTargetCount(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE void addBeatMarkersForSelection(int trackIndex, int clipIndex, int every);
+    Q_INVOKABLE void autoCutSelectionToBeat(int trackIndex, int clipIndex, int beatsPerCut, bool fromPlayhead,
+                                            bool syncDownbeats);
     bool beatsAvailable() const { return !m_beatAnalysisRaw.beats.isEmpty(); }
     // Keys a crop window of `aspect` (<= 0 means 9:16) onto the clip's subject: mode "face" follows
     // its face track when it has one, "center" holds the middle. Failure is {error, message};
@@ -1287,6 +1311,15 @@ public:
     // Style packs the user saved from the inspector. Kept out of textPresets() so the built-in
     // catalog (and the MCP list it feeds) stays a stable, shippable set.
     Q_INVOKABLE QVariantList userTextPresets() const;
+    // Multi-element title and lower-third templates (see core/text/TitleTemplate.h): the catalog with
+    // each template's fields and element list, for the assets grid and its thumbnails.
+    Q_INVOKABLE QVariantList titleTemplates() const;
+    // Places the template's text and shape clips at atSeconds (< 0: the playhead), each on a free
+    // track above the video, loosely linked. `texts` maps field keys to replacement text. One undo
+    // step. Returns {clips, start, duration, text_clip} or {error, message}.
+    QVariantMap insertTitleTemplate(const QString &templateId, double atSeconds, const QVariantMap &texts);
+    // GUI: insert at the playhead, select the first text clip and open it for typing.
+    Q_INVOKABLE void addTitleTemplate(const QString &templateId);
     Q_INVOKABLE QString saveTextStyleAsPreset(int trackIndex, int clipIndex, const QString &label);
     Q_INVOKABLE bool renameUserTextPreset(const QString &presetId, const QString &label);
     Q_INVOKABLE bool deleteUserTextPreset(const QString &presetId);
@@ -1542,6 +1575,23 @@ public:
     Q_INVOKABLE bool setProceduralColorParam(int trackIndex, int clipIndex, const QString &key,
                                              const QString &value);
     Q_INVOKABLE bool setProceduralSeed(int trackIndex, int clipIndex, int seed);
+    // Built-in generator clips: solid, gradient, noise, test patterns, countdown, particles. `id` is a
+    // kind id ("gen.noise") or a preset id ("particles.confetti"). opts: duration (seconds), seed (int),
+    // name, params (map keyed like the clip's "proc.<key>" keyframe properties, e.g. {"emitter.x": 0.3}).
+    Q_INVOKABLE QVariantMap addGeneratorClip(const QString &id, int trackIndex, double atSeconds,
+                                             const QVariantMap &opts = {});
+    // The kinds and presets the Generators tab lists: [{id, label, category, description, kindId, preset}].
+    Q_INVOKABLE QVariantList generatorCatalog() const;
+    Q_INVOKABLE QVariantList generatorCategories() const;
+    // A Generator clip's text params (the particle sprite's image path or emoji).
+    Q_INVOKABLE bool setProceduralTextParam(int trackIndex, int clipIndex, const QString &key, const QString &value);
+    // Scripted text: a Lua script on a Text clip that returns the text for every frame. An empty
+    // script switches it back to the typed text.
+    Q_INVOKABLE bool setTextScript(int trackIndex, int clipIndex, const QString &script);
+    // {script, text, error}: the script and what it says at the playhead (or the clip start when the
+    // playhead is elsewhere). `error` is empty when it runs.
+    Q_INVOKABLE QVariantMap textScriptStatus(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QVariantList textScriptPresets() const;
     // What the last render of the clip reported: {known, packageId, error, errors[], log[], serial}.
     Q_INVOKABLE QVariantMap proceduralDiagnostics(const QString &clipId) const;
     Q_INVOKABLE QVariantMap setModel3dSource(int trackIndex, int clipIndex, const QString &path,
@@ -1886,6 +1936,9 @@ public:
     // key walks to the first or last cut and stops there.
     Q_INVOKABLE void goToNextEdit();
     Q_INVOKABLE void goToPreviousEdit();
+    // Whether a cut point or a bookmark lies between two times (either order), exclusive of the
+    // start and inclusive of the end: a scrub that moved from one to the other passed it.
+    Q_INVOKABLE bool crossesEditPoint(double fromSeconds, double toSeconds) const;
     // Add at the playhead, or remove the nearest bookmark when one already sits
     // within the snap threshold — same key for mark and unmark.
     Q_INVOKABLE void toggleBookmarkAtPlayhead();
@@ -2051,6 +2104,9 @@ public:
     Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
                                         bool rememberChoice = true);
     Q_INVOKABLE void cancelExport();
+    // The main timeline as an export renders it (review tracks hidden and muted), as project JSON:
+    // what the render queue stores so a job outlives later edits.
+    QByteArray exportSnapshotJson() const;
     // Copies the finished export into the shared media collection and hands it to the system share
     // sheet. Deferred to this point rather than done as part of the export because it is a second
     // full copy of the video, and most exports are never shared. Android only; false/no-op elsewhere.
@@ -2754,6 +2810,7 @@ protected:
     DepthController *m_depth = nullptr;
     BakeController *m_bakes = nullptr;
     DenoiseController *m_denoise = nullptr;
+    CaptureController *m_capture = nullptr;
     AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
     BlendPreviewController *m_blendPreview = nullptr;
@@ -2780,6 +2837,7 @@ protected:
     // Persists the library; an edit to an active set also changes what the project saves.
     void guideLibraryEdited(const QString &id);
     drift::Keymap *m_keymap = nullptr;
+    drift::ControlSurfaceManager *m_surfaces = nullptr;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
     QString m_lastMessage;

@@ -33,6 +33,21 @@ AbstractButton {
     }
 
     onClicked: root.arm()
+    onCapturingChanged: Gamepad.capturing = capturing
+
+    // A controller button is a chord too ("Pad+RB").
+    Connections {
+        target: Gamepad
+        enabled: root.capturing
+
+        function onButtonPressed(chord) {
+            const clash = EditorState.keymap.addBinding(root.actionId, chord)
+            if (clash.length > 0)
+                Toasts.warning(qsTr("“%1” is already used by %2.")
+                               .arg(EditorState.keymap.displayText(chord)).arg(clash))
+            root.capturing = false
+        }
+    }
 
     background: Rectangle {
         radius: Theme.c.shortcutCaptureField.radius
@@ -68,7 +83,7 @@ AbstractButton {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
-        text: root.capturing ? qsTr("Press keys…") : "+"
+        text: root.capturing ? (Gamepad.connected ? qsTr("Press keys or a button…") : qsTr("Press keys…")) : "+"
         color: root.capturing ? Theme.c.shortcutCaptureField.foregroundCapturing
                               : Theme.c.shortcutCaptureField.foreground
         font.family: Theme.monoFontFamily

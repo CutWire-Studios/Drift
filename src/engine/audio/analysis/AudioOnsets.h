@@ -11,14 +11,14 @@ struct AudioOnset
 struct AudioBeatAnalysis
 {
     QList<AudioOnset> onsets; // detected transients
-    QList<double> beats;      // regular grid derived from bpm + phase; empty when bpm == 0
+    QList<double> beats;      // dynamic-programming beat track (Ellis 2007); empty when bpm == 0
     int beatsPerBar = 4;
     int firstDownbeat = 0; // index into `beats` of the first bar line
     double bpm = 0.0;      // 0 when the tempo estimate is not trustworthy
     double confidence = 0.0;
 };
 
-// Spectral-flux onset detection plus autocorrelation tempo estimation, built on
+// Spectral-flux onset detection, autocorrelation tempo estimation and DP beat tracking, built on
 // FFmpeg's av_tx (same FFT primitive as WhisperTranscriber / DeepFilterDenoiser)
 // so this costs no extra dependency.
 class AudioOnsets

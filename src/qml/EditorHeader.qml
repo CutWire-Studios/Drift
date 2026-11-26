@@ -66,7 +66,7 @@ Item {
 
     function closeTopDialog() {
         const dialogs = [unsavedDialog, exportDialogLoader.item, exportProgressDialogLoader.item,
-                         projectPropertiesDialogLoader.item, projectHealthDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item,
+                         projectPropertiesDialogLoader.item, projectHealthDialogLoader.item, agentAccessDialog, videoSizeDialogLoader.item, bakesDialogLoader.item, renderQueueDialogLoader.item,
                          languageChooserDialogLoader.item, packageProgressDialog]
         for (var i = 0; i < dialogs.length; ++i) {
             const d = dialogs[i]
@@ -172,6 +172,31 @@ Item {
         })
     }
 
+    // A project as a folder of JSON files that editors and agents can change on disk.
+    function openProjectFolder() {
+        if (ShellBridge.main.rejectIfProjectOpenPending())
+            return
+        root.confirmIfDirty(function () {
+            var url = FileDialogs.openDirectory(qsTr("Open Project Folder"))
+            if (url != "")
+                EditorState.projectFile.loadProject(url)
+        })
+    }
+
+    function saveProjectAsFolder() {
+        var url = FileDialogs.openDirectory(qsTr("Choose where to create the project folder"))
+        if (url != "")
+            EditorState.projectFile.folder.saveAsFolder(url, EditorState.projectFile.projectName)
+    }
+
+    function exportDriftBundle() {
+        var url = FileDialogs.saveFile(qsTr("Export .drift Bundle"), root.projectFilter,
+                                       EditorState.projectFile.projectName, "drift", "",
+                                       root.projectMimeTypes)
+        if (url != "")
+            EditorState.projectFile.folder.exportBundle(url)
+    }
+
     function openKdenliveProject() {
         root.confirmIfDirty(function () {
             var url = FileDialogs.openFile(qsTr("Import Kdenlive / Shotcut Project"),
@@ -260,6 +285,10 @@ Item {
         exportDialogLoader.ensure().openDialog()
     }
 
+    function openRenderQueue() {
+        renderQueueDialogLoader.ensure().openDialog()
+    }
+
     // True once the user has dismissed the progress dialog while an export is
     // still running; drives the circular-progress badge next to Export.
     property bool exportProgressDismissed: false
@@ -344,6 +373,11 @@ Item {
     }
 
     LazyLoader {
+        id: templateRenderDialogLoader
+        sourceComponent: Component { TemplateRenderDialog { } }
+    }
+
+    LazyLoader {
         id: projectPropertiesDialogLoader
         sourceComponent: Component { ProjectPropertiesDialog { } }
     }
@@ -369,6 +403,11 @@ Item {
     LazyLoader {
         id: projectHealthDialogLoader
         sourceComponent: Component { ProjectHealthDialog { } }
+    }
+
+    LazyLoader {
+        id: renderQueueDialogLoader
+        sourceComponent: Component { RenderQueueDialog { } }
     }
 
     LazyLoader {
@@ -424,9 +463,14 @@ Item {
                 onCloseProjectRequested: root.closeProject()
                 onSaveAsRequested: root.saveProjectAs()
                 onExportRequested: root.exportVideo()
+                onRenderQueueRequested: root.openRenderQueue()
                 onPackageRequested: root.packageProject()
                 onSaveJsonRequested: root.saveProjectJson()
                 onOpenJsonRequested: root.openProjectJson()
+                onOpenFolderRequested: root.openProjectFolder()
+                onSaveFolderRequested: root.saveProjectAsFolder()
+                onExportBundleRequested: root.exportDriftBundle()
+                onRenderTemplateRequested: templateRenderDialogLoader.ensure().openDialog()
                 onImportKdenliveRequested: root.openKdenliveProject()
                 onImportOtioRequested: root.openOtioTimeline()
                 onPropertiesRequested: projectPropertiesDialogLoader.ensure().openDialog()

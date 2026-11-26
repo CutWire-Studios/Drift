@@ -89,10 +89,10 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="0.9.3" date="2026-11-22">
-      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.3</url>
+    <release version="0.9.4" date="2026-11-23">
+      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.4</url>
       <description>
-        <p>Drift 0.9.3 adds node-based Video and Audio effect makers, auto ducking, keyboard
+        <p>Drift 0.9.4 adds node-based Video and Audio effect makers, auto ducking, keyboard
         shortcut presets from other editors, reworked on-canvas editing handles and better masking
         tools.</p>
         <ul>

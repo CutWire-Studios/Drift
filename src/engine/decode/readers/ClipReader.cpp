@@ -1163,11 +1163,9 @@ bool ClipReader::openHardwareDecoderWith(drift::hwaccel::Backend backend)
     m_videoCtx->hw_device_ctx = av_buffer_ref(m_hwDeviceCtx);
     m_hwFormatRequest = {};
     m_hwFormatRequest.pixFmt = pixFmt;
-#if defined(Q_OS_WIN)
-    // NVDEC on Windows will not create a decoder with more than 32 surfaces: cuvidCreateDecoder
-    // fails with CUDA_ERROR_INVALID_VALUE at any resolution. AV1's own pool is already 21 or so,
-    // so kHwExtraFrames on top of it failed every AV1 clip on the first packet and dropped it to
-    // libdav1d. The Linux driver has taken the uncapped pool, so it keeps it.
+#if defined(Q_OS_WIN) || defined(Q_OS_LINUX)
+    // NVDEC drivers on Windows and Linux can reject pools over 32 decode surfaces.
+    // Fit the preview cache's extra frames around the codec's base pool.
     if (backend == drift::hwaccel::Backend::Cuda)
         m_hwFormatRequest.maxSurfaces = 32;
 #endif

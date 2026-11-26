@@ -73,3 +73,7 @@ third_party/prebuilt/
 .env.*
 
 !resources/diagnostics/bench1080p60.mp4
+
+# nix build / nix develop
+/result
+/result-*

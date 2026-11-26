@@ -26,6 +26,11 @@ QString translatedName(const Preset &preset);
 // editors' tables, and leaving them unbound would silently disable the panels.
 QStringList presetChords(const Preset &preset, const QString &actionId, const QString &scope);
 
+// Controller chords: "Pad+<button>" or "Pad+<held LB/RB/LT/RT>+<button>". normalizePadChord returns
+// the canonical spelling, or an empty string for something that is not one.
+bool isPadChord(const QString &chord);
+QString normalizePadChord(const QString &chord);
+
 // Chords use Qt's Mac-neutral names, so a preset's Meta (physical Control on a Mac) has no
 // counterpart elsewhere. Off macOS it becomes Ctrl+Alt; the caller drops the result if that
 // collides with a chord that was already there.

@@ -1,6 +1,7 @@
 #include "app/editor/PreferencesController.h"
 #include "app/GraphicsApiChoice.h"
 #include "core/base/CacheRoot.h"
+#include "engine/capture/RecordingLocation.h"
 #include "engine/encode/proxies/ProxyLocation.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
@@ -288,6 +289,15 @@ PreferencesController::PreferencesController(QObject *parent)
     if (!drift::proxyLocationFromString(m_proxyLocation)
         || (m_proxyLocation == QLatin1String("folder") && (m_proxyFolder.isEmpty() || !proxyFolderSupported())))
         m_proxyLocation = QStringLiteral("beside");
+    m_recordingFolder = settings.value(QStringLiteral("capture/folder")).toString();
+    m_recordingLocation =
+        settings.value(QStringLiteral("capture/location"), QStringLiteral("movies")).toString();
+    // An unknown value reads as the Movies folder; "folder" needs a folder to have been chosen.
+    // "project" is allowed with no project open — chooseRecordingTarget falls back and says so,
+    // which is better than silently rewriting the user's choice behind their back.
+    if (!drift::recordingLocationFromString(m_recordingLocation)
+        || (m_recordingLocation == QLatin1String("folder") && m_recordingFolder.isEmpty()))
+        m_recordingLocation = QStringLiteral("movies");
     m_undoHistoryMode = settings.value(QStringLiteral("editor/undoHistoryMode"), QStringLiteral("session")).toString();
     if (!undoHistoryModes().contains(m_undoHistoryMode))
         m_undoHistoryMode = QStringLiteral("session");
@@ -675,6 +685,46 @@ void PreferencesController::setProxyLocation(const QString &location)
     m_proxyLocation = location;
     QSettings().setValue(QStringLiteral("proxy/location"), m_proxyLocation);
     emit proxyLocationChanged();
+}
+
+void PreferencesController::setRecordingLocation(const QString &location)
+{
+    const auto parsed = drift::recordingLocationFromString(location);
+    if (!parsed || location == m_recordingLocation)
+        return;
+    if (*parsed == drift::RecordingLocation::Folder && m_recordingFolder.isEmpty())
+        return;
+    m_recordingLocation = location;
+    QSettings().setValue(QStringLiteral("capture/location"), m_recordingLocation);
+    emit recordingLocationChanged();
+}
+
+QUrl PreferencesController::recordingFolderUrl() const
+{
+    return m_recordingFolder.isEmpty() ? QUrl() : QUrl::fromLocalFile(m_recordingFolder);
+}
+
+QString PreferencesController::setRecordingFolder(const QString &path)
+{
+    // The folder picker hands over a file:// URL; agents and the config hand over a path.
+    const QString raw = path.trimmed().startsWith(QLatin1String("file:"), Qt::CaseInsensitive)
+                            ? QUrl(path.trimmed()).toLocalFile()
+                            : path.trimmed();
+    const QString clean = QDir::cleanPath(raw);
+    if (raw.isEmpty() || !QDir::isAbsolutePath(clean))
+        return tr("Choose a folder by its full path.");
+    if (!QFileInfo(clean).isDir())
+        return tr("That folder doesn’t exist.");
+    // Tried by really writing: QFileInfo::isWritable lies on network shares, and finding that out
+    // when the recording stops would mean losing the take.
+    if (!drift::canWriteBeside(QDir(clean).filePath(QStringLiteral("drift-write-test"))))
+        return tr("Drift can’t write to that folder.");
+    if (clean != m_recordingFolder) {
+        m_recordingFolder = clean;
+        QSettings().setValue(QStringLiteral("capture/folder"), m_recordingFolder);
+        emit recordingFolderChanged();
+    }
+    return {};
 }
 
 QUrl PreferencesController::proxyFolderUrl() const

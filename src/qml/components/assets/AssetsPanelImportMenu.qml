@@ -10,6 +10,9 @@ ThemedContextMenu {
     signal importFilesRequested()
     signal importFolderRequested()
     signal collectMediaRequested()
+    signal recordScreenRequested()
+    signal recordScreenWithSystemAudioRequested()
+    signal recordCameraRequested()
 
     implicitWidth: 220
 
@@ -25,6 +28,57 @@ ThemedContextMenu {
         text: qsTr("Import Folder…")
         icon.name: Theme.icons.folderInput
         onTriggered: root.importFolderRequested()
+    }
+
+    ThemedMenuSeparator {
+        visible: recordScreenItem.visible || recordCameraItem.visible
+                 || recordScreenAudioItem.visible
+        height: visible ? implicitHeight : 0
+    }
+
+    // Recording is an import: what comes out is source footage and it lands in the bin, so it
+    // belongs with the other ways media gets in rather than in a tool panel of its own.
+    ThemedMenuItem {
+        id: recordScreenItem
+        // Hidden rather than disabled where there is no capture backend — a Linux build without
+        // PipeWire, a session with no portal — because there is nothing the user could do about it
+        // from here.
+        visible: EditorState.capture.screenAvailable()
+        height: visible ? implicitHeight : 0
+        text: qsTr("Record Screen…")
+        icon.name: Theme.icons.monitor
+        enabled: !EditorState.capture.recording
+        onTriggered: root.recordScreenRequested()
+    }
+
+    // Separate item rather than a setting, because which sound a recording wants is decided per
+    // take: a tutorial wants the app's sound, a talking head wants the microphone. The file holds
+    // one audio track, so it is one or the other.
+    ThemedMenuItem {
+        id: recordScreenAudioItem
+        visible: EditorState.capture.screenAvailable()
+                 && EditorState.capture.systemAudioAvailable()
+        height: visible ? implicitHeight : 0
+        text: qsTr("Record Screen with Computer Sound…")
+        icon.name: Theme.icons.monitor
+        enabled: !EditorState.capture.recording
+        onTriggered: root.recordScreenWithSystemAudioRequested()
+    }
+
+    ThemedMenuItem {
+        id: recordCameraItem
+        visible: EditorState.capture.cameraAvailable()
+        height: visible ? implicitHeight : 0
+        text: qsTr("Record Camera…")
+        icon.name: Theme.icons.video
+        enabled: !EditorState.capture.recording
+        onTriggered: root.recordCameraRequested()
+    }
+
+    ThemedMenuSeparator {
+        visible: recordScreenItem.visible || recordCameraItem.visible
+                 || recordScreenAudioItem.visible
+        height: visible ? implicitHeight : 0
     }
 
     ThemedMenuItem {

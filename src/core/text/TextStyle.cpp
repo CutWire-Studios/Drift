@@ -54,6 +54,50 @@ TextVAlign textVAlignFromString(const QString &valign)
     return TextVAlign::Middle;
 }
 
+QString textScrollToString(TextScroll scroll)
+{
+    switch (scroll) {
+    case TextScroll::RollUp: return QStringLiteral("rollUp");
+    case TextScroll::CrawlLeft: return QStringLiteral("crawlLeft");
+    case TextScroll::CrawlRight: return QStringLiteral("crawlRight");
+    case TextScroll::None: break;
+    }
+    return QStringLiteral("none");
+}
+
+TextScroll textScrollFromString(const QString &scroll)
+{
+    if (scroll == QLatin1String("rollUp"))
+        return TextScroll::RollUp;
+    if (scroll == QLatin1String("crawlLeft"))
+        return TextScroll::CrawlLeft;
+    if (scroll == QLatin1String("crawlRight"))
+        return TextScroll::CrawlRight;
+    return TextScroll::None;
+}
+
+QPointF textScrollOffset(const TextStyle &style, const QRectF &rest, const QSizeF &canvas,
+                         TimeUs clipTimeUs, TimeUs clipDurationUs)
+{
+    if (style.scroll == TextScroll::None || clipDurationUs <= 0)
+        return {};
+    const double p = qBound(0.0, double(clipTimeUs) / double(clipDurationUs), 1.0);
+    const auto along = [&](double from, double to) { return from + p * (to - from); };
+    switch (style.scroll) {
+    case TextScroll::RollUp:
+        return {0.0, along(style.scrollEnterOffscreen ? canvas.height() - rest.top() : 0.0,
+                           style.scrollExitOffscreen ? -rest.bottom() : 0.0)};
+    case TextScroll::CrawlLeft:
+        return {along(style.scrollEnterOffscreen ? canvas.width() - rest.left() : 0.0,
+                      style.scrollExitOffscreen ? -rest.right() : 0.0), 0.0};
+    case TextScroll::CrawlRight:
+        return {along(style.scrollEnterOffscreen ? -rest.right() : 0.0,
+                      style.scrollExitOffscreen ? canvas.width() - rest.left() : 0.0), 0.0};
+    case TextScroll::None: break;
+    }
+    return {};
+}
+
 QString textCaseToString(TextCase textCase)
 {
     switch (textCase) {
@@ -1072,6 +1116,12 @@ QJsonObject textStyleToJson(const TextStyle &s)
         {QStringLiteral("accent"), wordAccentToJson(s.accent)},
         {QStringLiteral("animation"), textAnimationSetToJson(s.animation)},
     };
+    // Only scrolling styles carry the keys: projects without a scroll stay byte-identical.
+    if (s.scroll != TextScroll::None) {
+        json.insert(QStringLiteral("scroll"), textScrollToString(s.scroll));
+        json.insert(QStringLiteral("scrollEnterOffscreen"), s.scrollEnterOffscreen);
+        json.insert(QStringLiteral("scrollExitOffscreen"), s.scrollExitOffscreen);
+    }
     if (!s.lookId.isEmpty()) {
         json.insert(QStringLiteral("lookId"), s.lookId);
         json.insert(QStringLiteral("lookParams"), lookParams);
@@ -1163,6 +1213,9 @@ TextStyle textStyleFromJson(const QJsonObject &o)
     s.align = textAlignFromString(o.value(QStringLiteral("align")).toString());
     s.valign = textVAlignFromString(o.value(QStringLiteral("valign")).toString());
     s.wordWrap = o.value(QStringLiteral("wordWrap")).toBool(s.wordWrap);
+    s.scroll = textScrollFromString(o.value(QStringLiteral("scroll")).toString());
+    s.scrollEnterOffscreen = o.value(QStringLiteral("scrollEnterOffscreen")).toBool(s.scrollEnterOffscreen);
+    s.scrollExitOffscreen = o.value(QStringLiteral("scrollExitOffscreen")).toBool(s.scrollExitOffscreen);
     s.lineHeight = o.value(QStringLiteral("lineHeight")).toDouble(s.lineHeight);
     s.letterSpacing = o.value(QStringLiteral("letterSpacing")).toDouble(s.letterSpacing);
     s.textCase = textCaseFromString(o.value(QStringLiteral("textCase")).toString());

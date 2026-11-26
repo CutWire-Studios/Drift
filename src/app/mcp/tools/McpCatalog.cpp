@@ -404,6 +404,11 @@ QJsonObject textStyleSchema()
                                              {QStringLiteral("none"), QStringLiteral("upper"), QStringLiteral("lower"),
                                               QStringLiteral("title"), QStringLiteral("sentence")})},
         {QStringLiteral("wordWrap"), boolProp(QStringLiteral("Wrap long lines"))},
+        {QStringLiteral("scroll"), enumProp(QStringLiteral("Move the block across the canvas over the clip's length: rollUp = credits, crawl = one-line ticker"),
+                                          {QStringLiteral("none"), QStringLiteral("rollUp"), QStringLiteral("crawlLeft"),
+                                           QStringLiteral("crawlRight")})},
+        {QStringLiteral("scrollEnterOffscreen"), boolProp(QStringLiteral("Start fully off-canvas (default true)"))},
+        {QStringLiteral("scrollExitOffscreen"), boolProp(QStringLiteral("End fully off-canvas (default true)"))},
         {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Legacy: the stroke layer on/off"))},
         {QStringLiteral("outlineWidth"), numberProp(QStringLiteral("Legacy: stroke width in px at pixelSize"))},
         {QStringLiteral("outlineColor"), stringProp(QStringLiteral("Legacy: stroke colour"))},
@@ -1150,6 +1155,19 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("text"), stringProp(QStringLiteral("Caption"))},
                         {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
                         {QStringLiteral("preset"), stringProp(QStringLiteral("Optional text style pack id from list_text_presets"))}}) },
+        { "list_title_templates", "text", "Ready-made titles and lower thirds",
+          "Returns {templates:[{id, label, category, duration, fields:[{key, label, text}]}]}. "
+          "fields are the editable text; pass their keys as `texts` to insert_title_template.",
+          objectSchema({}), true, false, true },
+        { "insert_title_template", "text", "Drop a multi-element title or lower third on the timeline",
+          "Place a template's text and shape clips at `at` (default: playhead) on free tracks above the "
+          "video, loosely linked. They stay ordinary clips: edit with set_text, or pass `texts` "
+          "{field key: text}. One undo step. Returns {clips, start, duration, text_clip}.",
+          objectSchema({{QStringLiteral("template"), stringProp(QStringLiteral("Template id from list_title_templates"))},
+                        {QStringLiteral("at"), numberProp(QStringLiteral("Start seconds (default: playhead)"))},
+                        {QStringLiteral("texts"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                                                              {QStringLiteral("description"), QStringLiteral("Replacement copy {field key: text}; unnamed fields keep the placeholder")}}}},
+                       {QStringLiteral("template")}) },
         { "set_text", "text", "Change caption copy or style",
           "Set text content and/or a partial style patch. Only supplied style keys change; omitted "
           "ones keep their current value.",
@@ -1430,6 +1448,37 @@ const QList<Op> &ops()
           "every composite's timeline too (sequence). Fixing is up to you.",
           objectSchema({{QStringLiteral("limit"), integerProp(QStringLiteral("Rows at most (default 200)"), 1, 1000)}}),
           true, false, true },
+
+        { "project_lint", "project", "Check a project folder's files",
+          "Lint a project folder (<name>.driftproj): types, unknown keys, duplicate and unknown ids, "
+          "clips overlapping on a track, keyframes outside their clip, unknown effects and parameters, "
+          "orphan sidecars, missing media and script errors. Returns {problems:[{file, line, column, "
+          "severity: error|warning|info, message}], errors, warnings, text} with text as "
+          "file:line:col: severity: message lines. folder defaults to the open project folder. Run it after "
+          "every edit to the files; project_folder_guide has the format.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Project folder; default: the open one"))},
+                        {QStringLiteral("info"), boolProp(QStringLiteral("Also list info rows (parameters left at their default)"))}}),
+          true, false, true },
+        { "project_folder_guide", "project", "How project folders work",
+          "Read before editing a project folder with your file tools. Returns {guide} - the full text of "
+          "docs/project-folder.md: the folder layout, units (microseconds), ids, a hand-written clip, what "
+          "the editor does when a file changes, lint, Lua scripts and templates.",
+          objectSchema({}), true, false, true },
+        { "template_render", "project", "Render a template once per data row",
+          "Render a template folder (one with template.json) in a headless Drift process, one output per "
+          "data row, without touching the open project. data is a CSV or JSON file of rows (default: the "
+          "template's own); row (1-based) or all picks the rows; output is a file pattern with {row} and "
+          "{param}. Returns {outputs:[paths], log, pid} at once, or with wait:true the exit code and the "
+          "tail of the log when it is done. target queue or farm adds one job per row to the editor's render "
+          "queue (farm: run by the render farm) and returns {jobs:[{row,id,output}], failures}.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Template folder"))},
+                        {QStringLiteral("data"), stringProp(QStringLiteral("Data file (CSV or JSON array); default: the template's"))},
+                        {QStringLiteral("row"), integerProp(QStringLiteral("One row, counting from 1"), 1, 1000000)},
+                        {QStringLiteral("all"), boolProp(QStringLiteral("Every row"))},
+                        {QStringLiteral("output"), stringProp(QStringLiteral("Output pattern, e.g. /renders/{row}.mp4"))},
+                        {QStringLiteral("wait"), boolProp(QStringLiteral("Block until the render ends (default false)"))},
+                        {QStringLiteral("target"), enumProp(QStringLiteral("now (default), queue or farm"), {QStringLiteral("now"), QStringLiteral("queue"), QStringLiteral("farm")})}},
+                       {QStringLiteral("folder")}) },
 
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
@@ -1743,7 +1792,7 @@ QStringList toolboxNames()
             QStringLiteral("model3d"),   QStringLiteral("subtitles"), QStringLiteral("segmentation"), QStringLiteral("ai"),
             QStringLiteral("audio"),     QStringLiteral("scene"),    QStringLiteral("multicam"),
             QStringLiteral("market"),    QStringLiteral("transcript"), QStringLiteral("voice"),
-            QStringLiteral("procedural")};
+            QStringLiteral("procedural"), QStringLiteral("generators")};
 }
 
 QStringList undoExemptOps()
@@ -1920,6 +1969,8 @@ QString agentGuideText()
         "   move_clip and move_to_track magnet to the nearest beat within 150 ms from then on.\n"
         "3. split_on_beats and snap_clips_to_beats cut and quantise against the same grid;\n"
         "   bookmark_beats writes it into the project as markers that survive re-analysis.\n"
+        "4. add_beat_markers({clip, every}) marks one music clip's beats without detect_beats;\n"
+        "   auto_cut_to_beat({music, clips, beats_per_cut}) lays picture clips out so cuts land on beats.\n"
         "The analysis is transient: any edit that changes the mix drops it, and\n"
         "inspect({detail:true}).beats.stale says whether what you have still describes the audio.\n"
         "\n"
@@ -1985,6 +2036,8 @@ QString agentGuideText()
         "   look (neon, gradient, chrome…); add/set/remove/move/duplicate_text_layer to edit the\n"
         "   shading stack (fill/stroke/shadow/glow/extrude, each solid/gradient/texture/effect —\n"
         "   list_gradient_presets and list_text_effects give the ready-made paints).\n"
+        "   For a finished multi-element look use list_title_templates, then insert_title_template.\n"
+        "   set_text({style:{scroll:\"rollUp\"}}) rolls a text clip like credits over its duration.\n"
         "3. Motion: list_text_animations, then set_text_animation({which:in|out|loop, preset, …}).\n"
         "4. Keyframe text.<key> and text.layer.<id>.<field> with set_keyframe; capture to check.\n"
         "\n"
@@ -2051,6 +2104,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
         {"procedural", "Procedural 3D clips: Lua-built scenes with your own GLSL shaders. Read the guide, write packages into My Procedurals, try them with evaluate_procedural, place them as clips and animate their params with proc.<key> keyframes."},
+        {"generators", "Built-in generator clips: solid colour, gradient, noise, colour bars, grid, checkerboard, countdown leader and the particle emitter (confetti, fireworks, sparks, snow, rain, smoke, magic dust, bubbles). Place with add_generator, animate params with proc.<key> keyframes."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon). Teleprompter script for a self-recorded voice-over."},
     };
 

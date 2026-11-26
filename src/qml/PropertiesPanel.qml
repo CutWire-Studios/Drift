@@ -144,6 +144,7 @@ PanelFrame {
         { id: "model3d", label: qsTr("3D Model"), icon: Theme.icons.box, group: 0, body: qsTr("Position and light the 3D model."), needs: ["model3d"] },
         { id: "pdf", label: qsTr("PDF"), icon: Theme.icons.fileText, group: 0, body: qsTr("Choose the pages to show."), needs: ["pdf"] },
         { id: "procedural", label: qsTr("Procedural"), icon: Theme.icons.box, group: 0, body: qsTr("Adjust the generated visual."), needs: ["procedural"] },
+        { id: "generator", label: qsTr("Generator"), icon: Theme.icons.asterism, group: 0, body: qsTr("Adjust the generated picture."), needs: ["generator"] },
         { id: "subtitles", label: qsTr("Subtitles"), icon: Theme.icons.captions, group: 0, body: qsTr("Edit caption lines and their timing."), needs: ["subtitle"] },
         { id: "transform", label: qsTr("Transform"), icon: Theme.icons.maximize, group: 1, body: qsTr("Move, scale, rotate and crop the clip on the canvas."),
           needs: ["transformable"], opens: "adj:transform" },
@@ -629,6 +630,12 @@ PanelFrame {
                     active: root.currentTabId === "procedural"
                     visible: active
                     sourceComponent: Component { ProceduralInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "generator"
+                    visible: active
+                    sourceComponent: Component { GeneratorInspector { width: tabColumn.width } }
                 }
 
                 Loader {

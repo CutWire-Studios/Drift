@@ -54,6 +54,7 @@ QList<int> changedRoles(const TimelineClipsModel::Row &a, const TimelineClipsMod
     diff(a.loopPeriod != b.loopPeriod, TimelineClipsModel::LoopPeriodRole);
     diff(a.loopPhase != b.loopPhase, TimelineClipsModel::LoopPhaseRole);
     diff(a.enabled != b.enabled, TimelineClipsModel::EnabledRole);
+    diff(a.generatedBy != b.generatedBy, TimelineClipsModel::GeneratedByRole);
     return roles;
 }
 
@@ -230,6 +231,7 @@ QVariant TimelineClipsModel::data(const QModelIndex &index, int role) const
     case LoopPeriodRole: return row.loopPeriod;
     case LoopPhaseRole: return row.loopPhase;
     case EnabledRole: return row.enabled;
+    case GeneratedByRole: return row.generatedBy;
     default: return {};
     }
 }
@@ -271,6 +273,7 @@ QHash<int, QByteArray> TimelineClipsModel::roleNames() const
         {LoopPeriodRole, "loopPeriod"},
         {LoopPhaseRole, "loopPhase"},
         {EnabledRole, "enabled"},
+        {GeneratedByRole, "generatedBy"},
     };
 }
 

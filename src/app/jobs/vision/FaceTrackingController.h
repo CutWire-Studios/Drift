@@ -31,6 +31,19 @@ public:
     Q_INVOKABLE void clearTrack(int trackIndex, int clipIndex);
     Q_INVOKABLE bool available();
 
+    // One keyframed Ellipse mask per face in the clip's baked track, pinned to the clip, so a
+    // "requires": "mask" effect — Privacy Blur is the one this exists for — covers every face and
+    // follows it. The effect has to be on the clip too: a layer whose chain reads its masks is not
+    // cut out by them, so masks alone would crop the picture to the faces instead of blurring them.
+    //
+    // Replaces what a previous run generated (Mask::faceSlot) and leaves hand-drawn masks alone,
+    // so re-running after a re-scan does not stack a second set over the first.
+    //
+    // `padding` scales the detected face oval, which traces the skin boundary and so leaves hair,
+    // ears and jaw outside it. Returns the number of faces masked, 0 with a message when the clip
+    // has no usable track. One undo step tr("Mask faces").
+    Q_INVOKABLE int addFaceMasks(int trackIndex, int clipIndex, double padding = 1.4);
+
     // Landmark a Face Swap source photo in the background and cache the result. Cheap enough
     // (one still, sub-second once the session is warm) that it gets no progress UI of its own —
     // the effect renders pass-through until the landmarks land, then the preview refreshes.
