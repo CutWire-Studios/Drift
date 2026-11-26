@@ -29,6 +29,14 @@
             hash = "sha256-41pi/JrkHquT7+SQ9H8pnAenaO1alDdqWl/UKMPM9Aw=";
           };
 
+          # MIDI control surfaces. Same tag as DRIFT_LIBREMIDI_TAG; Drift builds it from source.
+          libremidi = pkgs.fetchFromGitHub {
+            owner = "celtera";
+            repo = "libremidi";
+            tag = "v5.4.3";
+            hash = "sha256-p1abtxCJBwOt2VqKh85sF3yP4ekmwzTsden4XoMKDos=";
+          };
+
           # Headers only: Drift compiles against ONNX Runtime and never links it. The user installs
           # the runtime (CPU, CUDA, WebGPU) as an addon. Same pinned release as
           # cmake/FetchOnnxRuntime.cmake; the GitHub release archives are gone, so this is
@@ -142,6 +150,10 @@
             openssl
             soundtouch
             zlib
+            # libremidi's ALSA backend; game controllers use the installed SDL3.
+            alsa-lib
+            sdl3
+            wayland
             deps.skia
             deps.juce
             deps.onnxruntimeHeaders
@@ -167,6 +179,9 @@
             (lib.cmakeFeature "ONNXRUNTIME_ROOT" "${deps.onnxruntimeHeaders}")
             (lib.cmakeBool "DRIFT_FETCH_JUCE" false)
             (lib.cmakeFeature "DRIFT_JUCE_DIR" "${deps.juce}")
+            (lib.cmakeBool "DRIFT_FETCH_LIBREMIDI" false)
+            (lib.cmakeFeature "DRIFT_LIBREMIDI_DIR" "${deps.libremidi}")
+            (lib.cmakeBool "DRIFT_FETCH_SDL" false)
             # A packaged build ships the core effect set; the rest come from the Addon Manager.
             (lib.cmakeBool "DRIFT_BUNDLE_CORE_PACKAGES_ONLY" true)
             # "source" is the marketplace's name for a plain build; the enum has no nix value.
@@ -210,6 +225,7 @@
             shellHook = ''
               export DRIFT_SKIA_DIR="${deps.skia}"
               export DRIFT_JUCE_DIR="${deps.juce}"
+              export DRIFT_LIBREMIDI_DIR="${deps.libremidi}"
               export ONNXRUNTIME_ROOT="${deps.onnxruntimeHeaders}"
             '';
           };

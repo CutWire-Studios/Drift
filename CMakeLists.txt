@@ -1293,7 +1293,9 @@ if(NOT EMSCRIPTEN AND NOT ANDROID)
     set(LIBREMIDI_NO_WINUWP ON CACHE BOOL "" FORCE)
     set(LIBREMIDI_NO_WINMIDI ON CACHE BOOL "" FORCE)
     set(LIBREMIDI_NO_BOOST ON CACHE BOOL "" FORCE)
-    # libremidi installs its own headers and CMake package; Drift installs neither.
+    # libremidi installs its own headers and CMake package; Drift installs neither. Skipping its
+    # install rules alone leaves the parent's cmake_install.cmake including a script that was never
+    # written, so the directory is also EXCLUDE_FROM_ALL, which drops that include.
     set(CMAKE_SKIP_INSTALL_RULES ON)
     if(DRIFT_LIBREMIDI_DIR)
         if(IS_ABSOLUTE "${DRIFT_LIBREMIDI_DIR}")
@@ -1308,6 +1310,7 @@ if(NOT EMSCRIPTEN AND NOT ANDROID)
         endif()
         message(STATUS "libremidi: using ${_drift_libremidi_dir}")
         add_subdirectory("${_drift_libremidi_dir}" "${CMAKE_BINARY_DIR}/libremidi-build")
+        set_property(DIRECTORY "${_drift_libremidi_dir}" PROPERTY EXCLUDE_FROM_ALL ON)
     elseif(DRIFT_FETCH_LIBREMIDI)
         message(STATUS "libremidi: fetching ${DRIFT_LIBREMIDI_TAG}")
         include(FetchContent)
@@ -1317,6 +1320,7 @@ if(NOT EMSCRIPTEN AND NOT ANDROID)
             GIT_SHALLOW TRUE
             GIT_PROGRESS TRUE)
         FetchContent_MakeAvailable(libremidi)
+        set_property(DIRECTORY "${libremidi_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL ON)
     else()
         message(FATAL_ERROR
             "libremidi not available. Point DRIFT_LIBREMIDI_DIR at a libremidi source tree, "
