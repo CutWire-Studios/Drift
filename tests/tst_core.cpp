@@ -12,6 +12,7 @@
 #include <QSet>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QXmlStreamReader>
 #include <QUuid>
 
 #include "core/project/ProjectDiff.h"
@@ -9482,6 +9483,39 @@ void CoreTest::timelineExporterRoundTripsFcpxmlEdlOtioAndTsv()
     QVERIFY2(parsedFcpxml.has_value(), qPrintable(err));
     QVERIFY(!parsedFcpxml->tracks().isEmpty());
     QVERIFY(!parsedFcpxml->tracks().at(0).clips.isEmpty());
+
+    {
+        QXmlStreamReader xr(fcpxml);
+        QList<QString> stack;
+        bool audioNested = false;
+        bool markerNested = false;
+        while (!xr.atEnd()) {
+            xr.readNext();
+            if (xr.isEndElement()) {
+                stack.removeLast();
+                continue;
+            }
+            if (!xr.isStartElement())
+                continue;
+            const QString name = xr.name().toString();
+            QVERIFY(name != QLatin1String("title"));
+            if (!stack.isEmpty() && stack.last() == QLatin1String("spine"))
+                QVERIFY2(name == QLatin1String("asset-clip") || name == QLatin1String("gap"), qPrintable(name));
+            const bool parentInSpine = stack.size() >= 2 && stack.at(stack.size() - 2) == QLatin1String("spine");
+            if (name == QLatin1String("asset-clip") && xr.attributes().hasAttribute(QStringLiteral("lane"))
+                && parentInSpine) {
+                QVERIFY(xr.attributes().value(QStringLiteral("lane")).toInt() < 0);
+                QCOMPARE(xr.attributes().value(QStringLiteral("offset")).toString(), QStringLiteral("3600/2400s"));
+                audioNested = true;
+            }
+            if (name == QLatin1String("marker") && parentInSpine)
+                markerNested = true;
+            stack.append(name);
+        }
+        QVERIFY2(!xr.hasError(), qPrintable(xr.errorString()));
+        QVERIFY(audioNested);
+        QVERIFY(markerNested);
+    }
 
     // 2. CMX 3600 EDL round-trip via EdlReader.
     const QByteArray edl = drift::interchange::exportToEdl(p, &err);

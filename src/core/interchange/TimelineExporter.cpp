@@ -184,105 +184,143 @@ QByteArray exportToFcpxml(const Project &project, QString *error)
 
     xml.writeStartElement(QStringLiteral("spine"));
 
-    QList<Clip> primaryClips;
-    QList<const Clip *> attachedClips;
-    bool pickedPrimary = false;
+    const Track *primaryTrack = nullptr;
     for (const Track &track : project.tracks()) {
-        if (track.isAdjustment() || track.hidden)
-            continue;
-        if (!pickedPrimary && track.type == TrackType::Video) {
-            primaryClips = track.clips;
-            pickedPrimary = true;
-        } else {
-            for (const Clip &clip : track.clips)
-                attachedClips.append(&clip);
-        }
-    }
-    if (!pickedPrimary && !project.tracks().isEmpty()) {
-        for (const Track &track : project.tracks()) {
-            if (track.isAdjustment() || track.hidden)
-                continue;
-            primaryClips = track.clips;
-            attachedClips.clear();
-            bool passedFirst = false;
-            for (const Track &other : project.tracks()) {
-                if (other.isAdjustment() || other.hidden)
-                    continue;
-                if (!passedFirst) {
-                    passedFirst = true;
-                    continue;
-                }
-                for (const Clip &c : other.clips)
-                    attachedClips.append(&c);
-            }
+        if (!track.isAdjustment() && !track.hidden && track.type == TrackType::Video) {
+            primaryTrack = &track;
             break;
         }
     }
+    if (!primaryTrack) {
+        for (const Track &track : project.tracks()) {
+            if (!track.isAdjustment() && !track.hidden) {
+                primaryTrack = &track;
+                break;
+            }
+        }
+    }
 
-    std::sort(primaryClips.begin(), primaryClips.end(), [](const Clip &a, const Clip &b) {
-        return a.timelineStart < b.timelineStart;
+    struct Connected {
+        const Clip *clip;
+        int lane;
+    };
+    QList<Connected> connected;
+    int nextVideoLane = 1;
+    int nextAudioLane = -1;
+    for (const Track &track : project.tracks()) {
+        if (&track == primaryTrack || track.isAdjustment() || track.hidden)
+            continue;
+        const bool audio = track.type == TrackType::Audio;
+        const int lane = audio ? nextAudioLane-- : nextVideoLane++;
+        for (const Clip &clip : track.clips) {
+            if (clip.type == ClipType::Text || pathToResId.value(clip.path).isEmpty())
+                continue;
+            connected.append({&clip, lane});
+        }
+    }
+
+    QList<const Clip *> primaryClips;
+    if (primaryTrack) {
+        for (const Clip &clip : primaryTrack->clips)
+            primaryClips.append(&clip);
+    }
+    std::sort(primaryClips.begin(), primaryClips.end(), [](const Clip *a, const Clip *b) {
+        return a->timelineStart < b->timelineStart;
     });
 
-    auto writeClipElement = [&](const Clip &clip, const QString &laneAttr) {
-        if (clip.type == ClipType::Text) {
-            xml.writeStartElement(QStringLiteral("title"));
-            xml.writeAttribute(QStringLiteral("name"), clip.name.isEmpty() ? QStringLiteral("Title") : clip.name);
-            if (!laneAttr.isEmpty())
-                xml.writeAttribute(QStringLiteral("lane"), laneAttr);
-            xml.writeAttribute(QStringLiteral("offset"), fcpxmlTimeString(clip.timelineStart, fps));
-            xml.writeAttribute(QStringLiteral("duration"), fcpxmlTimeString(clip.timelineDuration, fps));
-            xml.writeAttribute(QStringLiteral("start"), QStringLiteral("0/1s"));
-            xml.writeStartElement(QStringLiteral("text"));
-            xml.writeStartElement(QStringLiteral("text-style"));
-            xml.writeAttribute(QStringLiteral("ref"), QStringLiteral("ts1"));
-            xml.writeCharacters(clip.textContent);
-            xml.writeEndElement(); // text-style
-            xml.writeEndElement(); // text
-            xml.writeEndElement(); // title
-            return;
+    struct SpineItem {
+        const Clip *clip = nullptr; // null for a gap
+        TimeUs start = 0;
+        TimeUs duration = 0;
+    };
+    QList<SpineItem> spine;
+    TimeUs cursorUs = 0;
+    for (const Clip *clip : primaryClips) {
+        const bool usable = clip->type != ClipType::Text && !pathToResId.value(clip->path).isEmpty();
+        const TimeUs start = qMax(clip->timelineStart, cursorUs);
+        if (start > cursorUs)
+            spine.append({nullptr, cursorUs, start - cursorUs});
+        const TimeUs dur = qMax<TimeUs>(0, clip->timelineEnd() - start);
+        if (dur <= 0)
+            continue;
+        spine.append({usable ? clip : nullptr, start, dur});
+        cursorUs = start + dur;
+    }
+
+    const TimeUs frameUs = static_cast<TimeUs>(kUsPerSecond / fps);
+    TimeUs neededEnd = cursorUs;
+    for (const Connected &c : connected)
+        neededEnd = qMax(neededEnd, qMax<TimeUs>(0, c.clip->timelineStart) + c.clip->timelineDuration);
+    for (const Bookmark &bm : project.bookmarks())
+        neededEnd = qMax(neededEnd, qMax<TimeUs>(0, bm.timeUs) + frameUs);
+    if (neededEnd > cursorUs)
+        spine.append({nullptr, cursorUs, neededEnd - cursorUs});
+
+    auto itemIndexAt = [&](TimeUs t) {
+        for (int i = 0; i < spine.size(); ++i) {
+            if (t >= spine.at(i).start && t < spine.at(i).start + spine.at(i).duration)
+                return i;
         }
-        const QString rid = pathToResId.value(clip.path);
-        if (rid.isEmpty())
-            return;
-        const QString tag = (clip.type == ClipType::Audio) ? QStringLiteral("audio") : QStringLiteral("asset-clip");
-        xml.writeStartElement(tag);
-        xml.writeAttribute(QStringLiteral("ref"), rid);
+        return spine.isEmpty() ? -1 : static_cast<int>(spine.size()) - 1;
+    };
+    auto localStart = [](const SpineItem &item) { return item.clip ? item.clip->srcIn : TimeUs(0); };
+
+    QList<QList<Connected>> itemConnected(spine.size());
+    QList<QList<const Bookmark *>> itemMarkers(spine.size());
+    for (const Connected &c : connected) {
+        const int idx = itemIndexAt(qMax<TimeUs>(0, c.clip->timelineStart));
+        if (idx >= 0)
+            itemConnected[idx].append(c);
+    }
+    for (const Bookmark &bm : project.bookmarks()) {
+        const int idx = itemIndexAt(qMax<TimeUs>(0, bm.timeUs));
+        if (idx >= 0)
+            itemMarkers[idx].append(&bm);
+    }
+
+    const QString frameDur = QStringLiteral("100/%1s").arg(qMax<qint64>(1, llround(fps * 100.0)));
+    auto writeAssetClip = [&](const Clip &clip, TimeUs offset, TimeUs start, int lane) {
+        xml.writeStartElement(QStringLiteral("asset-clip"));
+        xml.writeAttribute(QStringLiteral("ref"), pathToResId.value(clip.path));
         xml.writeAttribute(QStringLiteral("name"), clip.name.isEmpty() ? QFileInfo(clip.path).fileName() : clip.name);
-        if (!laneAttr.isEmpty())
-            xml.writeAttribute(QStringLiteral("lane"), laneAttr);
-        xml.writeAttribute(QStringLiteral("offset"), fcpxmlTimeString(clip.timelineStart, fps));
-        xml.writeAttribute(QStringLiteral("start"), fcpxmlTimeString(clip.srcIn, fps));
+        if (lane != 0)
+            xml.writeAttribute(QStringLiteral("lane"), QString::number(lane));
+        xml.writeAttribute(QStringLiteral("offset"), fcpxmlTimeString(offset, fps));
+        xml.writeAttribute(QStringLiteral("start"), fcpxmlTimeString(start, fps));
         xml.writeAttribute(QStringLiteral("duration"), fcpxmlTimeString(clip.timelineDuration, fps));
         xml.writeAttribute(QStringLiteral("enabled"), clip.enabled ? QStringLiteral("1") : QStringLiteral("0"));
         xml.writeEndElement();
     };
 
-    TimeUs cursorUs = 0;
-    for (int i = 0; i < primaryClips.size(); ++i) {
-        const Clip &clip = primaryClips.at(i);
-        if (clip.timelineStart > cursorUs) {
+    for (int i = 0; i < spine.size(); ++i) {
+        const SpineItem &item = spine.at(i);
+        if (item.clip) {
+            xml.writeStartElement(QStringLiteral("asset-clip"));
+            xml.writeAttribute(QStringLiteral("ref"), pathToResId.value(item.clip->path));
+            xml.writeAttribute(QStringLiteral("name"),
+                               item.clip->name.isEmpty() ? QFileInfo(item.clip->path).fileName() : item.clip->name);
+            xml.writeAttribute(QStringLiteral("enabled"),
+                               item.clip->enabled ? QStringLiteral("1") : QStringLiteral("0"));
+        } else {
             xml.writeStartElement(QStringLiteral("gap"));
             xml.writeAttribute(QStringLiteral("name"), QStringLiteral("Gap"));
-            xml.writeAttribute(QStringLiteral("offset"), fcpxmlTimeString(cursorUs, fps));
-            xml.writeAttribute(QStringLiteral("duration"), fcpxmlTimeString(clip.timelineStart - cursorUs, fps));
-            xml.writeAttribute(QStringLiteral("start"), QStringLiteral("0/1s"));
+        }
+        xml.writeAttribute(QStringLiteral("offset"), fcpxmlTimeString(item.start, fps));
+        xml.writeAttribute(QStringLiteral("start"), fcpxmlTimeString(localStart(item), fps));
+        xml.writeAttribute(QStringLiteral("duration"), fcpxmlTimeString(item.duration, fps));
+
+        for (const Connected &c : itemConnected.at(i)) {
+            const TimeUs local = localStart(item) + qMax<TimeUs>(0, c.clip->timelineStart) - item.start;
+            writeAssetClip(*c.clip, local, c.clip->srcIn, c.lane);
+        }
+        for (const Bookmark *bm : itemMarkers.at(i)) {
+            xml.writeStartElement(QStringLiteral("marker"));
+            xml.writeAttribute(QStringLiteral("start"),
+                               fcpxmlTimeString(localStart(item) + qMax<TimeUs>(0, bm->timeUs) - item.start, fps));
+            xml.writeAttribute(QStringLiteral("duration"), frameDur);
+            xml.writeAttribute(QStringLiteral("value"), bm->label.isEmpty() ? QStringLiteral("Marker") : bm->label);
             xml.writeEndElement();
         }
-        writeClipElement(clip, QString());
-        cursorUs = qMax(cursorUs, clip.timelineEnd());
-    }
-
-    for (const Clip *clip : attachedClips) {
-        const QString lane = (clip->type == ClipType::Audio) ? QStringLiteral("-1") : QStringLiteral("1");
-        writeClipElement(*clip, lane);
-    }
-
-    for (const Bookmark &bm : project.bookmarks()) {
-        xml.writeStartElement(QStringLiteral("marker"));
-        xml.writeAttribute(QStringLiteral("start"), fcpxmlTimeString(bm.timeUs, fps));
-        xml.writeAttribute(QStringLiteral("duration"),
-                           QStringLiteral("100/%1s").arg(qMax<qint64>(1, llround(fps * 100.0))));
-        xml.writeAttribute(QStringLiteral("value"), bm.label.isEmpty() ? QStringLiteral("Marker") : bm.label);
         xml.writeEndElement();
     }
 
