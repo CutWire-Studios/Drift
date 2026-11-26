@@ -3,6 +3,11 @@
 #include <algorithm>
 #include <cmath>
 
+// MSVC does not define M_PI in <cmath>, and this is the guard the audio analysis beside it uses.
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 extern "C" {
 #include <libavutil/mem.h>
 #include <libavutil/tx.h>
