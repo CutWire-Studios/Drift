@@ -65,6 +65,11 @@ target_include_directories(tst_maskselect PRIVATE ../src)
 target_link_libraries(tst_maskselect PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME MaskSelect COMMAND tst_maskselect)
 
+qt_add_executable(tst_autozoom tst_autozoom.cpp)
+target_include_directories(tst_autozoom PRIVATE ../src)
+target_link_libraries(tst_autozoom PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore)
+add_test(NAME AutoZoom COMMAND tst_autozoom)
+
 qt_add_executable(tst_capturewriter tst_capturewriter.cpp)
 target_include_directories(tst_capturewriter PRIVATE ../src)
 target_link_libraries(tst_capturewriter PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine driftcore FFmpeg::FFmpeg)
