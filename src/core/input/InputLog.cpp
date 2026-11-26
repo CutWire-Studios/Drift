@@ -1,5 +1,6 @@
 #include "core/input/InputLog.h"
 
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
