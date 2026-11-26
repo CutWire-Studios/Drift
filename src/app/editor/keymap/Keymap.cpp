@@ -146,6 +146,8 @@ QString Keymap::normalizeChord(const QString &chord)
 {
     if (chord.isEmpty())
         return {};
+    if (keymap::isPadChord(chord))
+        return keymap::normalizePadChord(chord);
     const QKeySequence sequence = QKeySequence::fromString(chord, QKeySequence::PortableText);
     if (sequence.count() != 1)
         return {};
@@ -365,7 +367,8 @@ void Keymap::migrateLegacy()
         const keymap::ActionDef *action = keymap::findAction(defaultsFrom);
         if (!action)
             return;
-        const QStringList base = keymap::presetChords(*drift, defaultsFrom, keymap::scopeOf(*action));
+        QStringList base = keymap::presetChords(*drift, defaultsFrom, keymap::scopeOf(*action));
+        base.removeIf(keymap::isPadChord);
         if (base.size() == 1 && base.first() == stored)
             return;
         migrated.insert(id, stored);
@@ -447,7 +450,7 @@ void Keymap::rebuild()
         if (keymap::isLocalScope(scopeOf(it.key())))
             continue;
         for (const QString &chord : it.value()) {
-            if (!isArrowChord(chord))
+            if (!isArrowChord(chord) && !keymap::isPadChord(chord))
                 all.insert(chord);
         }
     }

@@ -42,6 +42,7 @@ bool isVisualClip(const drift::Clip &clip)
     case drift::ClipType::Model3d:
     case drift::ClipType::Pdf:
     case drift::ClipType::Procedural:
+    case drift::ClipType::Generator:
     case drift::ClipType::Composite:
         return true;
     default:
@@ -152,6 +153,7 @@ bool isGradeTarget(const drift::Clip &clip)
     case drift::ClipType::Composite:
     case drift::ClipType::Pdf:
     case drift::ClipType::Procedural:
+    case drift::ClipType::Generator:
     case drift::ClipType::Model3d:
         return true;
     default:

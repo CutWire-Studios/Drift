@@ -545,6 +545,11 @@ double AppController::exportProgress() const
     return m_exportProgress;
 }
 
+QByteArray AppController::exportSnapshotJson() const
+{
+    return QJsonDocument(m_project.exportView({}).toJson()).toJson(QJsonDocument::Compact);
+}
+
 void AppController::cancelExport()
 {
     if (m_exportInProgress)

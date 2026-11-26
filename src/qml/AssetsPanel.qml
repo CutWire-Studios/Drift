@@ -819,6 +819,7 @@ PanelFrame {
     function assetVisible(kind) {
         const tabId = tabsModel.get(activeTab).tabId
         if (tabId === "text" || tabId === "subtitles" || tabId === "speech" || tabId === "stickers" || tabId === "shapes"
+                || tabId === "generators"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
                 || tabId === "sounds" || tabId === "transitions" || tabId === "masks"
                 || tabId === "scenes")
@@ -836,6 +837,7 @@ PanelFrame {
         "speech": qsTr("Speech"),
         "stickers": qsTr("Stickers"),
         "shapes": qsTr("Shapes"),
+        "generators": qsTr("Generators"),
         "scenes": qsTr("Scenes"),
         "masks": qsTr("Masks"),
         "effects": qsTr("Effects"),
@@ -851,6 +853,7 @@ PanelFrame {
         "speech": qsTr("Turn text into a voiceover, or clone a voice."),
         "stickers": qsTr("Emoji and stickers to place over your video."),
         "shapes": qsTr("Shapes and arrows for callouts and backgrounds."),
+        "generators": qsTr("Solid colours, gradients, noise, test patterns, countdowns and particle effects."),
         "scenes": qsTr("Find the cuts in a long clip so you can jump to each scene."),
         "masks": qsTr("Show only part of a clip, or cut a subject out of its background."),
         "effects": qsTr("Looks, glitches, blurs and more. Click one to apply it."),
@@ -870,6 +873,7 @@ PanelFrame {
         ListElement { tabId: "speech"; icon: 13; separatorAfter: false }
         ListElement { tabId: "stickers"; icon: 3; separatorAfter: false }
         ListElement { tabId: "shapes"; icon: 4; separatorAfter: false }
+        ListElement { tabId: "generators"; icon: 14; separatorAfter: false }
         ListElement { tabId: "masks"; icon: 11; separatorAfter: true }
         ListElement { tabId: "scenes"; icon: 10; separatorAfter: true }
         ListElement { tabId: "effects"; icon: 5; separatorAfter: false }
@@ -891,7 +895,8 @@ PanelFrame {
         Theme.icons.listVideo,
         Theme.icons.mask,
         Theme.icons.store,
-        Theme.icons.micVocal
+        Theme.icons.micVocal,
+        Theme.icons.asterism
     ]
     property int activeTab: locked ? tabIndexOf(lockedTab) : tabIndexOf(LayoutMemory.layoutString("assets/tab", "media"))
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
@@ -1026,7 +1031,7 @@ PanelFrame {
                 id: assetsHeader
                 readonly property string tabId: tabsModel.get(root.activeTab).tabId
                 readonly property bool hasActions: kindsForTab(tabId).length > 0
-                readonly property bool searchBarTab: ["text", "stickers", "shapes", "effects", "templates",
+                readonly property bool searchBarTab: ["text", "stickers", "shapes", "generators", "effects", "templates",
                                                       "transitions", "sounds"].indexOf(tabId) >= 0
                 width: parent.width
                 height: (searchBarTab && !root.locked) || (root.sheetMode && (!hasActions || Theme.phone)) ? 0 : Theme.panelHeaderHeight
@@ -1220,6 +1225,23 @@ PanelFrame {
                         Component.onCompleted: root.restoreBrowserTab(this, "shapes")
                         onSearchTextChanged: root.rememberTab("shapes", "search", searchText)
                         onActiveCategoryChanged: root.rememberTab("shapes", "category", activeCategory)
+                    }
+                }
+            }
+
+            Loader {
+                active: root.currentTabId === "generators"
+                visible: active
+                width: parent.width
+                height: parent.height - assetsHeader.height
+                clip: true
+                opacity: root.tabOpacity
+                sourceComponent: Component {
+                    GeneratorsTab {
+                        onAdded: root.addCompleted()
+                        Component.onCompleted: root.restoreBrowserTab(this, "generators")
+                        onSearchTextChanged: root.rememberTab("generators", "search", searchText)
+                        onActiveCategoryChanged: root.rememberTab("generators", "category", activeCategory)
                     }
                 }
             }

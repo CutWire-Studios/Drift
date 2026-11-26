@@ -61,7 +61,9 @@ drift::Clip *AppController::textClipAt(int trackIndex, int clipIndex)
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return nullptr;
     drift::Clip &clip = track.clips[clipIndex];
-    if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle)
+    // A countdown generator draws its number with the clip's text style, so it edits like text.
+    if (clip.type != drift::ClipType::Text && clip.type != drift::ClipType::Subtitle
+        && clip.type != drift::ClipType::Generator)
         return nullptr;
     return &clip;
 }

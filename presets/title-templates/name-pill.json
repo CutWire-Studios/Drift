@@ -1,0 +1,63 @@
+{
+  "format": 1,
+  "id": "name-pill",
+  "label": "Name tag: pill",
+  "category": "lower-third",
+  "order": 60,
+  "duration": 4,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Pill",
+      "shape": "pill",
+      "box": [
+        0.06,
+        0.8,
+        0.22,
+        0.07
+      ],
+      "fill": "#FFFFFF",
+      "in": {
+        "anim": "pop",
+        "duration": 0.4,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "zoomOut",
+        "duration": 0.3,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "name",
+      "label": "Name",
+      "text": "Casey Park",
+      "box": [
+        0.06,
+        0.8,
+        0.22,
+        0.07
+      ],
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "size": 0.033,
+      "color": "#111827",
+      "align": "center",
+      "valign": "middle",
+      "start": 0.15,
+      "in": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.25,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

@@ -14,6 +14,8 @@ Item {
     property bool bipolar: true
     property var gradient: []
     property bool animated: false
+    // Control-surface target while learn mode is on, e.g. "color.exposure".
+    property string learnId: ""
     property int dragMoves: 0
     // Handle travel is warped by |p|^curvePower around defaultValue; only for symmetric ranges.
     property real curvePower: 1
@@ -129,6 +131,12 @@ Item {
         stepSize: root.stepSize
         showValueTooltip: false
         lockWhilePlaying: root.animated
+
+        SurfaceLearnArea {
+            targetId: root.learnId
+            label: root.label
+            visible: root.learnId !== "" && EditorState.surfaces.learnMode
+        }
         valueFormatter: v => Number(v).toFixed(root.decimals)
 
         Binding on value {

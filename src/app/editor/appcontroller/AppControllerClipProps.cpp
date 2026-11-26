@@ -1155,6 +1155,12 @@ void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &
         s.valign = drift::textVAlignFromString(m.value(QStringLiteral("valign")).toString());
     if (m.contains(QStringLiteral("wordWrap")))
         s.wordWrap = m.value(QStringLiteral("wordWrap")).toBool();
+    if (m.contains(QStringLiteral("scroll")))
+        s.scroll = drift::textScrollFromString(m.value(QStringLiteral("scroll")).toString());
+    if (m.contains(QStringLiteral("scrollEnterOffscreen")))
+        s.scrollEnterOffscreen = m.value(QStringLiteral("scrollEnterOffscreen")).toBool();
+    if (m.contains(QStringLiteral("scrollExitOffscreen")))
+        s.scrollExitOffscreen = m.value(QStringLiteral("scrollExitOffscreen")).toBool();
     if (m.contains(QStringLiteral("lineHeight")))
         s.lineHeight = qBound(0.5, m.value(QStringLiteral("lineHeight")).toDouble(), 4.0);
     if (m.contains(QStringLiteral("letterSpacing")))
@@ -1278,7 +1284,9 @@ void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &
     // A hand-edited style is no longer the pack it came from, so the picker stops showing one as
     // selected. Alignment and wrapping are layout, not look, and leave the pack intact.
     static const QSet<QString> kLayoutOnlyKeys = {QStringLiteral("align"), QStringLiteral("valign"),
-                                                  QStringLiteral("wordWrap")};
+                                                  QStringLiteral("wordWrap"), QStringLiteral("scroll"),
+                                                  QStringLiteral("scrollEnterOffscreen"),
+                                                  QStringLiteral("scrollExitOffscreen")};
     for (auto it = m.constBegin(); it != m.constEnd(); ++it) {
         if (!kLayoutOnlyKeys.contains(it.key())) {
             s.packId.clear();
@@ -1305,8 +1313,13 @@ void AppController::applyTextPreset(int trackIndex, int clipIndex, const QString
         return;
 
     const drift::Project before = m_project;
+    // Scrolling is motion, not look: a credits roll keeps rolling when its font changes.
+    const drift::TextStyle old = clip.textStyle;
     clip.textStyle = *preset;
     clip.textStyle.packId = presetId;
+    clip.textStyle.scroll = old.scroll;
+    clip.textStyle.scrollEnterOffscreen = old.scrollEnterOffscreen;
+    clip.textStyle.scrollExitOffscreen = old.scrollExitOffscreen;
     pushProjectEdit(before, tr("Apply text preset"));
     finishEdit(tr("Text preset applied"));
 }

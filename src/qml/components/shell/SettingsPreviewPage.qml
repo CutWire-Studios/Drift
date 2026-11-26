@@ -179,6 +179,45 @@ SettingsPage {
         }
     }
 
+    SettingsGroupHeader {
+        text: qsTr("3D view")
+        query: page.query
+    }
+
+    SettingsRow {
+        title: qsTr("Fly look")
+        searchId: "preview-fly-look"
+        description: qsTr("How the mouse turns the view in fly mode. Mouse look locks the pointer; steering turns toward the pointer and suits touchpads.")
+        keywords: "fly mode mouse look pointer lock capture steer touchpad first person camera"
+        query: page.query
+
+        ThemedComboBox {
+            readonly property var ids: ["mouse", "steer"]
+            width: Theme.c.settingsRow.controlWidth
+            model: [qsTr("Mouse look (locked pointer)"), qsTr("Steer toward pointer")]
+            currentIndex: Math.max(0, ids.indexOf(EditorState.preview.flyLook))
+            onActivated: EditorState.preview.flyLook = ids[currentIndex]
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Recording smoothing")
+        searchId: "preview-record-smoothing"
+        description: qsTr("How much a recorded camera flight or clip motion is thinned into keyframes. Higher gives fewer, smoother keys.")
+        keywords: "record camera puppet keyframes simplify reduce tolerance virtual camera"
+        query: page.query
+
+        ThemedSlider {
+            width: Theme.c.settingsRow.controlWidth
+            label: qsTr("Smoothing")
+            from: 0
+            to: 1
+            value: EditorState.preview.recordSmoothing
+            valueFormatter: (v) => Math.round(v * 100) + "%"
+            onMoved: EditorState.preview.recordSmoothing = value
+        }
+    }
+
     PreviewOptionsDecodeDialog {
         id: decodeGpuDialog
         onRestoreSelection: decodeCombo.currentIndex = Math.max(0, decodeCombo.values.indexOf(EditorState.playback.decodeMode))

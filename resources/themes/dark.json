@@ -167,6 +167,8 @@
     "timelineWaveformGuide": "#26ffffff",
     "timelineWaveformLive": "#d9ffffff",
     "timelineHeaderBackground": "#00000000",
+    "surfaceLearnFill": "#26F8B81C",
+    "surfaceLearnArmed": "#59F8B81C",
     "timelineRecordWash": "#14e91616",
     "timelineRecordPausedWash": "#1aebb308",
     "timelineZoneMutedRed": "#4a2c2c",
@@ -828,12 +830,41 @@
       "divider": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth"
     },
+    "surfaceLearn": {
+      "border": "$semantic.primary",
+      "fill": "$palette.surfaceLearnFill",
+      "armedFill": "$palette.surfaceLearnArmed",
+      "borderWidth": 2,
+      "radius": "$metrics.radius.sm"
+    },
     "settingsRow": {
       "foreground": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "divider": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth",
       "controlWidth": 220
+    },
+    "controllerTest": {
+      "background": "$semantic.panel.accent",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "marker": "$semantic.primary",
+      "foreground": "$semantic.panel.foreground"
+    },
+    "phoneRemote": {
+      "padBackground": "$semantic.panel.secondary.background",
+      "padBorder": "$semantic.panel.border",
+      "padRadius": "$metrics.radius.md",
+      "wheelBackground": "$semantic.panel.secondary.background",
+      "wheelBorder": "$semantic.panel.border",
+      "wheelTick": "$semantic.mutedForeground",
+      "wheelThumb": "$semantic.primary",
+      "borderWidth": "$metrics.borderWidth"
+    },
+    "phonePairing": {
+      "qrBackground": "#ffffff",
+      "qrModule": "#000000",
+      "qrSize": 200
     },
     "settingsCloudProvidersSection": {
       "foregroundMuted": "$semantic.mutedForeground",
@@ -1498,6 +1529,14 @@
       "backgroundHover": "$semantic.panel.muted",
       "divider": "$semantic.panel.border",
       "radius": "$metrics.radius.sm"
+    },
+    "renderQueueRow": {
+      "backgroundHover": "$semantic.panel.muted",
+      "divider": "$semantic.panel.border",
+      "radius": "$metrics.radius.sm",
+      "done": "$semantic.constructive",
+      "failed": "$semantic.destructive",
+      "held": "$semantic.warning"
     },
     "timelineBakeStrip": {
       "fresh": "$semantic.constructive",
@@ -2826,6 +2865,15 @@
       "borderSelected": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth",
       "borderWidthFocus": "$metrics.borderWidthFocus",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "radius": "$metrics.radius.sm"
+    },
+    "titleTemplateCard": {
+      "background": "$semantic.preview.textStyleBackground",
+      "border": "$semantic.preview.textStyleBorder",
+      "borderHover": "$semantic.panel.muted",
+      "borderWidth": "$metrics.borderWidth",
+      "foregroundHover": "$semantic.panel.foreground",
       "foregroundMuted": "$semantic.mutedForeground",
       "radius": "$metrics.radius.sm"
     },

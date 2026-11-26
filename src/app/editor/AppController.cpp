@@ -1,3 +1,4 @@
+#include "app/surfaces/EditorSurfaceTargets.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/proxies/ProxyLocation.h"
 #include "ui/timeline/TimelineCursors.h"
@@ -951,6 +952,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
 
     m_keymap = new drift::Keymap(this);
     connect(m_keymap, &drift::Keymap::changed, this, &AppController::shortcutsChanged);
+    m_surfaces = new drift::ControlSurfaceManager(new drift::EditorSurfaceTargets(this, this), this);
     QSettings settings;
     for (const QJsonValue &value :
          QJsonDocument::fromJson(settings.value(QStringLiteral("preview/guideSets")).toByteArray()).array())

@@ -45,7 +45,8 @@ inline bool isEngineBoundGpuUniform(const QString &name)
         || name == QLatin1String("u_clipMask") || name == QLatin1String("u_hasClipMask")
         || name == QLatin1String("u_meshAspect") || name == QLatin1String("u_prevOutput")
         || name == QLatin1String("u_sourceFps") || name == QLatin1String("u_sourcePhase")
-        || name == QLatin1String("u_sourceStep") || name == QLatin1String("u_projectFps")) {
+        || name == QLatin1String("u_sourceStep") || name == QLatin1String("u_projectFps")
+        || name == QLatin1String("u_contentRect")) {
         return true;
     }
     // The depth map and its size, bound for "requires": "depth" packages.
@@ -176,6 +177,11 @@ struct GpuEffectDefinition
     // the media holds) around the one shown, not project frames, and are read from decoded neighbours
     // instead of the history ring. `historyFrames` is then just the prelude switch.
     bool sourceUnits = false;
+    // "padding": f: the clip frame grows by f of its width and height on every side before this effect
+    // runs, transparent where the clip is not, so the effect can draw past the frame (a shadow). The
+    // layer is drawn at the larger size, so the extra reaches the canvas. u_contentRect says where the
+    // clip sits inside it. 0 for packages that stay inside the frame.
+    float padding = 0.f;
     // "previousOutput": true: u_prevOutput is this effect's own result from the previous project frame.
     bool needsPrevOutput = false;
     // Parameters bound beyond plain scalars, from the package's parameter list (declaration order).

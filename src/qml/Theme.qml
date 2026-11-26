@@ -571,6 +571,7 @@ QtObject {
         smile: "smile",
         wand: "wand-sparkles",
         sparkles: "sparkles",
+        asterism: "asterism",
         sliders: "sliders-horizontal",
         slidersVertical: "sliders-vertical",
         settings: "settings",

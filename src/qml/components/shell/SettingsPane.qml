@@ -30,22 +30,27 @@ Item {
         { id: "workspaces", title: qsTr("Workspaces"), keywords: "workspace layout panel window monitor screen dock preset orientation landscape portrait" },
         { id: "timeline", title: qsTr("Timeline"), keywords: "scroll wheel horizontal vertical crossfade transition overview minimap toolbar buttons customize auto keyframes animation" },
         { id: "keymap", title: qsTr("Keyboard shortcuts"), keywords: "keymap keys hotkeys bindings" },
+        { id: "surfaces", title: qsTr("Control surfaces"), keywords: "midi osc mackie controller faders knobs jog hardware surface phone remote" },
         { id: "preview", title: qsTr("Preview"), keywords: "quality resolution decode guides background" },
+        { id: "controllers", title: qsTr("Controllers"), keywords: "gamepad controller joystick xbox playstation dualsense gyro rumble stick dead zone", available: Gamepad.available },
         { id: "performance", title: qsTr("Performance"), keywords: "graphics card gpu faster preview zero copy advanced tuning cache memory ram vram buffer drop frames pool" },
         { id: "storage", title: qsTr("Storage & media"), keywords: "cache location disk space preview copies proxies proxy folder thumbnails" },
         { id: "export", title: qsTr("Export"), keywords: "hardware encoder gpu encode h264 nvenc folder" },
+        { id: "farm", title: qsTr("Render farm"), keywords: "render queue farm coordinator workers distributed network lan token port cache" },
         { id: "audio", title: qsTr("Audio"), keywords: "sound speakers microphone output input" },
         { id: "ai", title: qsTr("AI & Cloud"), keywords: "agent mcp claude cursor api key elevenlabs voice scene detection" },
         { id: "notifications", title: qsTr("Notifications"), keywords: "extras reminders pack updates agent notifications toasts pop-ups quiet" },
         { id: "network", title: qsTr("Network & internet"), keywords: "internet proxy server http socks firewall" },
         { id: "about", title: qsTr("About"), keywords: "version updates debug info diagnostics quick setup" }
     ]
+    // The render farm is desktop-only: the coordinator is not built for Android or the browser.
+    readonly property bool farmSupported: Qt.platform.os !== "android" && Qt.platform.os !== "wasm"
     readonly property var visiblePages: pages.filter(
-        (page) => !(mobile && mobileHiddenPages.includes(page.id)))
+        (page) => page.available !== false && !(mobile && mobileHiddenPages.includes(page.id)) && (farmSupported || page.id !== "farm"))
 
     readonly property bool searchHasMatches: {
-        for (const slot of [generalSlot, personalizeSlot, appearanceSlot, workspacesSlot, timelineSlot, keymapSlot,
-                            previewSlot, performanceSlot, storageSlot, exportSlot, audioSlot, aiSlot,
+        for (const slot of [generalSlot, personalizeSlot, appearanceSlot, workspacesSlot, timelineSlot, keymapSlot, surfacesSlot,
+                            previewSlot, controllersSlot, performanceSlot, storageSlot, exportSlot, farmSlot, audioSlot, aiSlot,
                             notificationsSlot, networkSlot, aboutSlot]) {
             if (slot.hasMatches)
                 return true
@@ -242,9 +247,22 @@ Item {
             }
 
             PageSlot {
+                id: surfacesSlot
+                pageId: "surfaces"
+                sourceComponent: SettingsSurfacesPage { query: root.query }
+            }
+
+            PageSlot {
                 id: previewSlot
                 pageId: "preview"
                 sourceComponent: SettingsPreviewPage { query: root.query }
+            }
+
+            PageSlot {
+                id: controllersSlot
+                pageId: "controllers"
+                allowed: Gamepad.available
+                sourceComponent: SettingsControllersPage { query: root.query }
             }
 
             PageSlot {
@@ -263,6 +281,13 @@ Item {
                 id: exportSlot
                 pageId: "export"
                 sourceComponent: SettingsExportPage { query: root.query }
+            }
+
+            PageSlot {
+                id: farmSlot
+                pageId: "farm"
+                allowed: root.farmSupported
+                sourceComponent: SettingsFarmPage { query: root.query }
             }
 
             PageSlot {

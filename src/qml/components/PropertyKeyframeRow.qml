@@ -719,6 +719,12 @@ Column {
                 from: root.sliderFrom
                 to: root.sliderTo
                 stepSize: root.sliderStep
+                SurfaceLearnArea {
+                    propKey: root.propDef.key
+                    label: root.propDef.label
+                    from: root.sliderFrom
+                    to: root.sliderTo
+                }
                 // Keep the playhead/model binding off while pressed — same as
                 // PreviewPanel scrub — so preview ticks cannot fight the drag.
                 // displayedValue, so a scrub on the readout moves the thumb along with it.

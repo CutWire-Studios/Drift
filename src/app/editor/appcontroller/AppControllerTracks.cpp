@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "core/edit/BeatCut.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/keymap/KeymapCatalog.h"
 #include "app/jobs/audio/AudioAlignController.h"
@@ -19,7 +20,9 @@
 #include "ui/timeline/ClipThumbnailStore.h"
 
 #include "ui/timeline/TimelineCursors.h"
+#include <QEventLoop>
 #include <QGuiApplication>
+#include <QScopedValueRollback>
 #include <QScreen>
 
 #include <QSettings>
@@ -977,6 +980,22 @@ void AppController::goToPreviousEdit()
     setPlayheadUs(adjacentEditPoint(m_project, m_playheadUs, -1));
 }
 
+bool AppController::crossesEditPoint(double fromSeconds, double toSeconds) const
+{
+    const drift::TimeUs from = drift::secondsToUs(std::min(fromSeconds, toSeconds));
+    const drift::TimeUs to = drift::secondsToUs(std::max(fromSeconds, toSeconds));
+    if (to <= from)
+        return false;
+    const drift::TimeUs next = adjacentEditPoint(m_project, from, 1);
+    if (next > from && next <= to)
+        return true;
+    for (const auto &mark : m_project.bookmarks()) {
+        if (mark.timeUs > from && mark.timeUs <= to)
+            return true;
+    }
+    return false;
+}
+
 void AppController::toggleBookmarkAtPlayhead()
 {
     // The timeline's 150 ms snapping radius is much wider than a frame. Using it here
@@ -1429,7 +1448,11 @@ void AppController::setTimelineCursor(const QString &kindName, int heightPx, int
 
 QString AppController::shortcutFor(const QString &actionId) const
 {
-    return m_keymap->bindings(actionId).value(0);
+    for (const QString &chord : m_keymap->bindings(actionId)) {
+        if (!chord.startsWith(QLatin1String("Pad+")))
+            return chord;
+    }
+    return {};
 }
 
 QString AppController::setShortcut(const QString &actionId, const QString &keys)
@@ -2290,6 +2313,245 @@ void AppController::analyzeBeats(double startSeconds, double durSeconds)
             },
             Qt::QueuedConnection);
     });
+}
+
+namespace {
+
+QVariantMap beatFailure(const char *code, const QString &message)
+{
+    return QVariantMap{{QStringLiteral("error"), QString::fromLatin1(code)},
+                       {QStringLiteral("message"), message}};
+}
+
+} // namespace
+
+// Mixes the clip on its own, so other music or dialogue on the timeline cannot move the tempo.
+// Blocks in a nested event loop like detect_beats does; a few seconds for a song.
+AudioBeatAnalysis AppController::analyzeClipBeats(const QString &clipId, QVariantMap *failure)
+{
+    const QPair<int, int> at = m_mcpController->locateClip(clipId);
+    if (at.first < 0 || at.second < 0 || !isValidClipIndex(at.first, at.second)) {
+        *failure = beatFailure("not_found", tr("Unknown clip"));
+        return {};
+    }
+    const drift::Clip &clip = m_project.tracks().at(at.first).clips.at(at.second);
+    if (clip.type != drift::ClipType::Audio && clip.type != drift::ClipType::Video) {
+        *failure = beatFailure("bad_args", tr("Beats come from an audio or video clip"));
+        return {};
+    }
+    const double startSeconds = drift::usToSeconds(clip.timelineStart);
+    const double durSeconds = qMin(drift::usToSeconds(clip.timelineDuration), 600.0);
+    if (durSeconds < AudioOnsets::kMinAnalysisSec) {
+        *failure = beatFailure("bad_args", tr("The clip is too short to find a tempo"));
+        return {};
+    }
+
+    drift::Project snap = m_project;
+    drift::Track only = m_project.tracks().at(at.first);
+    only.clips = {clip};
+    only.transitions.clear();
+    only.muted = false;
+    only.solo = false;
+    snap.tracks() = {only};
+
+    const drift::TimeUs startUs = clip.timelineStart;
+    const drift::TimeUs durUs = drift::secondsToUs(durSeconds);
+    auto result = std::make_shared<AudioBeatAnalysis>();
+    QEventLoop loop;
+    (void)QtConcurrent::run([snap, startUs, durUs, startSeconds, result, &loop]() {
+        *result = runBeatAnalysis(snap, startUs, durUs, startSeconds);
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+
+    if (result->beats.size() < 2)
+        *failure = beatFailure("not_found", tr("No steady beat found in that clip"));
+    return *result;
+}
+
+QVariantMap AppController::addBeatMarkersForClip(const QString &clipId, int every)
+{
+    QVariantMap failure;
+    const AudioBeatAnalysis analysis = analyzeClipBeats(clipId, &failure);
+    if (!failure.isEmpty())
+        return failure;
+
+    const int step = every <= 0 ? analysis.beatsPerBar : every;
+    const QList<double> times = drift::beatsEvery(analysis.beats, step, analysis.firstDownbeat);
+    const int added = addBookmarksAtTimes(times, 0.0, 0.0, false, tr("Beat"), tr("Add beat markers"));
+    return QVariantMap{{QStringLiteral("added"), added},
+                       {QStringLiteral("beats"), static_cast<int>(times.size())},
+                       {QStringLiteral("bpm"), analysis.bpm},
+                       {QStringLiteral("confidence"), analysis.confidence}};
+}
+
+QVariantMap AppController::autoCutToBeat(const QString &musicClipId, const QStringList &clipIds,
+                                         int beatsPerCut, bool fromPlayhead, bool syncDownbeats)
+{
+    struct Target {
+        QString id;
+        drift::TimeUs start = 0;
+        int track = 0;
+        double available = 0.0;
+    };
+    QList<Target> targets;
+    QSet<QString> seen;
+    for (const QString &raw : clipIds) {
+        const QString id = raw.trimmed();
+        if (id.isEmpty() || id == musicClipId || seen.contains(id))
+            continue;
+        seen.insert(id);
+        const QPair<int, int> at = m_mcpController->locateClip(id);
+        if (at.first < 0 || at.second < 0 || !isValidClipIndex(at.first, at.second))
+            continue;
+        const drift::Clip &clip = m_project.tracks().at(at.first).clips.at(at.second);
+        if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
+            continue;
+        // A still has no footage to run out of; a video can only be trimmed, never stretched.
+        const double available = clip.type == drift::ClipType::Image
+                                     ? 3600.0
+                                     : drift::usToSeconds(clip.timelineDuration);
+        targets.append({id, clip.timelineStart, at.first, available});
+    }
+    if (targets.isEmpty())
+        return beatFailure("bad_args", tr("Select the video or image clips to cut together"));
+    std::stable_sort(targets.begin(), targets.end(), [](const Target &a, const Target &b) {
+        return a.start != b.start ? a.start < b.start : a.track < b.track;
+    });
+
+    QVariantMap failure;
+    const AudioBeatAnalysis analysis = analyzeClipBeats(musicClipId, &failure);
+    if (!failure.isEmpty())
+        return failure;
+
+    const QPair<int, int> music = m_mcpController->locateClip(musicClipId);
+    if (music.first < 0 || music.second < 0 || !isValidClipIndex(music.first, music.second))
+        return beatFailure("not_found", tr("The music clip is gone"));
+    const drift::Clip &musicClip = m_project.tracks().at(music.first).clips.at(music.second);
+    const double musicStart = drift::usToSeconds(musicClip.timelineStart);
+    const double musicEnd = drift::usToSeconds(musicClip.timelineEnd());
+
+    drift::BeatCutOptions options;
+    options.beatsPerCut = beatsPerCut;
+    options.syncToDownbeats = syncDownbeats;
+    options.startSeconds = fromPlayhead ? qMax(musicStart, playheadSeconds()) : musicStart;
+    options.endSeconds = qMin(musicEnd, musicStart + 600.0);
+    options.firstDownbeat = analysis.firstDownbeat;
+    options.beatsPerBar = analysis.beatsPerBar;
+
+    QList<double> available;
+    for (const Target &t : std::as_const(targets))
+        available.append(t.available);
+    const QList<drift::BeatCutSlot> cuts = drift::planBeatCut(analysis.beats, available, options);
+    if (cuts.isEmpty())
+        return beatFailure("bad_args", tr("No beat to cut on between the start point and the end of the music"));
+
+    int insertAt = targets.first().track;
+    for (const Target &t : std::as_const(targets))
+        insertAt = qMin(insertAt, t.track);
+
+    // Placement is exact: snapping to the playhead, another clip's edge or the beat grid would
+    // each move a cut off the beat it was planned for.
+    QScopedValueRollback<bool> noSnap(m_snapEnabled, false);
+    clearSelection();
+    m_mcpController->beginBatch();
+    m_project.ensureTrackIds();
+    QSet<QString> idsBefore;
+    for (const drift::Track &track : m_project.tracks())
+        idsBefore.insert(track.id);
+    insertTrack(QStringLiteral("video"), insertAt);
+    int newTrack = -1;
+    for (int i = 0; i < m_project.tracks().size(); ++i) {
+        if (!idsBefore.contains(m_project.tracks().at(i).id)) {
+            newTrack = i;
+            break;
+        }
+    }
+    if (newTrack < 0) {
+        m_mcpController->endBatch(tr("Auto-cut to beat"), true);
+        return beatFailure("apply_failed", tr("Could not add a track"));
+    }
+    QVariantList placed;
+    int shortClips = 0;
+    for (const drift::BeatCutSlot &slot : cuts) {
+        const QString &id = targets.at(slot.clip).id;
+        QPair<int, int> at = m_mcpController->locateClip(id);
+        if (at.first < 0)
+            continue;
+        const drift::Clip &before = m_project.tracks().at(at.first).clips.at(at.second);
+        if (qAbs(drift::usToSeconds(before.timelineDuration) - slot.duration) > 0.0005)
+            setClipDuration(at.first, at.second, slot.duration);
+        at = m_mcpController->locateClip(id);
+        if (at.first < 0)
+            continue;
+        moveClipToTrack(at.first, at.second, newTrack, slot.start);
+        at = m_mcpController->locateClip(id);
+        if (at.first < 0)
+            continue;
+        if (qAbs(drift::usToSeconds(m_project.tracks().at(at.first).clips.at(at.second).timelineStart) - slot.start) > 0.0005)
+            setClipStart(at.first, at.second, slot.start);
+        if (slot.shorterThanSlot)
+            ++shortClips;
+        placed.append(QVariantMap{{QStringLiteral("clip"), id},
+                                  {QStringLiteral("start"), slot.start},
+                                  {QStringLiteral("duration"), slot.duration}});
+    }
+    m_mcpController->endBatch(tr("Auto-cut to beat"), !placed.isEmpty());
+
+    return QVariantMap{{QStringLiteral("placed"), placed},
+                       {QStringLiteral("track"), newTrack},
+                       {QStringLiteral("bpm"), analysis.bpm},
+                       {QStringLiteral("short"), shortClips},
+                       {QStringLiteral("unused"), static_cast<int>(targets.size() - cuts.size())}};
+}
+
+int AppController::beatCutTargetCount(int trackIndex, int clipIndex) const
+{
+    int n = 0;
+    for (const QString &id : clipIdsForAction(trackIndex, clipIndex)) {
+        const QPair<int, int> at = m_mcpController->locateClip(id);
+        if (at.first < 0 || (at.first == trackIndex && at.second == clipIndex))
+            continue;
+        const drift::ClipType type = m_project.tracks().at(at.first).clips.at(at.second).type;
+        if (type == drift::ClipType::Video || type == drift::ClipType::Image)
+            ++n;
+    }
+    return n;
+}
+
+void AppController::addBeatMarkersForSelection(int trackIndex, int clipIndex, int every)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const QVariantMap result =
+        addBeatMarkersForClip(m_project.tracks().at(trackIndex).clips.at(clipIndex).id, every);
+    if (result.contains(QStringLiteral("error"))) {
+        setLastMessage(result.value(QStringLiteral("message")).toString(), QStringLiteral("warning"));
+        return;
+    }
+    const int added = result.value(QStringLiteral("added")).toInt();
+    if (added > 0)
+        setLastMessage(tr("Added %n beat marker(s)", nullptr, added));
+    else
+        setLastMessage(tr("No new markers to add"), QStringLiteral("warning"));
+}
+
+void AppController::autoCutSelectionToBeat(int trackIndex, int clipIndex, int beatsPerCut, bool fromPlayhead,
+                                           bool syncDownbeats)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const QString musicId = m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    const QVariantMap result =
+        autoCutToBeat(musicId, clipIdsForAction(trackIndex, clipIndex), beatsPerCut, fromPlayhead, syncDownbeats);
+    if (result.contains(QStringLiteral("error"))) {
+        setLastMessage(result.value(QStringLiteral("message")).toString(), QStringLiteral("warning"));
+        return;
+    }
+    const int placed = result.value(QStringLiteral("placed")).toList().size();
+    const int unused = result.value(QStringLiteral("unused")).toInt();
+    setLastMessage(unused > 0 ? tr("Cut %n clip(s) to the beat; %1 did not fit the music", nullptr, placed).arg(unused)
+                              : tr("Cut %n clip(s) to the beat", nullptr, placed));
 }
 
 void AppController::applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds,

@@ -50,10 +50,6 @@ constexpr double kOctaveAmbiguous = 0.9;
 constexpr double kMinTempoConfidence = 0.25;
 constexpr double kMinAnalysisSec = AudioOnsets::kMinAnalysisSec;
 
-// A beat comb is scored against the ODF; each hit is smeared over this many frames
-// either side so a slightly-off grid still scores.
-constexpr int kCombTolerance = 1;
-
 // Analysis-frame index -> seconds within the unpadded input.
 inline double frameToSeconds(double frame, int sampleRate)
 {
@@ -253,29 +249,125 @@ int estimatePeriod(const std::vector<float> &odf, double framesPerSec, double &c
     return bestLag;
 }
 
-// Slide a comb of period `lag` over the ODF and keep the offset that collects the
-// most energy.
-int estimatePhase(const std::vector<float> &odf, int lag)
+// Dynamic-programming beat tracker (Ellis 2007, "Beat Tracking by Dynamic Programming"), after
+// librosa.beat.beat_track (ISC licence). Every frame is scored by how strong the onset envelope
+// is there; the path through the frames maximises that score minus a penalty for each
+// inter-beat interval straying from the tempo's period. Unlike a fixed comb it follows a
+// drummer who drifts, and it leaves stretches with no music without beats.
+// Returns beat frame indices into `odf`.
+std::vector<int> trackBeats(const std::vector<float> &odf, int period)
 {
+    constexpr double kTightness = 100.0;
     const int n = static_cast<int>(odf.size());
-    double best = -1.0;
-    int bestOffset = 0;
-    for (int offset = 0; offset < lag; ++offset) {
+    if (period < 2 || n < 2 * period)
+        return {};
+
+    double mean = 0.0;
+    for (float v : odf)
+        mean += v;
+    mean /= n;
+    double var = 0.0;
+    for (float v : odf)
+        var += (v - mean) * (v - mean);
+    const double sd = std::sqrt(var / n);
+    if (sd < 1e-9)
+        return {};
+
+    std::vector<double> kernel(static_cast<size_t>(2 * period + 1));
+    for (int k = -period; k <= period; ++k) {
+        const double x = k * 32.0 / period;
+        kernel[static_cast<size_t>(k + period)] = std::exp(-0.5 * x * x);
+    }
+    std::vector<double> local(n, 0.0);
+    for (int i = 0; i < n; ++i) {
         double acc = 0.0;
-        for (int t = offset; t < n; t += lag) {
-            const int lo = std::max(0, t - kCombTolerance);
-            const int hi = std::min(n - 1, t + kCombTolerance);
-            float local = 0.0f;
-            for (int i = lo; i <= hi; ++i)
-                local = std::max(local, odf[i]);
-            acc += local;
+        const int lo = std::max(0, i - period);
+        const int hi = std::min(n - 1, i + period);
+        for (int j = lo; j <= hi; ++j)
+            acc += (odf[j] / sd) * kernel[static_cast<size_t>(i - j + period)];
+        local[i] = acc;
+    }
+    const double localMax = *std::max_element(local.begin(), local.end());
+
+    const int winLo = -2 * period;
+    const int winHi = -static_cast<int>(std::lround(period / 2.0));
+    std::vector<double> penalty;
+    for (int w = winLo; w <= winHi; ++w) {
+        const double l = std::log(static_cast<double>(-w) / period);
+        penalty.push_back(-kTightness * l * l);
+    }
+
+    std::vector<double> cum(local);
+    std::vector<int> back(n, -1);
+    bool firstBeat = true;
+    for (int i = 0; i < n; ++i) {
+        double bestScore = -1e300;
+        int bestW = winLo;
+        for (int w = winLo; w <= winHi; ++w) {
+            const int idx = i + w;
+            const double score = penalty[static_cast<size_t>(w - winLo)] + (idx >= 0 ? cum[idx] : 0.0);
+            if (score > bestScore) {
+                bestScore = score;
+                bestW = w;
+            }
         }
-        if (acc > best) {
-            best = acc;
-            bestOffset = offset;
+        if (firstBeat && local[i] < 0.01 * localMax)
+            continue;
+        cum[i] = local[i] + bestScore;
+        back[i] = (i + bestW >= 0) ? i + bestW : -1;
+        firstBeat = false;
+    }
+
+    std::vector<double> peaks;
+    std::vector<char> isPeak(n, 0);
+    for (int i = 0; i < n; ++i) {
+        const double l = i > 0 ? cum[i - 1] : cum[i];
+        const double r = i + 1 < n ? cum[i + 1] : cum[i];
+        if (cum[i] > l && cum[i] >= r) {
+            isPeak[i] = 1;
+            peaks.push_back(cum[i]);
         }
     }
-    return bestOffset;
+    if (peaks.empty())
+        return {};
+    std::nth_element(peaks.begin(), peaks.begin() + peaks.size() / 2, peaks.end());
+    const double med = peaks[peaks.size() / 2];
+    int tail = -1;
+    for (int i = n - 1; i >= 0; --i) {
+        if (isPeak[i] && cum[i] * 2.0 > med) {
+            tail = i;
+            break;
+        }
+    }
+    if (tail < 0)
+        return {};
+
+    std::vector<int> beats;
+    for (int i = tail; i >= 0; i = back[i])
+        beats.push_back(i);
+    std::reverse(beats.begin(), beats.end());
+    if (beats.size() < 3)
+        return beats;
+
+    // Drop leading and trailing beats that sit on almost nothing.
+    double rms = 0.0;
+    for (double v : local)
+        rms += v * v;
+    rms = std::sqrt(rms / n);
+    const int m = static_cast<int>(beats.size());
+    std::vector<double> smooth(m);
+    for (int i = 0; i < m; ++i) {
+        const double prev = i > 0 ? local[beats[i - 1]] : 0.0;
+        const double next = i + 1 < m ? local[beats[i + 1]] : 0.0;
+        smooth[i] = local[beats[i]] + 0.5 * (prev + next);
+    }
+    int first = 0;
+    while (first < m && smooth[first] <= 0.5 * rms)
+        ++first;
+    int last = m;
+    while (last > first && smooth[last - 1] <= 0.5 * rms)
+        --last;
+    return std::vector<int>(beats.begin() + first, beats.begin() + last);
 }
 
 } // namespace
@@ -313,11 +405,25 @@ AudioBeatAnalysis AudioOnsets::analyze(const float *mono, int frameCount, int sa
     result.bpm = 60.0 * framesPerSec / lag;
     result.confidence = confidence;
 
-    const int phase = estimatePhase(odf, lag);
-    for (int t = phase; t < static_cast<int>(odf.size()); t += lag) {
+    const std::vector<int> beatFrames = trackBeats(odf, lag);
+    if (beatFrames.size() < 2) {
+        result.bpm = 0.0;
+        result.confidence = 0.0;
+        return result;
+    }
+    for (int t : beatFrames) {
         const double at = startSeconds + frameToSeconds(t, sampleRate);
         if (at >= startSeconds)
             result.beats.append(at);
+    }
+
+    // The tracked beats average out the one-frame quantisation of the autocorrelation lag. Only
+    // trusted when it agrees with the lag, otherwise a tracker that wandered would set the tempo.
+    if (result.beats.size() >= 8) {
+        const double interval = (result.beats.last() - result.beats.first()) / (result.beats.size() - 1);
+        const double refined = 60.0 / interval;
+        if (std::abs(refined - result.bpm) < 0.05 * result.bpm)
+            result.bpm = refined;
     }
 
     // Bar lines: of the beatsPerBar candidate offsets, take the one whose beats

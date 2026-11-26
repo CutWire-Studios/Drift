@@ -17,6 +17,10 @@ uniform float hslAquaHue; uniform float hslAquaSat; uniform float hslAquaLum;
 uniform float hslBlueHue; uniform float hslBlueSat; uniform float hslBlueLum;
 uniform float hslPurpleHue; uniform float hslPurpleSat; uniform float hslPurpleLum;
 uniform float hslMagentaHue; uniform float hslMagentaSat; uniform float hslMagentaLum;
+uniform float qualifierEnabled; uniform float qualifierShowMatte; uniform float qualifierInvert;
+uniform float qualifierHue; uniform float qualifierHueWidth; uniform float qualifierHueSoft;
+uniform float qualifierSatLow; uniform float qualifierSatHigh; uniform float qualifierSatSoft;
+uniform float qualifierLumLow; uniform float qualifierLumHigh; uniform float qualifierLumSoft;
 // Set by the runtime when a curve bakes to the identity, or when no look resolves.
 uniform float curveMaster_identity; uniform float curveR_identity; uniform float curveG_identity;
 uniform float curveB_identity; uniform float curveHueHue_identity; uniform float curveHueSat_identity;
@@ -106,6 +110,29 @@ vec3 hueGrade(vec3 c) {
     return c;
 }
 
+float rampUp(float v, float edge, float soft) {
+    return soft <= 1e-4 ? step(edge, v) : smoothstep(edge - soft, edge, v);
+}
+
+float rampDown(float v, float edge, float soft) {
+    return soft <= 1e-4 ? step(v, edge) : 1.0 - smoothstep(edge, edge + soft, v);
+}
+
+// 1 inside the keyed hue / saturation / luma ranges, falling to 0 across each softness. The defaults
+// span everything, so enabling the qualifier alone keys the whole picture.
+float qualifierMatte(vec3 c) {
+    float mx = max(c.r, max(c.g, c.b));
+    float chroma = mx - min(c.r, min(c.g, c.b));
+    float hueDeg = hueOf(c, mx, chroma) * 360.0;
+    float d = abs(mod(hueDeg - qualifierHue + 180.0, 360.0) - 180.0);
+    float m = rampDown(d, 0.5 * qualifierHueWidth, qualifierHueSoft);
+    float sat = chroma / max(mx, 1e-5);
+    m *= rampUp(sat, qualifierSatLow, qualifierSatSoft) * rampDown(sat, qualifierSatHigh, qualifierSatSoft);
+    float yl = Y(c);
+    m *= rampUp(yl, qualifierLumLow, qualifierLumSoft) * rampDown(yl, qualifierLumHigh, qualifierLumSoft);
+    return qualifierInvert > 0.5 ? 1.0 - m : m;
+}
+
 vec3 lutSample(sampler2D t, vec3 c) {
     float bz = c.b * 32.0;
     float b0 = floor(bz);
@@ -160,6 +187,7 @@ void main() {
     vec4 src = texture(u_currentTexture, v_texCoord);
     float a = max(src.a, 1e-5);
     vec3 c = src.rgb / a;
+    vec3 original = c;
 
     vec3 lin = srgbToLinear(c);
     lin *= exp2(exposure);
@@ -214,6 +242,11 @@ void main() {
 
     if (look_identity < 0.5)
         c = mix(c, lutSample(look, c), lookAmount);
+
+    if (qualifierEnabled > 0.5) {
+        float m = qualifierMatte(original);
+        c = qualifierShowMatte > 0.5 ? vec3(m) : mix(original, c, m);
+    }
 
     fragColor = vec4(c * src.a, src.a);
 }

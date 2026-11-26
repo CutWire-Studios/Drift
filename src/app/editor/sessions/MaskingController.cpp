@@ -122,6 +122,7 @@ bool canBecomeSequenceMask(const drift::Clip &clip)
     case drift::ClipType::Shape:
     case drift::ClipType::Vector:
     case drift::ClipType::Pdf:
+    case drift::ClipType::Generator:
     case drift::ClipType::Composite:
         return true;
     case drift::ClipType::Audio:

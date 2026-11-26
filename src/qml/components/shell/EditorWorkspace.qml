@@ -24,6 +24,10 @@ Column {
         onDownloadsRequested: root.downloadsRequested()
     }
 
+    ProjectFolderBanner {
+        visible: shown && !ShellBridge.main?.mainPreviewFullscreen
+    }
+
     Item {
         width: parent.width
         // Clamped so the editor body never takes a negative height while the

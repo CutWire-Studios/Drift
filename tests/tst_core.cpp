@@ -2311,7 +2311,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 33);
+    QCOMPARE(drift::Project::kCurrentVersion, 35);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
