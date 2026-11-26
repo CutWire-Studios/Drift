@@ -109,6 +109,8 @@ QJsonObject maskToJson(const Mask &m)
         object.insert(QStringLiteral("lockAspect"), true);
     if (!m.sequenceId.isEmpty())
         object.insert(QStringLiteral("sequenceId"), m.sequenceId);
+    if (m.faceSlot >= 0)
+        object.insert(QStringLiteral("faceSlot"), m.faceSlot);
     if (!m.mediaPatches.isEmpty()) {
         QJsonArray patches;
         for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
@@ -139,6 +141,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);
     m.cropShape = o.value(QStringLiteral("cropShape")).toString();
+    m.faceSlot = o.value(QStringLiteral("faceSlot")).toInt(m.faceSlot);
     // Media was called "matte" before v5 and only ever backed a segmentation cutout, so the old
     // keys map straight across.
     m.mediaPath = o.value(QStringLiteral("mediaPath"))
@@ -375,8 +378,10 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     if (clip.type == ClipType::Pdf)
         json.insert(QStringLiteral("pdf"), clip.pdf.toJson());
-    if (clip.type == ClipType::Procedural)
+    if (clip.type == ClipType::Procedural || clip.type == ClipType::Generator)
         json.insert(QStringLiteral("procedural"), clip.procedural.toJson());
+    if (!clip.textScript.isEmpty())
+        json.insert(QStringLiteral("textScript"), clip.textScript);
     if (!clip.sequenceId.isEmpty())
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
@@ -415,6 +420,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("anchorZ"), keyframesToJson(clip.anchorZ));
     if (!clip.label.isEmpty())
         json.insert(QStringLiteral("label"), clip.label);
+    if (!clip.generatedBy.isEmpty())
+        json.insert(QStringLiteral("generatedBy"), clip.generatedBy);
     return json;
 }
 
@@ -497,7 +504,9 @@ Clip clipFromJsonV2(const QJsonObject &object, int version, int canvasW = 1920, 
     clip.hiddenInLane = object.value(QStringLiteral("hiddenInLane")).toBool(false);
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.label = object.value(QStringLiteral("label")).toString();
+    clip.generatedBy = object.value(QStringLiteral("generatedBy")).toString();
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
+    clip.textScript = object.value(QStringLiteral("textScript")).toString();
     clip.textStyle = textStyleFromJson(object.value(QStringLiteral("textStyle")).toObject());
     clip.subtitleCues = subtitleCuesFromJson(object.value(QStringLiteral("subtitleCues")).toArray());
     clip.shapeStyle = shapeStyleFromJson(object.value(QStringLiteral("shapeStyle")).toObject());
@@ -689,6 +698,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
     if (!asset.generator.isEmpty())
         object.insert(QStringLiteral("generator"), asset.generator);
+    if (!asset.generatedBy.isEmpty())
+        object.insert(QStringLiteral("generatedBy"), asset.generatedBy);
     // Only when known, like the keys above: an older project round-trips unchanged.
     if (drift::sourceFingerprintKnown(asset)) {
         object.insert(QStringLiteral("sourceSize"), static_cast<double>(asset.sourceSize));
@@ -741,6 +752,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.folderId = object.value(QStringLiteral("folderId")).toString();
     asset.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     asset.generator = object.value(QStringLiteral("generator")).toObject();
+    asset.generatedBy = object.value(QStringLiteral("generatedBy")).toString();
     asset.sourceSize = static_cast<qint64>(object.value(QStringLiteral("sourceSize")).toDouble());
     asset.sourceModifiedMs =
         static_cast<qint64>(object.value(QStringLiteral("sourceModifiedMs")).toDouble());
@@ -1610,6 +1622,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
             track.locked = trackObject.value(QStringLiteral("locked")).toBool(false);
             track.solo = trackObject.value(QStringLiteral("solo")).toBool(false);
             track.excludeFromExport = trackObject.value(QStringLiteral("excludeFromExport")).toBool(false);
+            track.generatedBy = trackObject.value(QStringLiteral("generatedBy")).toString();
             track.volume = trackObject.value(QStringLiteral("volume")).toDouble(1.0);
             track.pan = trackObject.value(QStringLiteral("pan")).toDouble(0.0);
             // Projects before clipDisplay only had a waveform-instead-of-filmstrip flag.
@@ -1745,6 +1758,13 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 23 added the teleprompter script. Nothing to migrate; the bump is a gate so an older
     // build does not silently drop the script on save.
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
+    // Version 35 added generatedBy on clips, tracks and assets: the project-folder script that made the
+    // item, which the editor locks and the script replaces. Nothing to migrate; the bump is a gate, as
+    // for versions 6 and 9. An older build would drop the key on load and save the item back as plain,
+    // unlocked data that the next script run duplicates.
+    // Version 34 added ClipType::Generator and the text clip script (Clip::textScript). Nothing to
+    // migrate; the bump is a gate, as for versions 6 and 9. An older build would load generators as
+    // videos with no path and show a scripted text clip's placeholder text.
     // Version 24 added ClipType::Procedural. Nothing to migrate; the bump is a gate, as for versions
     // 6 and 9. An older build would load those clips as videos with no path.
     // Version 25 added looping clips. Nothing to migrate; the bump is a gate, as for versions 6
@@ -1755,6 +1775,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
     // Version 28 added the Sequence mask shape. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would read the shape as none and drop the mask.
+    // Version 33 added Mask::faceSlot, the marker on a mask generated from a face track. Nothing
+    // to migrate; the bump is a gate, as for versions 6 and 9. An older build would drop the
+    // marker and then lay a second set of face masks over the first instead of replacing them.
     // Version 32 made Freeform mask vertices bezier (handles and a tangent mode). A format 31 polygon
     // point is already a valid corner vertex, so there is nothing to migrate; an older build would
     // drop the handles and draw the curve as a polygon.
@@ -1881,6 +1904,8 @@ QJsonObject Project::toJson(bool includeTranscripts) const
             // Written only when set, so projects without it stay byte-identical.
             if (track.excludeFromExport)
                 trackObject.insert(QStringLiteral("excludeFromExport"), true);
+            if (!track.generatedBy.isEmpty())
+                trackObject.insert(QStringLiteral("generatedBy"), track.generatedBy);
             tracksArray.append(trackObject);
         }
         return tracksArray;

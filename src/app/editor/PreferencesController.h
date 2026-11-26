@@ -78,6 +78,12 @@ class PreferencesController : public QObject
     // Where new proxies and reversed renders are saved: "beside" | "cache" | "folder" (proxyFolder).
     Q_PROPERTY(QString proxyLocation READ proxyLocation WRITE setProxyLocation NOTIFY proxyLocationChanged)
     Q_PROPERTY(QString proxyFolder READ proxyFolder NOTIFY proxyFolderChanged)
+    // Where new screen and camera recordings are saved: "movies" | "project" | "folder"
+    // (recordingFolder). There is deliberately no cache option, unlike proxies: a proxy can be
+    // rebuilt, while a recording is the only copy of something that happened once.
+    Q_PROPERTY(QString recordingLocation READ recordingLocation WRITE setRecordingLocation NOTIFY
+                   recordingLocationChanged)
+    Q_PROPERTY(QString recordingFolder READ recordingFolder NOTIFY recordingFolderChanged)
     // Bytes of Drift's own files in proxyFolder; -1 while unknown or without a folder.
     Q_PROPERTY(qint64 proxyFolderBytes READ proxyFolderBytes NOTIFY proxyFolderBytesChanged)
     // False on Android: the picker returns a tree URI, not a writable path.
@@ -245,6 +251,13 @@ public:
     QString proxyLocation() const { return m_proxyLocation; }
     // Refused (stays put) for "folder" without a folder, and for "folder" where it isn't supported.
     void setProxyLocation(const QString &location);
+    QString recordingLocation() const { return m_recordingLocation; }
+    void setRecordingLocation(const QString &location);
+    QString recordingFolder() const { return m_recordingFolder; }
+    // Empty on success, else why the folder was refused. The same checks as setProxyFolder, minus
+    // the cache test: there is no cache mode here for a folder to be confused with.
+    Q_INVOKABLE QString setRecordingFolder(const QString &path);
+    Q_INVOKABLE QUrl recordingFolderUrl() const;
     QString proxyFolder() const { return m_proxyFolder; }
     qint64 proxyFolderBytes() const { return m_proxyFolderBytes; }
     static bool proxyFolderSupported();
@@ -409,6 +422,8 @@ signals:
     void agentNotificationsChanged();
     void proxySuggestionChanged();
     void proxyLocationChanged();
+    void recordingLocationChanged();
+    void recordingFolderChanged();
     void proxyFolderChanged();
     void proxyFolderBytesChanged();
     void undoHistoryModeChanged();
@@ -462,6 +477,8 @@ private:
     QString m_proxySuggestion = QStringLiteral("ask");
     QString m_proxyLocation = QStringLiteral("beside");
     QString m_proxyFolder;
+    QString m_recordingLocation = QStringLiteral("movies");
+    QString m_recordingFolder;
     qint64 m_proxyFolderBytes = -1;
     QString m_undoHistoryMode = QStringLiteral("session");
     int m_undoHistoryLimit = 200;

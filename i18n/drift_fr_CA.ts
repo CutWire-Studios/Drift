@@ -2182,6 +2182,93 @@
     </message>
 </context>
 <context>
+    <name>AndroidRemotePage</name>
+    <message>
+        <source>Remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnect to your desktop, or pair again with a new code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On your desktop open Settings, Control surfaces, then Pair phone. Type the code shown there, in the form 192.168.1.20:47890/ABCD2345.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pairing code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connecting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is not a pairing code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forget desktop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Retour</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Pause</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Lire</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Arrêter</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished">Suivant</translation>
+    </message>
+    <message>
+        <source>Shadows</source>
+        <translation type="unfinished">Ombres</translation>
+    </message>
+    <message>
+        <source>Midtones</source>
+        <translation type="unfinished">Tons moyens</translation>
+    </message>
+    <message>
+        <source>Highlights</source>
+        <translation type="unfinished">Hautes lumières</translation>
+    </message>
+    <message>
+        <source>Look pad: drag to turn the 3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steer with the gyroscope</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidShareTargetSheet</name>
     <message>
         <source>Add shared media</source>
@@ -2805,6 +2892,10 @@
         <translation>Définir le début de la zone de travail</translation>
     </message>
     <message>
+        <source>Render queue…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Mark work area out</source>
         <translation>Définir la fin de la zone de travail</translation>
     </message>
@@ -3177,6 +3268,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Record camera or motion on play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look through the scene camera</source>
         <translation type="unfinished">Regarder à travers la caméra de scène</translation>
     </message>
@@ -3234,6 +3329,10 @@
     </message>
     <message>
         <source>Fly up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Land (finish flying)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3583,6 +3682,14 @@
     <message>
         <source>Text clip added</source>
         <translation>Clip de texte ajouté</translation>
+    </message>
+    <message>
+        <source>Edit text script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text script updated</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
@@ -4849,6 +4956,38 @@
         <translation>Aucune coupe entre deux clips pour ajouter une transition</translation>
     </message>
     <message>
+        <source>unknown generator &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generator added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backgrounds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Test patterns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leaders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit generator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generator updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit curve</source>
         <translation>Modifier la courbe</translation>
     </message>
@@ -4971,6 +5110,14 @@
     <message>
         <source>Align camera to view</source>
         <translation>Aligner la caméra sur la vue</translation>
+    </message>
+    <message>
+        <source>Record camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record motion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -5715,6 +5862,67 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Unknown clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beats come from an audio or video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip is too short to find a tempo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No steady beat found in that clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the video or image clips to cut together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The music clip is gone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No beat to cut on between the start point and the end of the music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-cut to beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not add a track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n beat marker(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Cut %n clip(s) to the beat; %1 did not fit the music</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Cut %n clip(s) to the beat</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Exporting…</source>
         <translation>Exportation en cours…</translation>
     </message>
@@ -6110,6 +6318,14 @@
         <source>Added to My shapes</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Unknown title template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppSettingsMenu</name>
@@ -6425,6 +6641,14 @@
         <translation>Importer dossier</translation>
     </message>
     <message>
+        <source>Choose what to share in the dialog your desktop shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1:%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Collect Media to Folder</source>
         <translation>Rassembler les médias dans un dossier</translation>
     </message>
@@ -6447,6 +6671,10 @@
     <message>
         <source>Shapes</source>
         <translation>Formes</translation>
+    </message>
+    <message>
+        <source>Generators</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scenes</source>
@@ -6497,6 +6725,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Solid colours, gradients, noise, test patterns, countdowns and particle effects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Find the cuts in a long clip so you can jump to each scene.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6519,6 +6751,18 @@
     <message>
         <source>Audio effects like echo, EQ and noise gate.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished">%1 — %2</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Arrêter</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">Ignorer</translation>
     </message>
     <message>
         <source>New folder</source>
@@ -6598,6 +6842,18 @@
     <message>
         <source>Import Folder…</source>
         <translation>Importer un dossier…</translation>
+    </message>
+    <message>
+        <source>Record Screen…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record Screen with Computer Sound…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record Camera…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse Marketplace…</source>
@@ -8165,6 +8421,51 @@
     </message>
 </context>
 <context>
+    <name>BeatCutDialog</name>
+    <message>
+        <source>Auto-cut to beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation type="unfinished">Couper</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected clip(s) will be placed on a new track, one per cut.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Cut every</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n beat(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Start at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Otherwise the first clip starts where the music starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut on bar lines only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on the first downbeat and keep every cut on the music&apos;s strong beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
@@ -8464,6 +8765,84 @@
     <message>
         <source>Camera position</source>
         <translation>Position de la caméra</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureController</name>
+    <message>
+        <source>The folder for recordings isn&apos;t available, so this one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the project to keep recordings beside it. This one goes to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The computer&apos;s sound could not be recorded, so this recording has no audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The recording did not produce a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording saved and added to the bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A recording is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift cannot record the screen on this system. On Linux this needs xdg-desktop-portal and PipeWire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Screen</source>
+        <translation type="unfinished">Écran</translation>
+    </message>
+    <message>
+        <source>There is nowhere to save the recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That microphone could not be opened, so this recording has no sound.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording</source>
+        <translation type="unfinished">Enregistrement</translation>
+    </message>
+    <message>
+        <source>Waiting for you to choose what to share…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Démarrage…</translation>
+    </message>
+    <message>
+        <source>No camera is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Caméra</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureRequest</name>
+    <message>
+        <source>There is nowhere to save this recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a window to record.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag out the area to record first.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8806,6 +9185,50 @@
         <translation>Luminance</translation>
     </message>
     <message>
+        <source>Hue Centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue Softness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation High</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation Softness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminance Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminance High</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Luminance Softness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invert</source>
+        <translation type="unfinished">Inverser</translation>
+    </message>
+    <message>
+        <source>Show matte</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Film Grain</source>
         <translation>Grain de film</translation>
     </message>
@@ -8952,6 +9375,14 @@
     <message>
         <source>Adjust hue curves</source>
         <translation>Ajuster les courbes de teinte</translation>
+    </message>
+    <message>
+        <source>Qualifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Limit the grade to a range of colours</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove</source>
@@ -9102,6 +9533,13 @@
     <message>
         <source>Cancelled</source>
         <translation>Annulé</translation>
+    </message>
+</context>
+<context>
+    <name>ControllerTestView</name>
+    <message>
+        <source>No buttons held</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10273,6 +10711,18 @@
         <translation>%1 copie</translation>
     </message>
     <message>
+        <source>Open Project Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose where to create the project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .drift Bundle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import Kdenlive / Shotcut Project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10519,6 +10969,77 @@
     <message>
         <source>Customize layouts in Settings…</source>
         <translation type="unfinished">Personnaliser les dispositions dans les Paramètres…</translation>
+    </message>
+</context>
+<context>
+    <name>EditorSurfaceTargets</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">Exposition</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Contraste</translation>
+    </message>
+    <message>
+        <source>Highlights</source>
+        <translation type="unfinished">Hautes lumières</translation>
+    </message>
+    <message>
+        <source>Shadows</source>
+        <translation type="unfinished">Ombres</translation>
+    </message>
+    <message>
+        <source>Whites</source>
+        <translation type="unfinished">Blancs</translation>
+    </message>
+    <message>
+        <source>Blacks</source>
+        <translation type="unfinished">Noirs</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">Température</translation>
+    </message>
+    <message>
+        <source>Tint</source>
+        <translation type="unfinished">Teinte</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Saturation</translation>
+    </message>
+    <message>
+        <source>Vibrance</source>
+        <translation type="unfinished">Vibrance</translation>
+    </message>
+    <message>
+        <source>Shadows wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Midtones wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Highlights wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip opacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip rotation</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11200,6 +11721,14 @@
         <source>Remove background</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Blur faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find and blur faces</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EffectsOccludeSection</name>
@@ -11318,6 +11847,26 @@
     <message>
         <source>Export cancelled.</source>
         <translation>Exportation annulée.</translation>
+    </message>
+    <message>
+        <source>Sent to the render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the render queue. Press Start there to render it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to farm</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Some pre-rendered sections are out of date</source>
@@ -12242,6 +12791,33 @@
         <translation>Détection des visages terminée</translation>
     </message>
     <message>
+        <source>Scan this clip for faces first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip&apos;s face track could not be read — re-detect faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face %1</source>
+        <translation type="unfinished">Visage %1</translation>
+    </message>
+    <message>
+        <source>Face</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Masked %n face(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Scanned clip no longer exists</source>
         <translation>Le clip scanné n&apos;existe plus</translation>
     </message>
@@ -13095,6 +13671,59 @@
     <message>
         <source>e.g. intro (empty clears it)</source>
         <translation>p. ex. intro (laisser vide pour effacer)</translation>
+    </message>
+</context>
+<context>
+    <name>GeneratorCard</name>
+    <message>
+        <source>Couldn’t add the generator.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — click to add at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add at playhead</source>
+        <translation type="unfinished">Ajouter à la tête de lecture</translation>
+    </message>
+</context>
+<context>
+    <name>GeneratorInspector</name>
+    <message>
+        <source>Generator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished">Graine</translation>
+    </message>
+    <message>
+        <source>Generator seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parameters</source>
+        <translation type="unfinished">Paramètres</translation>
+    </message>
+    <message>
+        <source>Generator parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emoji or path to an image</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeneratorsTab</name>
+    <message>
+        <source>Search generators</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No generators match “%1”.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17798,6 +18427,93 @@
     </message>
 </context>
 <context>
+    <name>MidiProtocol</name>
+    <message>
+        <source>Mackie Control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HUI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generic MIDI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rewind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fast forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Arrêter</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Lire</translation>
+    </message>
+    <message>
+        <source>Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cursor right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Zoom</translation>
+    </message>
+    <message>
+        <source>Scrub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rec %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select %1</source>
+        <translation type="unfinished">Sélectionner %1</translation>
+    </message>
+    <message>
+        <source>V-pot press %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MissingAddonsDialog</name>
     <message>
         <source>Extra packs needed</source>
@@ -17879,6 +18595,10 @@
     <message>
         <source>Record voiceover on %1</source>
         <translation>Enregistrer une voix hors champ sur %1</translation>
+    </message>
+    <message>
+        <source>%1 volume</source>
+        <translation type="unfinished">Volume de %1</translation>
     </message>
 </context>
 <context>
@@ -18990,6 +19710,21 @@
     </message>
 </context>
 <context>
+    <name>PortalScreenCapture</name>
+    <message>
+        <source>The desktop refused to share the screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop shared nothing to record.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop would not open the screen-sharing stream.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PreferencesController</name>
     <message>
         <source>Choosing a folder isn’t supported on this device.</source>
@@ -19046,6 +19781,10 @@
 </context>
 <context>
     <name>Preview3DMode</name>
+    <message>
+        <source>Mouse looks · W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish</source>
         <translation>W/A/S/D déplacer · Q/E bas/haut · Maj plus vite · Vitesse molette (%1×) · Échap ou clic pour terminer</translation>
@@ -20002,6 +20741,33 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Déballage des médias du projet…</translation>
     </message>
     <message>
+        <source>%1 isn’t a project folder (there is no project.json in it)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Project folder loaded, but %n media file(s) could not be found</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project folder loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach generated items</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detach clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No recovery file found</source>
         <translation>Aucun fichier de récupération trouvé</translation>
     </message>
@@ -20012,6 +20778,63 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Started new session</source>
         <translation>Nouvelle session démarrée</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFolderBanner</name>
+    <message>
+        <source>Project folder — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished">Fermer</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFolderController</name>
+    <message>
+        <source>%1 was changed on disk while you edited it; the version on disk was kept and yours is in .drift/conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source> and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The project folder has no project.json (moved or deleted?)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>External edit: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template render finished</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template render failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start the renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering a template needs a desktop build</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 already exists and isn’t empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved as project folder %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -20380,6 +21203,14 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Adjust the generated visual.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the generated picture.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -20906,6 +21737,102 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <source>In %1 → Out %2</source>
         <translation type="unfinished">Entrée %1 → Sortie %2</translation>
     </message>
+    <message>
+        <source>Note %1 (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pitch bend (ch %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>NRPN %1 (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CC %1 fine (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CC %1 (ch %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fader %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>V-pot %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Master fader</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jog wheel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select %1</source>
+        <translation type="unfinished">Sélectionner %1</translation>
+    </message>
+    <message>
+        <source>Mute %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solo %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rec %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Lire</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Arrêter</translation>
+    </message>
+    <message>
+        <source>Step back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 trackball X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 trackball Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look pad X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look pad Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QuickAddPopup</name>
@@ -21363,6 +22290,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Render queue…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import / Export</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21372,6 +22303,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Open project from JSON…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open project folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as project folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export .drift bundle…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render with data…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21486,6 +22433,160 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Auto-saved: %1</source>
         <translation>Sauvegarde automatique : %1</translation>
+    </message>
+</context>
+<context>
+    <name>RenderQueueDialog</name>
+    <message>
+        <source>Render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Fermer</translation>
+    </message>
+    <message>
+        <source>Waiting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation type="unfinished">En file d&apos;attente</translation>
+    </message>
+    <message>
+        <source>Rendering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Terminé</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished">Échec</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annulé</translation>
+    </message>
+    <message>
+        <source>Queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Pause</translation>
+    </message>
+    <message>
+        <source>Finish the current render, then hold the rest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear finished</source>
+        <translation type="unfinished">Effacement terminé</translation>
+    </message>
+    <message>
+        <source>Start immediately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render in a separate process</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing queued. Choose Add to queue in the Export dialog to render in the background.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished">%1 %2%</translation>
+    </message>
+    <message>
+        <source>Farm %1/%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">Début</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <translation type="unfinished">Maintenez</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Réessayer</translation>
+    </message>
+    <message>
+        <source>Show the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Annuler</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished">Monter</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished">Descendre</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Supprimer</translation>
+    </message>
+    <message>
+        <source>Coordinator listening on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The render farm is off. Turn it on in Settings, Render farm.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Token: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No workers yet. On another computer run: drift --headless --farm-worker %1 --token &lt;token&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n done</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -22854,6 +23955,121 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>SettingsControllersPage</name>
+    <message>
+        <source>Controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Devices</source>
+        <translation type="unfinished">Périphériques</translation>
+    </message>
+    <message>
+        <source>Use game controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly the 3D view and drive the timeline from a gamepad.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This build has no game controller support.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None found. Plug one in or pair it over Bluetooth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> · gyro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> · rumble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Test</source>
+        <translation type="unfinished">Tester</translation>
+    </message>
+    <message>
+        <source>Move the sticks and press buttons to see what the editor receives.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dead zone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How far a stick must move before it counts. Raise it if the view drifts on its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Response curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 is linear. Higher values give finer control near the centre.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Degrees per second at full right-stick deflection in 3D fly mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion and feedback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro aiming</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tilt the controller to aim the camera in 3D fly mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gyro sensitivity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scales how far the view turns for a given tilt.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rumble feedback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short pulse when scrubbing crosses a cut or marker and when a gizmo snaps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Button bindings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gamepad buttons are bound like keys, in the Keyboard shortcuts page: add a binding and press a controller button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SettingsDialog</name>
     <message>
         <source>Settings</source>
@@ -22881,6 +24097,73 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
         <translation type="unfinished">Démarrer les nouvelles exportations sur un encodeur H.264 matériel lorsqu’il est disponible. Plus rapide, mais la qualité par débit binaire est généralement inférieure à celle de l’encodeur logiciel par défaut.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsFarmPage</name>
+    <message>
+        <source>Render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Coordinator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let other computers render for this one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listens for render workers on your network. Jobs sent to the farm from the Export dialog are split up between them. Only turn this on in a network you trust.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Port</source>
+        <translation type="unfinished">Port</translation>
+    </message>
+    <message>
+        <source>The TCP port workers connect to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers need this to join %1. Paste it on the worker with --token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers need this to join. Paste it on the worker with --token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Copier</translation>
+    </message>
+    <message>
+        <source>New token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Workers using the old token are turned away the next time they connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Worker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media cache size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much of a coordinator&apos;s media a worker started on this computer keeps for the next job, in GB. The least recently used files go first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>GB</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23254,8 +24537,16 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Raccourcis clavier</translation>
     </message>
     <message>
+        <source>Control surfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview</source>
         <translation>Aperçu</translation>
+    </message>
+    <message>
+        <source>Controllers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Performance</source>
@@ -23268,6 +24559,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Export</source>
         <translation type="unfinished">Exporter</translation>
+    </message>
+    <message>
+        <source>Render farm</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>
@@ -23750,6 +25045,38 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
         <translation>Mode de décodage de la vidéo pour l’aperçu. Logiciel est plus fluide pour la plupart des clips mais consomme plus de processeur. Matériel convient aux séquences 4K de haute qualité.</translation>
     </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the mouse turns the view in fly mode. Mouse look locks the pointer; steering turns toward the pointer and suits touchpads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mouse look (locked pointer)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steer toward pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording smoothing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How much a recorded camera flight or clip motion is thinned into keyframes. Higher gives fewer, smoother keys.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation type="unfinished">Lissage</translation>
+    </message>
 </context>
 <context>
     <name>SettingsStoragePage</name>
@@ -23850,6 +25177,30 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">1080p</translation>
     </message>
     <message>
+        <source>Save screen and camera recordings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where Drift puts the recordings it makes. A recording is the only copy of what it caught, so Drift’s cache is not an option here — it gets cleared. Changing this doesn’t move recordings you already made.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folder for recordings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In my Movies folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Until the project is saved, recordings go to your Movies folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save preview copies and reversed clips</source>
         <translation type="unfinished"></translation>
     </message>
@@ -23908,6 +25259,153 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Reset to defaults</source>
         <translation type="unfinished">Réinitialiser aux valeurs par défaut</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsSurfacesPage</name>
+    <message>
+        <source>Control surfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Learn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Learn mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a parameter in the editor, such as a slider, a colour wheel or a mixer fader, then move a knob, fader or button on your device to bind it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for a control. Move a fader or knob, or press a button, on a connected device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Annuler</translation>
+    </message>
+    <message>
+        <source>MIDI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MIDI controllers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open every MIDI controller that is plugged in, including ones that appear later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Protocol: Mackie Control and HUI faders and buttons drive the mixer and transport, and follow the editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OSC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OSC control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listen for OSC messages over UDP, for TouchOSC, Open Stage Control and scripts. Anything else a sender transmits shows up as a control to bind.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Listen port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The UDP port Drift receives on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Feedback port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The UDP port on the sender&apos;s machine that Drift answers to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allowed hosts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One address or range per line, such as 192.168.1.40 or 10.0.0.0/24. Empty allows the local network only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OSC problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phone remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let a phone running Drift act as a jog wheel, fader bank and colour trackballs for this editor over your local network.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pair a phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan the code from the Drift app on your phone, or type the code into its Remote page. It works for a few minutes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop pairing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pair phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paired, not connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this phone as a remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pair with Drift on your computer to jog, fly the 3D view and set colours from here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open remote</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Devices</source>
+        <translation type="unfinished">Périphériques</translation>
+    </message>
+    <message>
+        <source>No control surfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plug in a MIDI controller, or enable OSC or the phone remote, and it appears here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not connected</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25115,6 +26613,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Press keys…</source>
         <translation>Appuyez sur les touches…</translation>
+    </message>
+    <message>
+        <source>Press keys or a button…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>“%1” is already used by %2.</source>
@@ -28052,6 +29554,81 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>SurfaceDeviceBindings</name>
+    <message>
+        <source>Nothing is bound yet. Turn on learn mode, click a parameter in the editor, then move a control.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation type="unfinished">Position</translation>
+    </message>
+    <message>
+        <source>Counter, 2&apos;s complement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Counter, sign and size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Counter around 64</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invert</source>
+        <translation type="unfinished">Inverser</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Vitesse</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Supprimer</translation>
+    </message>
+    <message>
+        <source>Bind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Learn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">Exporter...</translation>
+    </message>
+    <message>
+        <source>Export bindings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bindings (*.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import…</source>
+        <translation type="unfinished">Importer…</translation>
+    </message>
+    <message>
+        <source>Import bindings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That file is not a bindings file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">Effacer</translation>
+    </message>
+    <message>
+        <source>Forget device</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TeleprompterPanel</name>
     <message>
         <source>Teleprompter</source>
@@ -28107,6 +29684,95 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TemplateRenderDialog</name>
+    <message>
+        <source>Render now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render with data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering…</source>
+        <translation type="unfinished">Rendu en cours…</translation>
+    </message>
+    <message>
+        <source>Render</source>
+        <translation type="unfinished">Rendre</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Ajouter</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n row(s) could not be queued: %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Sent to the render farm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n row(s) of data: one video per row.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No data file: the template renders once with its default parameters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose data file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Data file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CSV or JSON (*.csv *.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation type="unfinished">Rangée</translation>
+    </message>
+    <message>
+        <source>Output file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>/path/to/renders/{row}.mp4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>{row} is the row number; {name} is any template parameter.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
@@ -28139,8 +29805,16 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show title templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show my styles</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Templates</source>
+        <translation type="unfinished">Préréglages</translation>
     </message>
     <message>
         <source>My styles</source>
@@ -28843,6 +30517,88 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>TextInspectorScriptSection</name>
+    <message>
+        <source>Script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make this text the result of a Lua script, evaluated for every frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate the text with a script instead of typing it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scripted text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start from a preset…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the script with a ready-made one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Return a string. Read ctx.time, ctx.timeline, ctx.progress, ctx.frame, ctx.fps, ctx.source and ctx.now; helpers: timecode, lerp, ease, pad, commas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextInspectorScrollSection</name>
+    <message>
+        <source>Scroll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll the text up the screen like end credits, or crawl it sideways like a ticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Aucun</translation>
+    </message>
+    <message>
+        <source>Roll up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crawl left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crawl right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text crosses the screen over the clip&apos;s length: a longer clip scrolls slower.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter off-screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start with the text fully outside the frame; off, it starts where the box lays it out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exit off-screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End with the text fully outside the frame; off, it settles where the box lays it out</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TextInspectorSpacingSection</name>
     <message>
         <source>Spacing</source>
@@ -28936,6 +30692,37 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp)</source>
         <translation>Images (*.png *.jpg *.jpeg *.webp)</translation>
+    </message>
+</context>
+<context>
+    <name>TextScriptPresets</name>
+    <message>
+        <source>Timecode burn-in (timeline)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timecode burn-in (source)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame counter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number ticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopwatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Date and clock (at render)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Percentage loader</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -29328,6 +31115,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">Coller à l&apos;heure actuelle</translation>
     </message>
     <message>
+        <source>Detach from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>Propriétés</translation>
     </message>
@@ -29373,6 +31164,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Generate captions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers: every beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers: every 2 beats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add beat markers: every bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-cut to beat…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -30348,6 +32155,13 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Pre-render the work area for smooth playback and export</source>
         <translation>Pré-rendre la zone de travail pour une lecture et une exportation fluides</translation>
+    </message>
+</context>
+<context>
+    <name>TitleTemplateCard</name>
+    <message>
+        <source>%1 — click to add at the playhead, then type over the text.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -33204,6 +35018,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Vol libre (WASD pour déplacer, Q/E bas/haut, orienter vers le pointeur)</translation>
     </message>
     <message>
+        <source>Record: the next play keys the scene camera&apos;s flight, or the selected clip&apos;s stick-driven motion, as one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look through the scene camera</source>
         <translation>Regarder à travers la caméra de scène</translation>
     </message>
@@ -33910,6 +35728,160 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
+    <name>drift::CameraCaptureSource</name>
+    <message>
+        <source>A camera recording is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The camera stopped working.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::EditorSurfaceTargets</name>
+    <message>
+        <source>Playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Jog (frames)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shuttle (spring fader)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playhead position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timeline zoom</source>
+        <translation type="unfinished">Zoom de la ligne du temps</translation>
+    </message>
+    <message>
+        <source>3D view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn left and right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look up and down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly forward and back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fly left and right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mixer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 pan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strip %1 solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous strip bank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next strip bank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected clip</source>
+        <translation type="unfinished">Clip sélectionné</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Couleur</translation>
+    </message>
+    <message>
+        <source>%1 hue X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 hue Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 brightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust with control surface</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::OscSurfaceService</name>
+    <message>
+        <source>OSC (port %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PhoneRemoteClient</name>
+    <message>
+        <source>The desktop did not accept this code. Pair again from Settings &gt; Control surfaces.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PhoneRemoteServer</name>
+    <message>
+        <source>Phone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phone: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::PortalScreenCapture</name>
+    <message>
+        <source>A screen recording is already starting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This desktop has no screen-sharing portal, so Drift cannot record the screen. Install xdg-desktop-portal and a backend for your desktop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The screen-sharing portal returned no session.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>drift::crash</name>
     <message>
         <source>Drift ran out of memory. Close other programs, or work with smaller or lower-resolution media.</source>
@@ -33938,6 +35910,33 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Drift closed unexpectedly during your last session.</source>
         <translation>Drift s’est fermé de manière inattendue lors de votre dernière session.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::farm::RenderQueue</name>
+    <message>
+        <source>Couldn’t copy the project into the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no project to queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation type="unfinished">Cet emplacement de sauvegarde n&apos;est pas valide</translation>
+    </message>
+    <message>
+        <source>Couldn’t write the render queue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This computer (worker process)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This computer (editor)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

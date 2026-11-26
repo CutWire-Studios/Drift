@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "id": "lt-split-tag",
+  "label": "Lower third: split tag",
+  "category": "lower-third",
+  "order": 50,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Name block",
+      "shape": "rectangle",
+      "box": [
+        0.06,
+        0.76,
+        0.26,
+        0.08
+      ],
+      "fill": "#0F172A",
+      "in": {
+        "anim": "slideRight",
+        "duration": 0.45,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideLeft",
+        "duration": 0.35,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "shape",
+      "name": "Role block",
+      "shape": "rectangle",
+      "box": [
+        0.32,
+        0.76,
+        0.17,
+        0.08
+      ],
+      "fill": "#F59E0B",
+      "start": 0.1,
+      "in": {
+        "anim": "slideRight",
+        "duration": 0.45,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideLeft",
+        "duration": 0.35,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "name",
+      "label": "Name",
+      "text": "Riley Chen",
+      "box": [
+        0.07,
+        0.76,
+        0.25,
+        0.08
+      ],
+      "font": "Outfit",
+      "weight": 600,
+      "size": 0.04,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "middle",
+      "start": 0.25,
+      "in": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "role",
+      "label": "Role",
+      "text": "Guest",
+      "box": [
+        0.32,
+        0.76,
+        0.17,
+        0.08
+      ],
+      "font": "Outfit",
+      "weight": 700,
+      "size": 0.028,
+      "color": "#0F172A",
+      "align": "center",
+      "valign": "middle",
+      "case": "upper",
+      "letterSpacing": 0.12,
+      "start": 0.35,
+      "in": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

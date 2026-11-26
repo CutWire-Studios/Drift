@@ -444,7 +444,7 @@ bool checkNextFeatures(const QJsonObject &root, QString *errorOut)
         QStringLiteral("requires:depth"),   QStringLiteral("requires:face"),
         QStringLiteral("history:source"),   QStringLiteral("history:previous-output"),
         QStringLiteral("history:exact"),     QStringLiteral("history:future"),    QStringLiteral("history:source-units"),
-        QStringLiteral("buffer:float"),
+        QStringLiteral("buffer:float"),     QStringLiteral("layout:padding"),
     };
     QStringList unsupported;
     for (const QJsonValue &v : root.value(QStringLiteral("nextFeatures")).toArray()) {

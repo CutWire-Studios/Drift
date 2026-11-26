@@ -109,8 +109,51 @@ static QMap<QString, QPair<QJsonValue, bool>> trackContentById(const drift::Proj
 // The id of the first locked track whose clips or transitions differ between two project states,
 // empty when none does. pushProjectEdit refuses an edit on this basis; callers that must report the
 // refusal instead of replying ok ask the same question first.
+// Clips a project-folder script made are locked like a locked track's: any change to one, or its removal,
+// is refused. Returns the id of the track it sits on.
+static std::optional<QString> firstGeneratedClipChange(const drift::Project &before, const drift::Project &now)
+{
+    bool any = false;
+    before.forEachTrackList([&any](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips)
+                any = any || !clip.generatedBy.isEmpty();
+        }
+    });
+    if (!any)
+        return std::nullopt;
+    const auto collect = [](const drift::Project &project) {
+        QMap<QString, QPair<QJsonValue, QString>> result;
+        const auto walk = [&result](const QJsonArray &tracks) {
+            for (const QJsonValue &t : tracks) {
+                const QJsonObject track = t.toObject();
+                for (const QJsonValue &c : track.value(QStringLiteral("clips")).toArray()) {
+                    if (!c.toObject().value(QStringLiteral("generatedBy")).toString().isEmpty())
+                        result.insert(c.toObject().value(QStringLiteral("id")).toString(),
+                                      {c, track.value(QStringLiteral("id")).toString()});
+                }
+            }
+        };
+        const QJsonObject root = project.toJson(false);
+        walk(root.value(QStringLiteral("tracks")).toArray());
+        for (const QJsonValue &sequence : root.value(QStringLiteral("sequences")).toArray())
+            walk(sequence.toObject().value(QStringLiteral("tracks")).toArray());
+        return result;
+    };
+    const auto was = collect(before);
+    const auto cur = collect(now);
+    for (auto it = was.constBegin(); it != was.constEnd(); ++it) {
+        const auto found = cur.constFind(it.key());
+        if (found == cur.constEnd() || found->first != it.value().first)
+            return it.value().second;
+    }
+    return std::nullopt;
+}
+
 static std::optional<QString> firstLockedTrackChange(const drift::Project &before, const drift::Project &now)
 {
+    if (const std::optional<QString> generated = firstGeneratedClipChange(before, now))
+        return generated;
     bool anyLocked = false;
     // Every timeline, not just the open one: trackContentById walks them all, and a bin
     // removal can delete a composite's sequence whatever is open (#83).

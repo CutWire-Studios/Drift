@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "id": "lt-solid-block",
+  "label": "Lower third: solid block",
+  "category": "lower-third",
+  "order": 20,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Name block",
+      "shape": "rectangle",
+      "box": [
+        0.06,
+        0.74,
+        0.34,
+        0.075
+      ],
+      "fill": "#FFFFFF",
+      "in": {
+        "anim": "slideRight",
+        "duration": 0.5,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideLeft",
+        "duration": 0.4,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "shape",
+      "name": "Role block",
+      "shape": "rectangle",
+      "box": [
+        0.06,
+        0.815,
+        0.34,
+        0.045
+      ],
+      "fill": "#111827",
+      "start": 0.12,
+      "in": {
+        "anim": "slideRight",
+        "duration": 0.5,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideLeft",
+        "duration": 0.4,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "name",
+      "label": "Name",
+      "text": "Sam Rivera",
+      "box": [
+        0.075,
+        0.74,
+        0.32,
+        0.075
+      ],
+      "font": "Poppins",
+      "weight": 700,
+      "size": 0.042,
+      "color": "#111827",
+      "align": "left",
+      "valign": "middle",
+      "start": 0.25,
+      "in": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "role",
+      "label": "Role",
+      "text": "Host",
+      "box": [
+        0.075,
+        0.815,
+        0.32,
+        0.045
+      ],
+      "font": "Poppins",
+      "weight": 500,
+      "size": 0.024,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "middle",
+      "case": "upper",
+      "letterSpacing": 0.12,
+      "start": 0.35,
+      "in": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

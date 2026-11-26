@@ -1,3 +1,4 @@
+#include "app/surfaces/EditorSurfaceTargets.h"
 #include "engine/platform/AndroidUri.h"
 #include "engine/encode/proxies/ProxyLocation.h"
 #include "ui/timeline/TimelineCursors.h"
@@ -13,6 +14,7 @@
 #include "app/color/ColorController.h"
 #include "app/editor/BlendPreviewController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/capture/CaptureController.h"
 #include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/render/BakeController.h"
 #include "app/jobs/vision/DepthController.h"
@@ -619,6 +621,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_depth = new DepthController(this, this);
     m_bakes = new BakeController(this, this);
     m_denoise = new DenoiseController(this, this);
+    m_capture = new CaptureController(this, this);
     m_audioAlign = new AudioAlignController(this, this);
     m_color = new ColorController(this, this);
     m_blendPreview = new BlendPreviewController(this, this);
@@ -949,6 +952,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
 
     m_keymap = new drift::Keymap(this);
     connect(m_keymap, &drift::Keymap::changed, this, &AppController::shortcutsChanged);
+    m_surfaces = new drift::ControlSurfaceManager(new drift::EditorSurfaceTargets(this, this), this);
     QSettings settings;
     for (const QJsonValue &value :
          QJsonDocument::fromJson(settings.value(QStringLiteral("preview/guideSets")).toByteArray()).array())

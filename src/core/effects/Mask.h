@@ -70,6 +70,11 @@ struct Mask
     // shape id, e.g. "hexagon". The compositor applies such a mask after every other one so an
     // additive mask cannot bring back the area outside the shape.
     QString cropShape;
+    // Set on a mask generated from the host clip's baked face track (see
+    // engine/face/tracking/FaceMask.h): the face slot it follows. Regenerating after a re-scan
+    // replaces the masks carrying a slot instead of adding a second set over the first, and
+    // leaves anything the user drew by hand alone. -1 on every other mask.
+    int faceSlot = -1;
 
     double x = 0.5; // center, normalized
     double y = 0.5;

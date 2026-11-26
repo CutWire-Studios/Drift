@@ -228,6 +228,13 @@ ThemedContextMenu {
     ThemedMenuSeparator { visible: clipContextMenu.suggestions.length > 0 }
 
     ThemedMenuItem {
+        text: qsTr("Detach from %1").arg(clipContextMenu.owner.clipData.generatedBy || "")
+        icon.name: Theme.icons.unlink
+        visible: (clipContextMenu.owner.clipData.generatedBy || "") !== ""
+        height: visible ? implicitHeight : 0
+        onTriggered: EditorState.projectFile.folder.detachClip(clipContextMenu.owner.clipData.id)
+    }
+    ThemedMenuItem {
         text: qsTr("Properties")
         icon.name: Theme.icons.sliders
         onTriggered: {
@@ -437,6 +444,29 @@ ThemedContextMenu {
                         EditorState.selectClip(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
                     EditorState.generateSubtitlesForSelection()
                 }
+            }
+            ThemedMenuItem {
+                text: qsTr("Add beat markers: every beat")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addBeatMarkersForSelection(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, 1)
+            }
+            ThemedMenuItem {
+                text: qsTr("Add beat markers: every 2 beats")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addBeatMarkersForSelection(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, 2)
+            }
+            ThemedMenuItem {
+                text: qsTr("Add beat markers: every bar")
+                icon.name: Theme.icons.music
+                onTriggered: EditorState.addBeatMarkersForSelection(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex, 0)
+            }
+            ThemedMenuItem {
+                text: qsTr("Auto-cut to beat…")
+                icon.name: Theme.icons.scissors
+                visible: clipContextMenu.owner.clipData.kind === "audio"
+                         && typeof ShellBridge.main?.openBeatCut === "function"
+                enabled: EditorState.beatCutTargetCount(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex) > 0
+                onTriggered: ShellBridge.main.openBeatCut(clipContextMenu.owner.trackIndex, clipContextMenu.owner.clipIndex)
             }
             ThemedMenuItem {
                 text: qsTr("Cancel audio analysis")

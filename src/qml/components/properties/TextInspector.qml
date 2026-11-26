@@ -12,7 +12,7 @@ Item {
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
     readonly property bool hasTextStyle: hasSelection
-                                         && (clipKind === "text" || clipKind === "subtitle")
+                                         && (clipKind === "text" || clipKind === "subtitle" || clipKind === "generator")
                                          && !!clipData.textStyle
     readonly property var textStyle: hasTextStyle ? clipData.textStyle : ({
                                                                        "fontFamily": "Inter",
@@ -26,6 +26,9 @@ Item {
                                                                        "align": "center",
                                                                        "valign": "middle",
                                                                        "wordWrap": true,
+                                                                       "scroll": "none",
+                                                                       "scrollEnterOffscreen": true,
+                                                                       "scrollExitOffscreen": true,
                                                                        "lineHeight": 1.2,
                                                                        "letterSpacing": 0,
                                                                        "boxEnabled": false,

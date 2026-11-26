@@ -16,6 +16,10 @@ Dialog {
     property bool showReject: true
     property string acceptVariant: "primary"
     property string rejectVariant: "secondary"
+    // Extra footer buttons left of Cancel: [{ id, text, variant? }]. A click emits extraClicked(id)
+    // and leaves the dialog open; the handler decides whether to close it.
+    property var extraButtons: []
+    signal extraClicked(string id)
     // Natural width; clamped against the window so the dialog always fits.
     property real preferredWidth: Theme.dialogWidthMd
     // Set false for dialogs where Enter must not commit (destructive confirms).
@@ -241,8 +245,20 @@ Dialog {
             anchors.rightMargin: Theme.spacing2xl
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingLg
-            readonly property int shown: (root.showReject ? 1 : 0) + (root.showAccept ? 1 : 0)
+            readonly property int shown: (root.showReject ? 1 : 0) + (root.showAccept ? 1 : 0) + root.extraButtons.length
             readonly property real phoneWidth: shown > 0 ? Math.floor((root.width - 2 * Theme.spacing2xl - (shown - 1) * spacing) / shown) : 0
+
+            Repeater {
+                model: root.extraButtons
+                delegate: ThemedButton {
+                    required property var modelData
+                    width: dialogFooter.phone ? footerRow.phoneWidth : implicitWidth
+                    height: dialogFooter.phone ? Theme.androidMinTouchTarget : implicitHeight
+                    text: modelData.text
+                    variant: modelData.variant ?? "secondary"
+                    onClicked: root.extraClicked(modelData.id)
+                }
+            }
 
             ThemedButton {
                 width: dialogFooter.phone ? footerRow.phoneWidth : implicitWidth

@@ -65,6 +65,7 @@ public:
         LoopPeriodRole,
         LoopPhaseRole,
         EnabledRole,
+        GeneratedByRole,
     };
     Q_ENUM(Role)
 
@@ -109,6 +110,8 @@ public:
         double loopPeriod = 0.0;
         double loopPhase = 0.0;
         bool enabled = true;
+        // The project-folder script that made this clip; it is locked while set.
+        QString generatedBy;
 
         // Not roles: typed copies for the scene-graph renderer, derived from the fields above so
         // any change to them already arrives as a changed row.

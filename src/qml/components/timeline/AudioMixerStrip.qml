@@ -567,6 +567,7 @@ Rectangle {
                                     readonly property var modelData: content.audioTracksList[index] || ({})
 
                                     readonly property int trackIndex: modelData.trackIndex
+                                    learnId: index < 8 ? "mixer.volume." + (index + 1) : ""
                                     property real peakHoldTimeL: 0
                                     property real peakHoldTimeR: 0
 

@@ -214,6 +214,15 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
             entry.gpu.historyFrames = qMax(entry.gpu.historyExactFrames, entry.gpu.futureFrames > 0 ? 1 : 0);
         }
         entry.gpu.needsPrevOutput = root.value(QStringLiteral("previousOutput")).toBool(false);
+        if (root.contains(QStringLiteral("padding"))) {
+            const double padding = root.value(QStringLiteral("padding")).toDouble(-1.0);
+            if (!(padding > 0.0 && padding <= 1.0)) {
+                entry.gpu.valid = false;
+                setError(errorOut, &entry, QStringLiteral("padding must be greater than 0 and at most 1"));
+                return entry;
+            }
+            entry.gpu.padding = float(padding);
+        }
         return entry;
     }
 

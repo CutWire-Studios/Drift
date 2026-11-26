@@ -704,6 +704,8 @@ bool writeFaceTrack(const QString &path, const FaceTrack &track, QString *errorO
     root[QStringLiteral("version")] = kFormatVersion;
     root[QStringLiteral("fps")] = track.fps;
     root[QStringLiteral("startSrcUs")] = qint64(track.startSrcUs);
+    if (track.frameAspect > 0.0)
+        root[QStringLiteral("frameAspect")] = track.frameAspect;
 
     QJsonArray frames;
     for (const FaceTrackFrame &frame : track.frames) {
@@ -764,6 +766,7 @@ bool readFaceTrack(const QString &path, FaceTrack *out, QString *errorOut)
 
     out->fps = root.value(QStringLiteral("fps")).toInt();
     out->startSrcUs = TimeUs(root.value(QStringLiteral("startSrcUs")).toInteger(0));
+    out->frameAspect = root.value(QStringLiteral("frameAspect")).toDouble(0.0);
     out->frames.clear();
 
     const QJsonArray frames = root.value(QStringLiteral("frames")).toArray();
