@@ -8769,6 +8769,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>This clip has no recorded mouse activity to zoom to. Only screen recordings Drift made carry it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip&apos;s recorded mouse activity is empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to zoom to in this part of the recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom to clicks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n zoom keyframe(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clip&apos;s own position and scale keyframes were replaced. Undo brings them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That microphone could not be opened, so this recording has no sound.</source>
         <translation type="unfinished"></translation>
     </message>
