@@ -575,6 +575,12 @@ add_library(driftcore STATIC
     src/core/animation/FadeShape.cpp
     src/core/animation/Easing.h
     src/core/animation/Easing.cpp
+    src/core/animation/AutoZoom.h
+    src/core/animation/AutoZoom.cpp
+    src/core/input/InputLog.h
+    src/core/input/InputLog.cpp
+    src/core/input/CursorDwell.h
+    src/core/input/CursorDwell.cpp
     src/core/animation/EasingPresetStore.h
     src/core/animation/EasingPresetStore.cpp
     src/core/animation/ClipAnimation.h
@@ -663,6 +669,8 @@ add_library(driftcore STATIC
     src/core/interchange/EdlReader.cpp
     src/core/interchange/OtioReader.h
     src/core/interchange/OtioReader.cpp
+    src/core/interchange/TimelineExporter.h
+    src/core/interchange/TimelineExporter.cpp
     src/core/edit/TimelineOps.h
     src/core/edit/TimelineOps.cpp
     src/core/project/ProjectDiff.h

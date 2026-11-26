@@ -69,6 +69,19 @@ public:
                                   const QString &audioInputId = QString(), int fps = 30,
                                   bool systemAudio = false);
 
+    // Writes a push-in that follows the clip's recorded points of interest onto its own transform
+    // (see core/animation/AutoZoom.h). The points come from the ".input.json" sidecar beside the
+    // media — clicks where the platform lets them be recorded, otherwise where the cursor settled.
+    //
+    // Ordinary keyframes, not a live effect, so every zoom stays editable in the graph afterwards.
+    // Any position and scale keys the clip already had are replaced, which the undo step reverses.
+    //
+    // Returns how many zooms were written, 0 with a message when the clip has no sidecar or
+    // nothing in it. One undo step tr("Zoom to clicks").
+    Q_INVOKABLE int applyAutoZoom(int trackIndex, int clipIndex, double zoom = 1.6);
+    // Whether this clip has a sidecar worth offering the action for, without reading it all.
+    Q_INVOKABLE bool hasInputLog(int trackIndex, int clipIndex) const;
+
     // Stops and keeps the recording, importing it into the bin.
     Q_INVOKABLE void stop();
     // Stops and deletes it.
