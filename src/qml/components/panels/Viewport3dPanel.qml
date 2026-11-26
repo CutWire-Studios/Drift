@@ -175,6 +175,13 @@ PanelFrame {
                 onClicked: EditorState.preview.flying = !EditorState.preview.flying
             }
             IconButton {
+                glyph: Theme.icons.circle
+                tooltip: qsTr("Record: the next play keys the scene camera's flight, or the selected clip's stick-driven motion, as one undo step")
+                tooltipActionId: "viewport3d.toggleRecord"
+                active: EditorState.preview.recordArmed
+                onClicked: EditorState.preview.recordArmed = !EditorState.preview.recordArmed
+            }
+            IconButton {
                 glyph: Theme.icons.video
                 tooltip: qsTr("Look through the scene camera")
                 tooltipActionId: "viewport3d.lookThrough"

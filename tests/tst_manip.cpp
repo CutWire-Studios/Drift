@@ -724,7 +724,7 @@ private slots:
         mask.pathKeys.insert(drift::secondsToUs(2.0), later);
 
         const QJsonObject json = maskProject(mask).toJson();
-        QCOMPARE(json.value(QStringLiteral("version")).toInt(), 32);
+        QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
 
         QString error;
         const drift::Project loaded = drift::Project::fromJson(json, &error);

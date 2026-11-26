@@ -441,6 +441,17 @@ ApplicationWindow {
     }
 
     LazyLoader {
+        id: beatCutDialogLoader
+        sourceComponent: Component {
+            BeatCutDialog { }
+        }
+    }
+
+    function openBeatCut(track, clip) {
+        beatCutDialogLoader.ensure().openFor(track, clip)
+    }
+
+    LazyLoader {
         id: imageSequenceDialogLoader
         sourceComponent: Component {
             ImageSequenceDialog { }
@@ -1424,6 +1435,14 @@ ApplicationWindow {
         }
     }
 
+    // Control-surface buttons dispatch exactly like a key press.
+    Connections {
+        target: EditorState.surfaces
+        function onActionRequested(id) {
+            window.dispatchAction(id)
+        }
+    }
+
     // The one place a bound action is dispatched, shared by dispatchChord (the Shortcut items
     // below and the editor FocusScope's arrow handling), the Mac menu bar and global search. A
     // handful of ids are QML state and have no triggerAction branch at all, so a second dispatch
@@ -1562,6 +1581,10 @@ ApplicationWindow {
             if (editorHeader.visible && !EditorState.exportInProgress)
                 editorHeader.exportVideo()
             return true
+        case "renderQueue":
+            if (editorHeader.visible && Qt.platform.os !== "android")
+                editorHeader.openRenderQueue()
+            return true
         case "openSettings":
             window.openSettings()
             return true
@@ -1625,6 +1648,44 @@ ApplicationWindow {
             return true
         }
         return false
+    }
+
+    // Controller buttons are chords like keys ("Pad+RB"), so the same dispatch decides whose they
+    // are. Fly mode takes them while it is on, and the shortcut capture field while it listens.
+    Connections {
+        target: Gamepad
+        function onButtonPressed(chord) {
+            if (!window.showStartScreen && !Gamepad.capturing && !EditorState.preview.flying)
+                window.dispatchChord(chord)
+        }
+    }
+
+    // Puppet recording: while it runs the sticks steer the selected clip (left moves, right turns
+    // and grows). The scene camera is flown from the 3D view instead.
+    Timer {
+        interval: 16
+        repeat: true
+        running: EditorState.preview.recording && Gamepad.connected
+        property double last: 0
+        onRunningChanged: last = Date.now()
+        onTriggered: {
+            const now = Date.now()
+            EditorState.preview.puppet((now - last) / 1000, Gamepad.leftX, Gamepad.leftY, Gamepad.rightY, Gamepad.rightX)
+            last = now
+        }
+    }
+
+    // A short rumble when a scrub passes a cut or a marker.
+    Connections {
+        target: EditorState
+        property real lastSeconds: 0
+        function onPlayheadSecondsChanged() {
+            const seconds = EditorState.playheadSeconds
+            if (!EditorState.playing && Gamepad.connected && Gamepad.hapticsEnabled
+                    && EditorState.crossesEditPoint(lastSeconds, seconds))
+                Gamepad.haptic("cut")
+            lastSeconds = seconds
+        }
     }
 
     // One Shortcut per distinct chord across the global and panel scopes; dispatchChord decides

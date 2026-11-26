@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.9.3 LANGUAGES CXX C)
+project(Drift VERSION 0.9.4 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -172,7 +172,7 @@ if(EMSCRIPTEN)
     add_link_options(${DRIFT_WASM_EH_FLAGS})
 endif()
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
+find_package(Qt6 6.11 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
 
 # IconImage loads Lucide SVGs from qrc. The SVG imageformat plugin is refused when it was
@@ -586,6 +586,15 @@ add_library(driftcore STATIC
     src/core/project/Transcript.h
     src/core/project/Transcript.cpp
     src/core/project/GuideSet.h
+    src/core/project/folder/ProjectFolder.h
+    src/core/project/folder/ProjectFolder.cpp
+    src/core/project/folder/ProjectFormat.h
+    src/core/project/folder/ProjectSchema.h
+    src/core/project/folder/ProjectSchema.cpp
+    src/core/project/folder/ProjectLint.h
+    src/core/project/folder/ProjectLint.cpp
+    src/core/project/folder/ProjectData.h
+    src/core/project/folder/ProjectData.cpp
     src/core/project/GuideSet.cpp
     src/core/interchange/subtitles/SubtitleParse.h
     src/core/interchange/subtitles/SrtIO.h
@@ -628,6 +637,10 @@ add_library(driftcore STATIC
     src/core/project/sources/Model3dSource.cpp
     src/core/project/sources/ProceduralSource.h
     src/core/project/sources/ProceduralSource.cpp
+    src/core/project/sources/GeneratorKinds.h
+    src/core/project/sources/GeneratorKinds.cpp
+    src/core/text/TextScriptPresets.h
+    src/core/text/TextScriptPresets.cpp
     src/core/project/sources/PdfSource.h
     src/core/project/sources/PdfSource.cpp
     src/core/base/ZipArchive.h
@@ -658,6 +671,9 @@ add_library(driftcore STATIC
     src/core/edit/MaskSpace.cpp
     src/core/edit/CutOps.h
     src/core/edit/CutOps.cpp
+    src/core/edit/BeatCut.cpp
+    src/core/text/TitleTemplate.h
+    src/core/text/TitleTemplate.cpp
     src/core/edit/commands/ProjectCommands.h
     src/core/edit/commands/ProjectCommands.cpp
 )
@@ -669,6 +685,13 @@ qt_add_resources(driftcore "drift_text_animations"
     PREFIX "/text-animations"
     BASE "${CMAKE_SOURCE_DIR}/presets/text-animations"
     FILES ${DRIFT_TEXT_ANIMATION_FILES}
+)
+
+file(GLOB DRIFT_TITLE_TEMPLATE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/presets/title-templates/*.json")
+qt_add_resources(driftcore "drift_title_templates"
+    PREFIX "/title-templates"
+    BASE "${CMAKE_SOURCE_DIR}/presets/title-templates"
+    FILES ${DRIFT_TITLE_TEMPLATE_FILES}
 )
 
 # Audio effect DSP. JUCE modules compile into whatever target links them, so keeping them in a
@@ -784,6 +807,8 @@ add_library(driftprocedural STATIC
     src/engine/procedural/ProceduralSceneCache.cpp
     src/engine/procedural/ProceduralDiagnostics.h
     src/engine/procedural/ProceduralDiagnostics.cpp
+    src/engine/procedural/TextScript.h
+    src/engine/procedural/TextScript.cpp
 )
 target_include_directories(driftprocedural PUBLIC src)
 target_link_libraries(driftprocedural PUBLIC drift_lua)
@@ -878,6 +903,10 @@ add_library(driftengine STATIC
     src/engine/audio/analysis/AudioDucking.h
     src/engine/audio/analysis/AudioDucking.cpp
     src/engine/audio/analysis/RealFft.h
+    src/engine/audio/analysis/Stft.h
+    src/engine/audio/analysis/Stft.cpp
+    src/engine/ml/audio/StemMask.h
+    src/engine/ml/audio/StemMask.cpp
     src/engine/audio/analysis/AudioFrameAnalysis.h
     src/engine/audio/analysis/AudioFrameAnalysis.cpp
     src/engine/ml/vision/detection/SceneDetect.h
@@ -923,6 +952,8 @@ add_library(driftengine STATIC
     src/engine/packages/assets/EmojiTable.cpp
     src/engine/render2d/text/TextLayout.h
     src/engine/render2d/text/TextLayout.cpp
+    src/engine/render2d/generators/ParticleSim.h
+    src/engine/render2d/generators/ParticleSim.cpp
     src/engine/render2d/vector/VectorClipRenderer.h
     src/engine/render2d/vector/VectorClipRenderer.cpp
     src/engine/render2d/vector/VectorInspect.h
@@ -965,6 +996,8 @@ add_library(driftengine STATIC
     src/engine/color/ScopeAnalysis.h
     src/engine/color/ScopeAnalysis.cpp
     src/engine/compositor/FrameCompositor.h
+    src/engine/compositor/ScriptedText.h
+    src/engine/compositor/ScriptedText.cpp
     src/engine/compositor/FrameCompositor.cpp
     src/engine/compositor/SourceFrameCrop.h
     src/engine/compositor/SourceFrameCrop.cpp
@@ -1019,6 +1052,8 @@ add_library(driftengine STATIC
     src/engine/face/tracking/FaceLandmarker.cpp
     src/engine/face/tracking/FaceTrack.h
     src/engine/face/tracking/FaceTrack.cpp
+    src/engine/face/tracking/FaceMask.h
+    src/engine/face/tracking/FaceMask.cpp
     src/engine/face/props/FaceModelTransform.h
     src/engine/face/props/FaceModelTransform.cpp
     src/engine/render3d/models/ModelAnimation.h
@@ -1084,6 +1119,20 @@ add_library(driftengine STATIC
     src/engine/encode/writers/MatteWriter.cpp
     src/engine/encode/proxies/ProxyNaming.h
     src/engine/encode/proxies/ProxyNaming.cpp
+    src/engine/capture/SystemAudioSource.h
+    src/engine/capture/SystemAudioSource.cpp
+    src/engine/capture/CaptureDevices.h
+    src/engine/capture/CaptureDevices.cpp
+    src/engine/capture/CameraCaptureSource.h
+    src/engine/capture/CameraCaptureSource.cpp
+    src/engine/capture/ScreenCaptureSource.h
+    src/engine/capture/ScreenCaptureSource.cpp
+    src/engine/capture/CaptureWriter.h
+    src/engine/capture/CaptureWriter.cpp
+    src/engine/capture/CaptureRequest.h
+    src/engine/capture/CaptureRequest.cpp
+    src/engine/capture/RecordingLocation.h
+    src/engine/capture/RecordingLocation.cpp
     src/engine/encode/proxies/ProxyLocation.h
     src/engine/encode/proxies/ProxyLocation.cpp
     src/engine/encode/proxies/ReverseProxyCache.h
@@ -1116,6 +1165,16 @@ add_library(driftengine STATIC
     src/engine/project/ProjectBundle.cpp
     src/engine/project/ProjectDependencies.h
     src/engine/project/ProjectDependencies.cpp
+    src/engine/projdir/ProjectLsp.h
+    src/engine/projdir/ProjectLsp.cpp
+    src/engine/projdir/ProjectScripts.h
+    src/engine/projdir/ProjectScripts.cpp
+    src/engine/projdir/ProjectTemplate.h
+    src/engine/projdir/ProjectTemplate.cpp
+    src/engine/projdir/ProjectFolderLint.h
+    src/engine/projdir/ProjectFolderLint.cpp
+    src/engine/projdir/ProjectGuide.h
+    src/engine/projdir/ProjectGuide.cpp
     src/engine/gpu/device/GpuPreference.h
     src/engine/gpu/device/GpuPreference.cpp
     src/engine/gpu/device/GpuDevice.h
@@ -1130,6 +1189,32 @@ target_link_libraries(driftengine PRIVATE ${DRIFT_ZSTD_TARGET} OpenSSL::Crypto $
 # LlamaServer talks HTTP to its own child process on loopback; nothing else in the engine needs it.
 find_package(Qt6 REQUIRED COMPONENTS Network)
 target_link_libraries(driftengine PRIVATE Qt6::Network)
+
+# Linux screen recording goes through xdg-desktop-portal's ScreenCast interface (D-Bus) and reads
+# the frames from PipeWire. There is no alternative on a Wayland session: Qt's own QScreenCapture
+# has no Wayland path and silently delivers nothing there. Optional, because a build without
+# PipeWire development files is still a working editor — it just cannot record the screen, which
+# makeScreenCaptureSource reports by returning null.
+option(DRIFT_WITH_PORTAL_CAPTURE "Linux screen recording via xdg-desktop-portal and PipeWire" ON)
+if(UNIX AND NOT APPLE AND NOT ANDROID AND DRIFT_WITH_PORTAL_CAPTURE)
+    find_package(Qt6 COMPONENTS DBus QUIET)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(PipeWire QUIET IMPORTED_TARGET libpipewire-0.3)
+    endif()
+    if(Qt6DBus_FOUND AND TARGET PkgConfig::PipeWire)
+        target_sources(driftengine PRIVATE
+            src/engine/capture/PortalScreenCapture.h
+            src/engine/capture/PortalScreenCapture.cpp
+            src/engine/capture/PipeWireAudioSource.h
+            src/engine/capture/PipeWireAudioSource.cpp)
+        target_link_libraries(driftengine PRIVATE Qt6::DBus PkgConfig::PipeWire)
+        target_compile_definitions(driftengine PRIVATE DRIFT_WITH_PORTAL_CAPTURE)
+        message(STATUS "Screen recording: xdg-desktop-portal + PipeWire ${PipeWire_VERSION}")
+    else()
+        message(STATUS "Screen recording: disabled (needs Qt6 DBus and libpipewire-0.3)")
+    endif()
+endif()
 if(WIN32)
     # Hybrid-graphics laptops: D3D11VA -> OpenGL preview interop, and DXGI adapter enumeration for
     # the GPU preference and for opening D3D11VA on the GPU that renders.
@@ -1158,6 +1243,8 @@ if(DRIFT_WITH_SKIA)
         src/engine/render2d/skia/SkiaShading.cpp
         src/engine/render2d/shapes/SkiaShapePainter.h
         src/engine/render2d/shapes/SkiaShapePainter.cpp
+        src/engine/render2d/generators/SkiaGeneratorPainter.h
+        src/engine/render2d/generators/SkiaGeneratorPainter.cpp
         src/engine/render2d/text/fonts/SkiaFonts.h
         src/engine/render2d/text/fonts/SkiaFonts.cpp
         src/engine/render2d/text/fonts/SkiaFontCollection.h
@@ -1184,6 +1271,105 @@ if(DRIFT_WITH_SKIA)
     target_compile_definitions(driftengine PRIVATE QT_NO_FOREACH)
 endif()
 
+# --- control surfaces --------------------------------------------------------
+# Bindings, MIDI, OSC and the phone remote. libremidi is the one dependency: MIT, ALSA sequencer on
+# Linux, WinMM on Windows, CoreMIDI on macOS. Android reads MIDI through android.media.midi from
+# Java instead (libremidi's Android backend wants API 31, minSdk here is 28) and wasm has no
+# transports at all. Like JUCE it is fetched unless DRIFT_LIBREMIDI_DIR points at a source tree,
+# which is what an offline build sets.
+option(DRIFT_FETCH_LIBREMIDI "Download libremidi when DRIFT_LIBREMIDI_DIR is not set" ON)
+set(DRIFT_LIBREMIDI_DIR "" CACHE STRING
+    "libremidi source tree, absolute or relative to this file; overrides DRIFT_FETCH_LIBREMIDI")
+set(DRIFT_LIBREMIDI_TAG "v5.4.3" CACHE STRING "libremidi release tag to fetch when DRIFT_LIBREMIDI_DIR is unset")
+
+if(NOT EMSCRIPTEN AND NOT ANDROID)
+    set(LIBREMIDI_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(LIBREMIDI_TESTS OFF CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_JACK ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_PIPEWIRE ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_NETWORK ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_KEYBOARD ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_UDEV ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_WINUWP ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_WINMIDI ON CACHE BOOL "" FORCE)
+    set(LIBREMIDI_NO_BOOST ON CACHE BOOL "" FORCE)
+    # libremidi installs its own headers and CMake package; Drift installs neither. Skipping its
+    # install rules alone leaves the parent's cmake_install.cmake including a script that was never
+    # written, so the directory is also EXCLUDE_FROM_ALL, which drops that include.
+    set(CMAKE_SKIP_INSTALL_RULES ON)
+    if(DRIFT_LIBREMIDI_DIR)
+        if(IS_ABSOLUTE "${DRIFT_LIBREMIDI_DIR}")
+            set(_drift_libremidi_dir "${DRIFT_LIBREMIDI_DIR}")
+        else()
+            set(_drift_libremidi_dir "${CMAKE_CURRENT_SOURCE_DIR}/${DRIFT_LIBREMIDI_DIR}")
+        endif()
+        if(NOT EXISTS "${_drift_libremidi_dir}/CMakeLists.txt")
+            message(FATAL_ERROR
+                "DRIFT_LIBREMIDI_DIR=${DRIFT_LIBREMIDI_DIR} does not point at a libremidi source tree "
+                "(looked in ${_drift_libremidi_dir}).")
+        endif()
+        message(STATUS "libremidi: using ${_drift_libremidi_dir}")
+        add_subdirectory("${_drift_libremidi_dir}" "${CMAKE_BINARY_DIR}/libremidi-build")
+        set_property(DIRECTORY "${_drift_libremidi_dir}" PROPERTY EXCLUDE_FROM_ALL ON)
+    elseif(DRIFT_FETCH_LIBREMIDI)
+        message(STATUS "libremidi: fetching ${DRIFT_LIBREMIDI_TAG}")
+        include(FetchContent)
+        FetchContent_Declare(libremidi
+            GIT_REPOSITORY https://github.com/celtera/libremidi.git
+            GIT_TAG ${DRIFT_LIBREMIDI_TAG}
+            GIT_SHALLOW TRUE
+            GIT_PROGRESS TRUE)
+        FetchContent_MakeAvailable(libremidi)
+        set_property(DIRECTORY "${libremidi_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL ON)
+    else()
+        message(FATAL_ERROR
+            "libremidi not available. Point DRIFT_LIBREMIDI_DIR at a libremidi source tree, "
+            "or enable DRIFT_FETCH_LIBREMIDI to download it automatically.")
+    endif()
+    unset(CMAKE_SKIP_INSTALL_RULES)
+endif()
+
+add_library(driftsurfaces STATIC
+    src/app/surfaces/ControlSurfaceManager.h
+    src/app/surfaces/ControlSurfaceManager.cpp
+    src/app/surfaces/FaderScale.h
+    src/app/surfaces/SurfaceTargets.h
+    src/app/surfaces/SurfaceHub.h
+    src/app/surfaces/SurfaceHub.cpp
+)
+target_include_directories(driftsurfaces PUBLIC src)
+target_link_libraries(driftsurfaces PUBLIC Qt6::Core)
+if(NOT EMSCRIPTEN)
+    target_link_libraries(driftsurfaces PUBLIC Qt6::Network)
+    target_sources(driftsurfaces PRIVATE
+        src/app/surfaces/midi/MidiIo.h
+        src/app/surfaces/midi/MidiProtocols.h
+        src/app/surfaces/midi/MidiProtocols.cpp
+        src/app/surfaces/midi/MidiSurfaceService.h
+        src/app/surfaces/midi/MidiSurfaceService.cpp
+    )
+    target_compile_definitions(driftsurfaces PRIVATE DRIFT_SURFACE_MIDI DRIFT_SURFACE_OSC DRIFT_SURFACE_REMOTE)
+    target_sources(driftsurfaces PRIVATE
+        src/app/surfaces/osc/OscCodec.h
+        src/app/surfaces/osc/OscCodec.cpp
+        src/app/surfaces/osc/OscSurfaceService.h
+        src/app/surfaces/osc/OscSurfaceService.cpp
+        src/app/surfaces/remote/RemoteProtocol.h
+        src/app/surfaces/remote/QrCode.h
+        src/app/surfaces/remote/QrCode.cpp
+        src/app/surfaces/remote/PhoneRemoteServer.h
+        src/app/surfaces/remote/PhoneRemoteServer.cpp
+        src/app/surfaces/remote/PhoneRemoteClient.h
+        src/app/surfaces/remote/PhoneRemoteClient.cpp
+    )
+    if(ANDROID)
+        target_sources(driftsurfaces PRIVATE src/app/surfaces/midi/AndroidMidiIo.cpp)
+    else()
+        target_sources(driftsurfaces PRIVATE src/app/surfaces/midi/LibremidiIo.cpp)
+        target_link_libraries(driftsurfaces PRIVATE libremidi)
+    endif()
+endif()
+
 # --- application ------------------------------------------------------------
 # The app sources tst_editorstate also needs, compiled once. Files that read the endpoint/version
 # defines drift sets (or that carry QML_ELEMENT) stay in drift and are compiled separately by the
@@ -1199,6 +1385,7 @@ target_link_libraries(driftapp PUBLIC
     driftcore
     driftengine
     driftforge
+    driftsurfaces
 )
 if(ANDROID)
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
@@ -1272,6 +1459,11 @@ qt_add_executable(drift
     src/app/platform/Haptics.cpp
     src/app/platform/PointerDevices.h
     src/app/platform/PointerDevices.cpp
+    src/app/platform/PointerLock.h
+    src/app/platform/PointerLock.cpp
+    src/app/platform/Gamepad.h
+    src/app/platform/Gamepad.cpp
+    src/app/platform/GamepadSdl.cpp
     src/app/platform/PlatformDrag.h
     src/app/platform/PlatformDrag.cpp
     src/ui/preview/PreviewItem.h
@@ -1369,6 +1561,7 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerKeyframes.cpp
     src/app/editor/appcontroller/AppControllerEffects.cpp
     src/app/editor/appcontroller/AppControllerTracks.cpp
+    src/app/editor/appcontroller/AppControllerTitleTemplates.cpp
     src/app/editor/keymap/Keymap.h
     src/app/editor/keymap/Keymap.cpp
     src/app/editor/keymap/KeymapCatalog.h
@@ -1387,6 +1580,8 @@ target_sources(driftapp PRIVATE
     src/app/GraphicsApiChoice.cpp
     src/app/editor/ProjectFileController.h
     src/app/editor/ProjectFileController.cpp
+    src/app/editor/ProjectFolderController.h
+    src/app/editor/ProjectFolderController.cpp
     src/app/bin/AssetPreviewController.h
     src/app/bin/AssetPreviewController.cpp
     src/app/editor/sessions/SpeedCurveController.h
@@ -1438,6 +1633,8 @@ target_sources(driftapp PRIVATE
     src/app/jobs/render/BakeController.cpp
     src/app/jobs/render/BakeFingerprint.h
     src/app/jobs/render/BakeFingerprint.cpp
+    src/app/jobs/capture/CaptureController.h
+    src/app/jobs/capture/CaptureController.cpp
     src/app/jobs/audio/DenoiseController.h
     src/app/jobs/audio/DenoiseController.cpp
     src/app/jobs/audio/AudioAlignController.h
@@ -1507,6 +1704,8 @@ target_sources(drift PRIVATE
     src/app/mcp/protocol/McpJson.h
 )
 target_sources(driftapp PRIVATE
+    src/app/surfaces/EditorSurfaceTargets.h
+    src/app/surfaces/EditorSurfaceTargets.cpp
     src/app/commandbar/CommandBarController.h
     src/app/commandbar/CommandBarController.cpp
     src/app/commandbar/CommandCatalog.h
@@ -1536,6 +1735,8 @@ target_sources(driftapp PRIVATE
     src/app/mcp/tools/McpEffectAuthoring.cpp
     src/app/mcp/tools/McpProceduralAuthoring.h
     src/app/mcp/tools/McpProceduralAuthoring.cpp
+    src/app/mcp/tools/McpProjectFolder.h
+    src/app/mcp/tools/McpProjectFolder.cpp
     src/app/procedural/ProceduralAuthoringService.h
     src/app/procedural/ProceduralAuthoringService.cpp
     src/app/procedural/ProceduralEditorController.h
@@ -1566,7 +1767,48 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
     target_sources(drift PRIVATE
         src/app/HeadlessApp.h
         src/app/HeadlessApp.cpp
+        src/app/ProjectDirCli.h
+        src/app/ProjectDirCli.cpp
     )
+    # Render queue and farm: one task runner behind the CLI, the in-process queue, the local
+    # worker process and the LAN workers.
+    target_sources(driftapp PRIVATE
+        src/app/farm/RenderTask.h
+        src/app/farm/RenderTask.cpp
+        src/app/farm/FarmCli.h
+        src/app/farm/FarmCli.cpp
+        src/app/farm/RenderJob.h
+        src/app/farm/RenderJob.cpp
+        src/app/farm/RenderQueue.h
+        src/app/farm/RenderQueue.cpp
+        src/app/farm/TemplateBatch.h
+        src/app/farm/TemplateBatch.cpp
+        src/app/farm/WorkerProcess.h
+        src/app/farm/WorkerProcess.cpp
+        src/app/farm/FarmHttp.h
+        src/app/farm/FarmHttp.cpp
+        src/app/farm/FarmCoordinator.h
+        src/app/farm/FarmCoordinator.cpp
+        src/app/farm/FarmWorker.h
+        src/app/farm/FarmWorker.cpp
+        src/app/farm/ChunkJoin.h
+        src/app/farm/ChunkJoin.cpp
+    )
+    # The native EGL Qt platform: contexts with no display server. Private QPA headers, so it
+    # needs Qt6::GuiPrivate; without that (or off Linux) --headless keeps using the stock platforms.
+    if(UNIX AND NOT APPLE)
+        find_package(Qt6 COMPONENTS GuiPrivate QUIET)
+        if(TARGET Qt6::GuiPrivate)
+            target_sources(drift PRIVATE
+                src/app/headless/EglPlatform.h
+                src/app/headless/EglPlatform.cpp
+            )
+            target_link_libraries(drift PRIVATE Qt6::GuiPrivate)
+            target_compile_definitions(drift PRIVATE DRIFT_HEADLESS_EGL)
+            set_source_files_properties(src/app/headless/EglPlatform.cpp PROPERTIES
+                COMPILE_DEFINITIONS QT_STATICPLUGIN)
+        endif()
+    endif()
     target_sources(driftapp PRIVATE
         src/app/mcp/transport/McpStdio.h
         src/app/mcp/transport/McpStdio.cpp
@@ -1774,10 +2016,10 @@ qt_add_resources(drift "drift_addon_catalog"
 qt_add_resources(drift "drift_procedural_docs"
     PREFIX "/docs"
     BASE docs
-    FILES docs/procedural.md
+    FILES docs/procedural.md docs/project-folder.md
 )
 # A resource file is a target source, and lupdate parses a source it has no parser for as C++.
-set_property(TARGET drift APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION docs/procedural.md)
+set_property(TARGET drift APPEND PROPERTY QT_EXCLUDE_SOURCES_FROM_TRANSLATION docs/procedural.md docs/project-folder.md)
 
 qt_add_resources(drift "drift_search_index"
     PREFIX "/"
@@ -2021,6 +2263,8 @@ qt_add_qml_module(drift
         src/qml/components/properties/Transform3dInspector.qml
         src/qml/components/properties/PdfInspector.qml
         src/qml/components/properties/ProceduralInspector.qml
+        src/qml/components/properties/GeneratorInspector.qml
+        src/qml/components/properties/TextInspectorScriptSection.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/properties/FacePropPicker.qml
@@ -2031,6 +2275,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TextInspectorTabBar.qml
         src/qml/components/properties/TextInspectorStylePage.qml
         src/qml/components/properties/TextInspectorSpacingSection.qml
+        src/qml/components/properties/TextInspectorScrollSection.qml
         src/qml/components/properties/TextInspectorPresetSection.qml
         src/qml/components/properties/TextInspectorLookSection.qml
         src/qml/components/properties/TextInspectorFontSection.qml
@@ -2107,12 +2352,15 @@ qt_add_qml_module(drift
         src/qml/components/properties/CollapsibleSectionHeader.qml
         src/qml/components/properties/AudioEffectHeader.qml
         src/qml/components/assets/TextAssetsTab.qml
+        src/qml/components/assets/TitleTemplateCard.qml
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/SpeechTab.qml
         src/qml/components/assets/SoundEffectDialog.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
+        src/qml/components/assets/GeneratorsTab.qml
+        src/qml/components/assets/GeneratorCard.qml
         src/qml/components/assets/AssetSearchBar.qml
         src/qml/components/assets/AssetDragSource.qml
         src/qml/components/assets/MasksTab.qml
@@ -2301,6 +2549,7 @@ qt_add_qml_module(drift
         src/qml/components/ImageViewer.qml
         src/qml/components/dialogs/ImageViewerDialog.qml
         src/qml/components/dialogs/BakesDialog.qml
+        src/qml/components/dialogs/RenderQueueDialog.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/timeline/PlayheadInterpolator.qml
         src/qml/components/timeline/TimelineTrackArea.qml
@@ -2661,6 +2910,8 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidToolPage.qml
         src/qml/components/android/AndroidClipRangeBar.qml
         src/qml/components/android/AndroidSubPage.qml
+        src/qml/components/android/AndroidRemotePage.qml
+        src/qml/components/android/RemoteJogWheel.qml
         src/qml/components/android/AndroidHomeTab.qml
         src/qml/components/android/AndroidMyVideosTab.qml
         src/qml/components/android/pages/AndroidAddPage.qml
@@ -2704,6 +2955,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/ExportDialog.qml
         src/qml/components/dialogs/ExportProgressDialog.qml
         src/qml/components/dialogs/CollectMediaDialog.qml
+        src/qml/components/dialogs/BeatCutDialog.qml
         src/qml/components/dialogs/ImageSequenceDialog.qml
         src/qml/components/dialogs/ReverseProgressDialog.qml
         src/qml/components/dialogs/SubtitleProgressDialog.qml
@@ -2739,6 +2991,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/TouchDragGhost.qml
         src/qml/components/shell/SkeletonBox.qml
         src/qml/components/controls/ThemedSwitch.qml
+        src/qml/components/controls/SurfaceLearnArea.qml
         src/qml/components/controls/ThemedCheckBox.qml
         src/qml/components/controls/ThemedToggleButton.qml
         src/qml/components/controls/ThemedToolTip.qml
@@ -2765,13 +3018,18 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsGroupHeader.qml
         src/qml/components/shell/SettingsKeymapPage.qml
         src/qml/components/shell/SettingsExportPage.qml
+        src/qml/components/shell/SettingsFarmPage.qml
         src/qml/components/shell/SettingsNetworkPage.qml
         src/qml/components/shell/SettingsNotificationsPage.qml
         src/qml/components/shell/SettingsPersonalizePage.qml
         src/qml/components/shell/SettingsStoragePage.qml
+        src/qml/components/shell/SettingsSurfacesPage.qml
+        src/qml/components/shell/SurfaceDeviceBindings.qml
         src/qml/components/shell/SettingsPage.qml
         src/qml/components/shell/SettingsPerformancePage.qml
         src/qml/components/shell/SettingsPreviewPage.qml
+        src/qml/components/shell/SettingsControllersPage.qml
+        src/qml/components/shell/ControllerTestView.qml
         src/qml/components/shell/SettingsRow.qml
         src/qml/components/shell/SearchAnchor.qml
         src/qml/components/quicksetup/QuickSetupStepIndicator.qml
@@ -2835,6 +3093,8 @@ qt_add_qml_module(drift
         src/qml/components/shell/EditorHeaderSeparator.qml
         src/qml/components/shell/EditorHeaderSearchField.qml
         src/qml/components/shell/EditorHeaderProjectsButton.qml
+        src/qml/components/shell/ProjectFolderBanner.qml
+        src/qml/components/dialogs/TemplateRenderDialog.qml
         src/qml/components/shell/EditorHeaderNotificationsButton.qml
         src/qml/components/shell/EditorHeaderHairline.qml
         src/qml/components/shell/EditorHeaderExtrasWave.qml
@@ -2886,6 +3146,110 @@ target_link_libraries(drift PRIVATE
     driftengine
     ${DRIFT_ZSTD_TARGET}
 )
+# Mouse-look for 3D fly mode on Wayland binds zwp_pointer_constraints_v1 and zwp_relative_pointer_v1
+# directly. It needs Qt's Wayland client (for the native window interface), libwayland-client and
+# the scanner plus protocol XML; without any of them the pointer-lock service falls back to the
+# warp-to-centre path or reports itself unsupported.
+if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT EMSCRIPTEN)
+    find_package(Qt6 COMPONENTS WaylandClient GuiPrivate QUIET)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND AND Qt6WaylandClient_FOUND AND TARGET Qt6::GuiPrivate)
+        pkg_check_modules(DRIFT_WAYLAND_CLIENT QUIET IMPORTED_TARGET wayland-client)
+        pkg_get_variable(_drift_wl_protocols wayland-protocols pkgdatadir)
+        find_program(DRIFT_WAYLAND_SCANNER wayland-scanner)
+        set(_drift_wl_constraints "${_drift_wl_protocols}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml")
+        set(_drift_wl_relative "${_drift_wl_protocols}/unstable/relative-pointer/relative-pointer-unstable-v1.xml")
+        if(DRIFT_WAYLAND_CLIENT_FOUND AND DRIFT_WAYLAND_SCANNER AND EXISTS "${_drift_wl_constraints}"
+           AND EXISTS "${_drift_wl_relative}")
+            set(_drift_wl_dir "${CMAKE_CURRENT_BINARY_DIR}/wayland-protocols")
+            file(MAKE_DIRECTORY "${_drift_wl_dir}")
+            set(_drift_wl_sources "")
+            foreach(_xml IN ITEMS "${_drift_wl_constraints}" "${_drift_wl_relative}")
+                get_filename_component(_name "${_xml}" NAME_WE)
+                add_custom_command(
+                    OUTPUT "${_drift_wl_dir}/${_name}-client-protocol.h" "${_drift_wl_dir}/${_name}-protocol.c"
+                    COMMAND "${DRIFT_WAYLAND_SCANNER}" client-header "${_xml}" "${_drift_wl_dir}/${_name}-client-protocol.h"
+                    COMMAND "${DRIFT_WAYLAND_SCANNER}" private-code "${_xml}" "${_drift_wl_dir}/${_name}-protocol.c"
+                    DEPENDS "${_xml}"
+                    VERBATIM)
+                list(APPEND _drift_wl_sources "${_drift_wl_dir}/${_name}-protocol.c" "${_drift_wl_dir}/${_name}-client-protocol.h")
+            endforeach()
+            target_sources(drift PRIVATE src/app/platform/PointerLock_wayland.cpp ${_drift_wl_sources})
+            target_include_directories(drift PRIVATE "${_drift_wl_dir}")
+            target_link_libraries(drift PRIVATE PkgConfig::DRIFT_WAYLAND_CLIENT Qt6::GuiPrivate)
+            target_compile_definitions(drift PRIVATE DRIFT_HAVE_WAYLAND_LOCK)
+            message(STATUS "Pointer lock: Wayland pointer constraints enabled")
+        endif()
+    endif()
+endif()
+if(APPLE)
+    target_link_libraries(drift PRIVATE "-framework ApplicationServices")
+endif()
+
+# Game controllers on desktop go through SDL3, initialised with the gamepad and sensor subsystems
+# only (no SDL video, window or audio). An installed SDL3 is used as is; otherwise DRIFT_SDL_DIR
+# (a source tree, as JUCE's) or a download gives a trimmed static build. Android reads controllers
+# from the activity's InputDevice events instead, and wasm has none.
+if(NOT ANDROID AND NOT EMSCRIPTEN)
+    option(DRIFT_WITH_SDL "Game controller support through SDL3" ON)
+    option(DRIFT_FETCH_SDL "Download SDL3 when it is not installed and DRIFT_SDL_DIR is not set" ON)
+    set(DRIFT_SDL_DIR "" CACHE STRING "SDL3 source tree - absolute, or relative to this file")
+    set(DRIFT_SDL_TAG "release-3.2.0" CACHE STRING "SDL3 release tag to fetch when SDL3 is not installed")
+    if(DRIFT_WITH_SDL)
+        set(_drift_sdl_target "")
+        if(DRIFT_SDL_DIR)
+            if(IS_ABSOLUTE "${DRIFT_SDL_DIR}")
+                set(_drift_sdl_src "${DRIFT_SDL_DIR}")
+            else()
+                set(_drift_sdl_src "${CMAKE_CURRENT_SOURCE_DIR}/${DRIFT_SDL_DIR}")
+            endif()
+            if(NOT EXISTS "${_drift_sdl_src}/CMakeLists.txt")
+                message(FATAL_ERROR "DRIFT_SDL_DIR=${DRIFT_SDL_DIR} does not point at an SDL3 source tree")
+            endif()
+        else()
+            find_package(SDL3 CONFIG QUIET)
+            if(TARGET SDL3::SDL3)
+                set(_drift_sdl_target SDL3::SDL3)
+                message(STATUS "SDL3: using ${SDL3_DIR}")
+            elseif(DRIFT_FETCH_SDL)
+                include(FetchContent)
+                FetchContent_Declare(SDL3
+                    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+                    GIT_TAG ${DRIFT_SDL_TAG}
+                    GIT_SHALLOW TRUE)
+                message(STATUS "SDL3: fetching ${DRIFT_SDL_TAG}")
+            endif()
+        endif()
+        if(NOT _drift_sdl_target AND (_drift_sdl_src OR DRIFT_FETCH_SDL))
+            set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+            set(SDL_STATIC ON CACHE BOOL "" FORCE)
+            set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+            set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+            set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+            set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
+            set(SDL_VIDEO OFF CACHE BOOL "" FORCE)
+            set(SDL_RENDER OFF CACHE BOOL "" FORCE)
+            set(SDL_GPU OFF CACHE BOOL "" FORCE)
+            set(SDL_AUDIO OFF CACHE BOOL "" FORCE)
+            set(SDL_CAMERA OFF CACHE BOOL "" FORCE)
+            set(SDL_DIALOG OFF CACHE BOOL "" FORCE)
+            if(_drift_sdl_src)
+                add_subdirectory("${_drift_sdl_src}" "${CMAKE_BINARY_DIR}/_deps/sdl3-build" EXCLUDE_FROM_ALL)
+            else()
+                FetchContent_MakeAvailable(SDL3)
+            endif()
+            if(TARGET SDL3::SDL3-static)
+                set(_drift_sdl_target SDL3::SDL3-static)
+            elseif(TARGET SDL3-static)
+                set(_drift_sdl_target SDL3-static)
+            endif()
+        endif()
+        if(_drift_sdl_target)
+            target_link_libraries(drift PRIVATE ${_drift_sdl_target})
+            target_compile_definitions(drift PRIVATE DRIFT_HAVE_SDL)
+        endif()
+    endif()
+endif()
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.
 target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace src/ui/nodes)

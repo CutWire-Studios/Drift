@@ -50,6 +50,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.software.midi" android:required="false" />
     <supports-screens
         android:anyDensity="true"
         android:largeScreens="true"

@@ -839,7 +839,7 @@ static bool allowedInAtomic(const QString &tool)
         QStringLiteral("timeline"), QStringLiteral("canvas"),   QStringLiteral("effects"),
         QStringLiteral("keyframes"), QStringLiteral("motion"),  QStringLiteral("text"),
         QStringLiteral("shapes"),   QStringLiteral("speed"),    QStringLiteral("subtitles"),
-        QStringLiteral("audio"),    QStringLiteral("procedural"), QStringLiteral("transcript"),
+        QStringLiteral("audio"),    QStringLiteral("procedural"), QStringLiteral("generators"), QStringLiteral("transcript"),
         QStringLiteral("media"),    QStringLiteral("project"),  QStringLiteral("scene"),
         QStringLiteral("playback")};
     static const QSet<QString> kOutside{

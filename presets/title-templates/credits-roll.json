@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "credits-roll",
+  "label": "Credits roll",
+  "category": "credits",
+  "order": 500,
+  "duration": 16,
+  "elements": [
+    {
+      "type": "text",
+      "key": "credits",
+      "label": "Credits",
+      "text": "DIRECTED BY\nAlex Morgan\n\nPRODUCED BY\nSam Rivera\n\nEDITED BY\nYour name\n\nMUSIC\nArtist name\n\nTHANK YOU FOR WATCHING",
+      "box": [
+        0.2,
+        0.0,
+        0.6,
+        1.0
+      ],
+      "font": "Inter",
+      "weight": 600,
+      "size": 0.05,
+      "color": "#FFFFFF",
+      "align": "center",
+      "valign": "top",
+      "lineHeight": 1.5,
+      "scroll": "rollUp"
+    }
+  ]
+}

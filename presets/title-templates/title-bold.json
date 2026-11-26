@@ -1,0 +1,105 @@
+{
+  "format": 1,
+  "id": "title-bold",
+  "label": "Title: bold centre",
+  "category": "title",
+  "order": 100,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Rule",
+      "shape": "rectangle",
+      "box": [
+        0.45,
+        0.31,
+        0.1,
+        0.006
+      ],
+      "fill": "#FF5A36",
+      "in": {
+        "anim": "zoomIn",
+        "duration": 0.5,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "zoomOut",
+        "duration": 0.4,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "title",
+      "label": "Title",
+      "text": "YOUR TITLE",
+      "box": [
+        0.05,
+        0.32,
+        0.9,
+        0.26
+      ],
+      "font": "Anton",
+      "weight": 400,
+      "size": 0.17,
+      "color": "#FFFFFF",
+      "align": "center",
+      "valign": "middle",
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "letterSpacing": 0.02,
+      "start": 0.1,
+      "in": {
+        "preset": "fade-up-char",
+        "duration": 0.6,
+        "unit": "character",
+        "ease": "easeOut",
+        "stagger": 0.03,
+        "rise": 0.35
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "subtitle",
+      "label": "Subtitle",
+      "text": "A short line to set the scene",
+      "box": [
+        0.1,
+        0.6,
+        0.8,
+        0.06
+      ],
+      "font": "Montserrat",
+      "weight": 500,
+      "size": 0.033,
+      "color": "#D1D5DB",
+      "align": "center",
+      "valign": "middle",
+      "case": "upper",
+      "letterSpacing": 0.2,
+      "start": 0.5,
+      "in": {
+        "preset": "fade",
+        "duration": 0.6,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

@@ -258,6 +258,7 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Model3d:
     case ClipType::Pdf:
     case ClipType::Procedural:
+    case ClipType::Generator:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
@@ -1367,7 +1368,8 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 
     if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
         || clip.type == ClipType::Model3d || clip.type == ClipType::Pdf
-        || clip.type == ClipType::Procedural || clip.type == ClipType::Adjustment)
+        || clip.type == ClipType::Procedural || clip.type == ClipType::Generator
+        || clip.type == ClipType::Adjustment)
         return imageClipDurationUs();
 
     return qMax(clip.srcOut, clip.timelineDuration);
@@ -2778,7 +2780,8 @@ QSizeF clipFitFrameSize(const Project &project, const Clip &clip)
         const double biggest = std::max({double(extent.x()), double(extent.y()), double(extent.z())});
         return QSizeF(span * extent.x() / biggest, span * extent.y() / biggest);
     }
-    if (clip.type == ClipType::Text || clip.type == ClipType::Subtitle || clip.type == ClipType::Shape)
+    if (clip.type == ClipType::Text || clip.type == ClipType::Subtitle || clip.type == ClipType::Shape
+        || clip.type == ClipType::Generator)
         return QSizeF(clip.frameW > 0.0 ? clip.frameW : canvasW, clip.frameH > 0.0 ? clip.frameH : canvasH);
 
     int mediaW = 0;

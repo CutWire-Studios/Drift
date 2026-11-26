@@ -1,0 +1,130 @@
+{
+  "format": 1,
+  "id": "quote-card",
+  "label": "Quote card",
+  "category": "quote",
+  "order": 400,
+  "duration": 6,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Card",
+      "shape": "rounded-rectangle",
+      "box": [
+        0.2,
+        0.2,
+        0.6,
+        0.6
+      ],
+      "fill": "#F21A1F2B",
+      "radius": 0.07,
+      "in": {
+        "anim": "zoomIn",
+        "duration": 0.5,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "zoomOut",
+        "duration": 0.4,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "mark",
+      "label": "Mark",
+      "text": "“",
+      "box": [
+        0.235,
+        0.2,
+        0.15,
+        0.22
+      ],
+      "font": "Playfair Display",
+      "weight": 800,
+      "size": 0.24,
+      "color": "#FF5A36",
+      "align": "left",
+      "valign": "top",
+      "start": 0.2,
+      "in": {
+        "preset": "fade",
+        "duration": 0.4,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "quote",
+      "label": "Quote",
+      "text": "The best way to predict the future is to invent it.",
+      "box": [
+        0.25,
+        0.34,
+        0.5,
+        0.26
+      ],
+      "font": "Playfair Display",
+      "weight": 500,
+      "size": 0.055,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "top",
+      "italic": true,
+      "lineHeight": 1.25,
+      "start": 0.35,
+      "in": {
+        "preset": "blur-in",
+        "duration": 0.6,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "author",
+      "label": "Author",
+      "text": "Alan Kay",
+      "box": [
+        0.25,
+        0.65,
+        0.5,
+        0.06
+      ],
+      "font": "Inter",
+      "weight": 600,
+      "size": 0.03,
+      "color": "#9CA3AF",
+      "align": "left",
+      "valign": "middle",
+      "case": "upper",
+      "letterSpacing": 0.12,
+      "start": 0.7,
+      "in": {
+        "preset": "fade",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.3,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

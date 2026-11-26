@@ -61,6 +61,13 @@
     "assetsPanel": {
       "background": "#00000000"
     },
+    "captureBar": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "text": "$semantic.foreground",
+      "indicator": "$semantic.destructive"
+    },
     "assetsPanelHeader": {
       "background": "#00000000"
     },

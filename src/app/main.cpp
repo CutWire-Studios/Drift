@@ -9,6 +9,9 @@
 #include "app/procedural/ProceduralEditorController.h"
 #include "app/procedural/ProceduralHighlighter.h"
 #include "app/editor/ProjectFileController.h"
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+#include "app/ProjectDirCli.h"
+#endif
 #include "app/mcp/McpController.h"
 #include "engine/packages/assets/EmojiCatalog.h"
 #include "engine/packages/assets/FontCatalog.h"
@@ -25,12 +28,22 @@
 #include "app/online/addons/AddonManager.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+#include "app/farm/FarmCoordinator.h"
+#include "app/farm/RenderQueue.h"
+#include "app/farm/TemplateBatch.h"
+#include "app/mcp/tools/McpProjectFolder.h"
+#include <QJsonArray>
+#endif
 #include "app/crash/CrashReporter.h"
 #include "app/platform/CrashHandler.h"
 #include "app/platform/FileDialogs.h"
 #include "engine/addons/AddonRegistry.h"
 #include "app/platform/Haptics.h"
 #include "app/platform/PointerDevices.h"
+#include "app/platform/Gamepad.h"
+#include "app/platform/PointerLock.h"
+#include "app/surfaces/SurfaceHub.h"
 #include "app/platform/PlatformDrag.h"
 #include "app/platform/PrimaryDisplay.h"
 #include "app/GraphicsApiChoice.h"
@@ -659,6 +672,12 @@ int main(int argc, char *argv[])
         qputenv("QT_LOGGING_RULES", "qt.scenegraph.time.renderloop.debug=true");
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    // `drift lint <folder>` and `drift --lsp` are command-line tools: no window, no editor, nothing else started.
+    {
+        int projdirExit = 0;
+        if (drift::projdir::handleProjectDirCli(argc, argv, &projdirExit))
+            return projdirExit;
+    }
     // --headless is checked first: it also accepts --mcp-stdio, as the transport to serve
     // rather than as a request to attach to an editor running elsewhere.
     for (int i = 1; i < argc; ++i) {
@@ -976,7 +995,35 @@ int main(int argc, char *argv[])
     ForgeController forge(&editorState, &workspaceStore);
     AudioForgeController audioForge(&editorState, &workspaceStore);
     drift::Haptics haptics;
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    drift::farm::RenderQueue renderQueue;
+    drift::farm::FarmCoordinator renderFarm(&renderQueue);
+    drift::mcp::projectfolder::setTemplateQueueHook(
+        [&renderQueue](const QString &folder, const QString &data, const QString &output, int row, bool all,
+                       const QString &target) {
+            drift::farm::TemplateBatch batch;
+            batch.folder = folder;
+            batch.dataFile = data;
+            batch.output = output;
+            batch.row = row;
+            batch.all = all;
+            batch.target = target == QLatin1String("farm") ? drift::farm::JobTarget::Farm : drift::farm::JobTarget::Local;
+            const drift::farm::TemplateBatchResult result = drift::farm::queueTemplateBatch(renderQueue, batch);
+            QJsonArray jobs;
+            for (const drift::farm::TemplateBatchJob &job : result.jobs)
+                jobs.append(QJsonObject{{QStringLiteral("row"), job.row},
+                                        {QStringLiteral("id"), job.id},
+                                        {QStringLiteral("output"), job.output}});
+            return QJsonObject{{QStringLiteral("error"), result.error},
+                               {QStringLiteral("jobs"), jobs},
+                               {QStringLiteral("failures"), QJsonArray::fromStringList(result.failures)}};
+        });
+    renderQueue.setSnapshotProvider([&editorState] { return editorState.exportSnapshotJson(); });
+#endif
     drift::PointerDevices pointerDevices;
+    drift::PointerLock pointerLock;
+    drift::Gamepad gamepad;
+    drift::SurfaceHub surfaceHub(editorState.surfaces());
     drift::PlatformDrag platformDrag;
     CrashReporter crashReporter;
     editorState.setAddonManager(&addonManager);
@@ -1008,7 +1055,15 @@ int main(int argc, char *argv[])
     searchIndex.setSources(&editorState, &workspaceStore, &addonManager, ThemeManager::shared());
     qmlRegisterSingletonInstance("Drift", 1, 0, "SearchIndex", &searchIndex);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    qmlRegisterSingletonInstance("Drift", 1, 0, "RenderQueue", &renderQueue);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "RenderFarm", &renderFarm);
+    renderFarm.restore();
+#endif
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerDevices", &pointerDevices);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "PointerLock", &pointerLock);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Gamepad", &gamepad);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "SurfaceHub", &surfaceHub);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PlatformDrag", &platformDrag);
     qmlRegisterSingletonInstance("Drift", 1, 0, "CrashReports", &crashReporter);
     // QML_ELEMENT on ThemeManager is recorded in qml_register_types_Drift(), and

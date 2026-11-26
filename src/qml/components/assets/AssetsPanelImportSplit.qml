@@ -14,6 +14,9 @@ Rectangle {
     signal importFilesRequested()
     signal importFolderRequested()
     signal collectMediaRequested()
+    signal recordScreenRequested()
+    signal recordScreenWithSystemAudioRequested()
+    signal recordCameraRequested()
 
     width: importFilesHalf.width
            + (importMenuHalf.visible ? importSplitDivider.width + importMenuHalf.width : 0)
@@ -78,5 +81,8 @@ Rectangle {
         onImportFilesRequested: root.importFilesRequested()
         onImportFolderRequested: root.importFolderRequested()
         onCollectMediaRequested: root.collectMediaRequested()
+        onRecordScreenRequested: root.recordScreenRequested()
+        onRecordScreenWithSystemAudioRequested: root.recordScreenWithSystemAudioRequested()
+        onRecordCameraRequested: root.recordCameraRequested()
     }
 }

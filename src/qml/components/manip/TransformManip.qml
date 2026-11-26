@@ -352,8 +352,11 @@ ManipOverlay {
     function publishGuides(gx, gy, sx, sy) {
         snapLinesX = gx >= 0 ? [stage.x + gx * sx] : []
         snapLinesY = gy >= 0 ? [stage.y + gy * sy] : []
-        if (touchDrag && ((gx >= 0 && gx !== lastGuideX) || (gy >= 0 && gy !== lastGuideY)))
+        const snappedNow = (gx >= 0 && gx !== lastGuideX) || (gy >= 0 && gy !== lastGuideY)
+        if (touchDrag && snappedNow)
             Haptics.detent()
+        if (snappedNow)
+            Gamepad.haptic("snap")
         lastGuideX = gx
         lastGuideY = gy
     }

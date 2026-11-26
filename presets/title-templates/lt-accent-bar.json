@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "id": "lt-accent-bar",
+  "label": "Lower third: accent bar",
+  "category": "lower-third",
+  "order": 10,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "shape",
+      "name": "Accent",
+      "shape": "rectangle",
+      "box": [
+        0.07,
+        0.745,
+        0.006,
+        0.115
+      ],
+      "fill": "#FF5A36",
+      "in": {
+        "anim": "slideUp",
+        "duration": 0.45,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideDown",
+        "duration": 0.35,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "name",
+      "label": "Name",
+      "text": "Alex Morgan",
+      "box": [
+        0.09,
+        0.735,
+        0.6,
+        0.07
+      ],
+      "font": "Montserrat",
+      "weight": 800,
+      "size": 0.05,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "middle",
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "start": 0.1,
+      "in": {
+        "preset": "slide-right",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "role",
+      "label": "Role",
+      "text": "Creative Director",
+      "box": [
+        0.09,
+        0.806,
+        0.6,
+        0.05
+      ],
+      "font": "Montserrat",
+      "weight": 500,
+      "size": 0.03,
+      "color": "#E5E7EB",
+      "align": "left",
+      "valign": "middle",
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "start": 0.25,
+      "in": {
+        "preset": "slide-right",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}
