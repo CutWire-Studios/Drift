@@ -17846,6 +17846,14 @@
         <source>Playback</source>
         <translation type="unfinished">Odtwarzanie</translation>
     </message>
+    <message numerus="yes">
+        <source>Convert %n clips to Apple ProRes 422…</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>Użyj jako maski</translation>
@@ -17901,6 +17909,10 @@
     <message>
         <source>Remove proxy</source>
         <translation>Usuń proxy</translation>
+    </message>
+    <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -18193,6 +18205,34 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Another conversion or media edit is currently running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those clips are already Apple ProRes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No valid video files to transcode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422 and relinked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The project was closed before the replace landed</source>
         <translation>Projekt został zamknięty przed ukończeniem zastępowania</translation>
     </message>
@@ -18243,6 +18283,30 @@
     <message>
         <source>Couldn’t update the library</source>
         <translation>Nie udało się zaktualizować biblioteki</translation>
+    </message>
+    <message>
+        <source>Transcoding to Apple ProRes 422 (%1/%2)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>ProRes transcoding cancelled after %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422, %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not refresh “%1”: %2</source>
@@ -20721,6 +20785,14 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message numerus="yes">
         <source>%n nested VEGAS Pro project(s) could not be imported.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n clip(s) to ProRes transcodes</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
@@ -31476,6 +31548,10 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Open mask timeline</source>
         <translation>Otwórz oś czasu maski</translation>
+    </message>
+    <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
