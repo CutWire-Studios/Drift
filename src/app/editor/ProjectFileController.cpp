@@ -954,6 +954,8 @@ struct ProjectFileController::LoadResult
     // Recovery loads only: the file the snapshot was taken of.
     QString originalPath;
     QString projectName;
+    // VEGAS imports only: nested projects that could not be brought in.
+    int skipped = 0;
     // Bundle loads only.
     drift::bundle::BundleInfo bundle;
     QHash<QString, QString> remap;
@@ -1536,7 +1538,7 @@ void ProjectFileController::loadProject(const QUrl &url)
             || drift::vegas::isVegasProject(path)) {
             result->kind = LoadResult::Kind::Vegas;
             QString readError;
-            const auto proj = drift::vegas::readProject(path, &readError);
+            const auto proj = drift::vegas::readProject(path, &readError, &result->skipped);
             if (!proj) {
                 result->error = readError.isEmpty() ? tr("Failed to open VEGAS Pro project") : readError;
             } else {
@@ -1636,7 +1638,18 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         m_app->setProjectLayoutChosen(true);
         if (m_app->m_assetLibrary)
             m_app->m_assetLibrary->setProject(&m_app->m_project);
-        finishProjectLoad(true, QString());
+        const int missing = m_app->m_assetLibrary ? m_app->m_assetLibrary->missingCount() : 0;
+        const QString name = result->projectName.isEmpty() ? projectNameForUrl(url) : result->projectName;
+        QString message = missing > 0
+            ? tr("VEGAS Pro project imported: %1, but %n media file(s) could not be found", nullptr, missing)
+                  .arg(name)
+            : tr("VEGAS Pro project imported: %1").arg(name);
+        if (result->skipped > 0)
+            message += QLatin1Char(' ')
+                + tr("%n nested VEGAS Pro project(s) could not be imported.", nullptr, result->skipped);
+        m_app->setLastMessage(message, missing > 0 || result->skipped > 0 ? QStringLiteral("warning")
+                                                                           : QStringLiteral("success"));
+        finishProjectLoad(true, message);
         return;
     }
 
@@ -2624,9 +2637,3 @@ void ProjectFileController::discardUnsavedChanges()
 }
 
 #include "moc_ProjectFileController.cpp"
-
-void ProjectFileController::loadVegasProject(const QUrl &url)
-{
-    loadProject(url);
-}
-
