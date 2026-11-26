@@ -145,6 +145,10 @@ public:
     // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
     // asset edit-friendly. The original file is left where it was.
     Q_INVOKABLE void convertToConstantFrameRate(const QStringList &assetIds);
+    // "Convert to Apple ProRes 422": transcodes video assets to Apple ProRes 422 QuickTime MOV
+    // in-process, one at a time, into a Transcodes_ProRes/ folder beside the project (or the
+    // source), and swaps each in the way a crop does. Never writes onto a source file.
+    Q_INVOKABLE void convertToProRes(const QStringList &assetIds);
     // The document was replaced (load, new, close) while a replace's probe ran: AssetLibrary
     // drops the probe, so finalizeReplace never runs. Clears the busy row, and the edit that
     // was waiting on it (jmn8718/Drift#74).
@@ -171,6 +175,7 @@ public:
 signals:
     void currentFolderIdChanged();
     void importingFolderChanged();
+    void proresTranscodeFinished(int convertedCount, int failedCount);
     // Outcome of importFolder: how many bin folders and assets it actually created, how many
     // files it passed over as unrecognized, and whether the walk stopped at the file limit with
     // more still on disk.
@@ -203,7 +208,15 @@ private:
     // Runs spec off-thread and swaps its output in for the asset at assetIndex, reporting through
     // editChanged/editFinished. The caller has checked no edit is running.
     void startEditJob(const QString &assetId, const QString &name,
-                      const drift::MediaEditSpec &spec, bool conversion);
+                      const drift::MediaEditSpec &spec, bool conversion,
+                      const QString &status = QString(), bool reuseOutput = false);
+    // The encode has ended (ok) or failed: swaps the output in for the asset, or reports why not.
+    // keepOutput leaves the file alone on failure — it is not this edit's to delete.
+    void landEdit(const QString &assetId, const QString &outputPath, bool ok, const QString &error,
+                  bool keepOutput);
+    void startNextProRes();
+    void onProResEditFinished(bool ok, const QString &message);
+    void finishProResBatch();
     void startNextConversion();
     // Starts the off-thread walk of `path`. Does not touch m_importingFolder: the queue owns
     // that, so a batch of folders is one busy stretch instead of flickering per folder.
@@ -240,6 +253,25 @@ private:
     bool m_editIsConversion = false;
     // Asset ids waiting for convertToConstantFrameRate; the edit job runs one at a time.
     QStringList m_conversionQueue;
+    struct ProResJob
+    {
+        QString assetId;
+        QString name;
+        QString inputPath;
+        QString outputPath;
+        int rotation = 0;
+        bool reuse = false; // outputPath already holds a ProRes transcode of inputPath
+    };
+    QList<ProResJob> m_proresQueue;
+    QString m_proresProjectId;
+    QString m_proresLastError;
+    int m_proresTotal = 0;
+    int m_proresDone = 0;
+    int m_proresFailed = 0;
+    bool m_proresActive = false;
+    bool m_proresInFlight = false;
+    bool m_proresCancelled = false;
+    bool m_editOutputKeep = false;
     // Folders waiting to be walked, and the totals of the batch in progress. One walk runs at
     // a time: each mutates the bin model on the GUI thread when it lands.
     QList<QUrl> m_folderQueue;

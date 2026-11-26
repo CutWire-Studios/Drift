@@ -17700,6 +17700,12 @@
         <source>Playback</source>
         <translation type="unfinished">Phát lại</translation>
     </message>
+    <message numerus="yes">
+        <source>Convert %n clips to Apple ProRes 422…</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>Dùng làm mặt nạ</translation>
@@ -17749,6 +17755,10 @@
     <message>
         <source>Remove proxy</source>
         <translation>Xóa proxy</translation>
+    </message>
+    <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -18037,6 +18047,32 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Another conversion or media edit is currently running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those clips are already Apple ProRes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No valid video files to transcode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422 and relinked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The project was closed before the replace landed</source>
         <translation>Dự án đã bị đóng trước khi quá trình thay thế hoàn tất</translation>
     </message>
@@ -18085,6 +18121,26 @@
     <message>
         <source>Couldn’t update the library</source>
         <translation>Không thể cập nhật thư viện</translation>
+    </message>
+    <message>
+        <source>Transcoding to Apple ProRes 422 (%1/%2)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>ProRes transcoding cancelled after %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422, %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not refresh “%1”: %2</source>
@@ -31214,6 +31270,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Open mask timeline</source>
         <translation>Mở dòng thời gian mặt nạ</translation>
+    </message>
+    <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
