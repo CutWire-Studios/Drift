@@ -75,6 +75,31 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DWITH_BGREMOVAL=ON
 cmake --build build -j$(nproc)
 ```
 
+## Nix
+
+`flake.nix` builds Drift and Skia the way the packaging lanes do:
+
+```bash
+nix build          # ./result/bin/drift
+```
+
+The dev shell has the toolchain plus the directories CMake would otherwise download: JUCE, libremidi,
+the ONNX Runtime headers and the Skia build. The normal `cmake` workflow works unchanged:
+
+```bash
+nix develop
+cmake -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+  -DDRIFT_JUCE_DIR="$DRIFT_JUCE_DIR" -DDRIFT_FETCH_JUCE=OFF \
+  -DDRIFT_LIBREMIDI_DIR="$DRIFT_LIBREMIDI_DIR" -DDRIFT_FETCH_LIBREMIDI=OFF -DDRIFT_FETCH_SDL=OFF \
+  -DDRIFT_SKIA_DIR="$DRIFT_SKIA_DIR" \
+  -DONNXRUNTIME_ROOT="$ONNXRUNTIME_ROOT" -DDRIFT_FETCH_ONNXRUNTIME=OFF \
+  -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+ninja -C build-dev drift
+```
+
+`nix build .#drift` is the packaged variant: Release, only the core effect set (the Addon Manager
+supplies the rest) and no in-app update feed, since Nix owns the install.
+
 ## Run
 
 ```bash
