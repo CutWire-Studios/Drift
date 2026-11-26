@@ -3,6 +3,8 @@
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/AppController.h"
 #include "app/editor/ProjectFileController.h"
+#include "core/animation/AutoZoom.h"
+#include "core/input/InputLog.h"
 #include "engine/capture/CaptureDevices.h"
 #include "engine/capture/CaptureWriter.h"
 #include "engine/capture/RecordingLocation.h"
@@ -14,6 +16,7 @@
 #include <QAudioSource>
 #include <QDateTime>
 #include <QFile>
+#include <QFileInfo>
 #include <QMediaDevices>
 #include <QSettings>
 #include <QUrl>
@@ -542,6 +545,87 @@ bool CaptureController::recordCamera(const QString &cameraId,
     d->setStatus(tr("Starting…"));
     d->source->start(request);
     return true;
+}
+
+bool CaptureController::hasInputLog(int trackIndex, int clipIndex) const
+{
+    if (!d->app->isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    const drift::Clip &clip = d->app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const QString sidecar = drift::inputLogPathFor(clip.path);
+    return !sidecar.isEmpty() && QFileInfo::exists(sidecar);
+}
+
+int CaptureController::applyAutoZoom(int trackIndex, int clipIndex, double zoom)
+{
+    if (!d->app->isValidClipIndex(trackIndex, clipIndex))
+        return 0;
+
+    const drift::Clip clip = d->app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const QString sidecar = drift::inputLogPathFor(clip.path);
+    if (sidecar.isEmpty() || !QFileInfo::exists(sidecar)) {
+        d->app->setLastMessage(tr("This clip has no recorded mouse activity to zoom to. Only "
+                                  "screen recordings Drift made carry it."),
+                               QStringLiteral("warning"));
+        return 0;
+    }
+
+    drift::InputLog log;
+    QString error;
+    if (!drift::readInputLog(sidecar, &log, &error) || log.isEmpty()) {
+        d->app->setLastMessage(error.isEmpty()
+                                   ? tr("This clip's recorded mouse activity is empty.")
+                                   : error,
+                               QStringLiteral("warning"));
+        return 0;
+    }
+
+    drift::AutoZoomOptions options;
+    options.zoom = zoom;
+    // frameW/frameH of 0 means the clip fills the canvas, which is what a screen recording of the
+    // whole screen does.
+    options.frame = QSizeF(clip.frameW > 0.0 ? clip.frameW : d->app->m_project.width(),
+                           clip.frameH > 0.0 ? clip.frameH : d->app->m_project.height());
+    // Where the clip rests now, so a recording the user has already placed off-centre zooms about
+    // where it sits rather than snapping to the middle. An empty track means the canvas centre.
+    options.restPosition =
+        QPointF(clip.positionX.isEmpty() ? d->app->m_project.width() / 2.0
+                                         : clip.positionX.evaluateAt(0),
+                clip.positionY.isEmpty() ? d->app->m_project.height() / 2.0
+                                         : clip.positionY.evaluateAt(0));
+
+    // The log is in recording time; the clip may have been trimmed, so shift into clip time and
+    // let the generator drop whatever falls outside.
+    QList<drift::InputEvent> points = log.presses();
+    for (drift::InputEvent &point : points)
+        point.timeUs -= clip.srcIn;
+
+    const drift::AutoZoomTracks tracks =
+        drift::autoZoomFromClicks(points, clip.timelineDuration, options);
+    if (tracks.isEmpty()) {
+        d->app->setLastMessage(tr("Nothing to zoom to in this part of the recording."),
+                               QStringLiteral("warning"));
+        return 0;
+    }
+
+    const bool replacedExisting = !clip.positionX.isEmpty() || !clip.scaleX.isEmpty();
+    const drift::Project before = d->app->m_project;
+    drift::Clip &target = d->app->m_project.tracks()[trackIndex].clips[clipIndex];
+    target.positionX = tracks.positionX;
+    target.positionY = tracks.positionY;
+    target.scaleX = tracks.scaleX;
+    target.scaleY = tracks.scaleY;
+
+    // One key per zoom edge, so the count the user is told is zooms rather than keyframes.
+    const int zooms = int(tracks.scaleX.keyframes().size());
+    d->app->pushProjectEdit(before, tr("Zoom to clicks"));
+    d->app->finishEdit(tr("Added %n zoom keyframe(s)", "", zooms));
+    if (replacedExisting) {
+        d->app->setLastMessage(tr("The clip's own position and scale keyframes were replaced. "
+                                  "Undo brings them back."),
+                               QStringLiteral("warning"));
+    }
+    return zooms;
 }
 
 void CaptureController::stop()
