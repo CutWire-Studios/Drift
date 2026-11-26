@@ -15,6 +15,7 @@
 #include "core/interchange/KdenliveReader.h"
 #include "core/interchange/premiere/MogrtReader.h"
 #include "core/interchange/OtioReader.h"
+#include "core/interchange/VegasReader.h"
 #include "core/interchange/premiere/PrprojReader.h"
 #include "core/interchange/ResolveReader.h"
 #include "engine/addons/AddonRegistry.h"
@@ -946,7 +947,7 @@ std::optional<AppController::ParsedProject> readRecoveryFile(const QString &path
 
 struct ProjectFileController::LoadResult
 {
-    enum class Kind { Bundle, Json, Recovery };
+    enum class Kind { Bundle, Json, Recovery, Vegas };
 
     QString error;
     Kind kind = Kind::Bundle;
@@ -954,6 +955,9 @@ struct ProjectFileController::LoadResult
     std::optional<AppController::ParsedProject> parsed;
     // Recovery loads only: the file the snapshot was taken of.
     QString originalPath;
+    QString projectName;
+    // VEGAS imports only: nested projects that could not be brought in.
+    int skipped = 0;
     // Bundle loads only.
     drift::bundle::BundleInfo bundle;
     QHash<QString, QString> remap;
@@ -1532,6 +1536,22 @@ void ProjectFileController::loadProject(const QUrl &url)
         //     return;
         // }
 
+        if (path.endsWith(QLatin1String(".veg"), Qt::CaseInsensitive)
+            || drift::vegas::isVegasProject(path)) {
+            result->kind = LoadResult::Kind::Vegas;
+            QString readError;
+            const auto proj = drift::vegas::readProject(path, &readError, &result->skipped);
+            if (!proj) {
+                result->error = readError.isEmpty() ? tr("Failed to open VEGAS Pro project") : readError;
+            } else {
+                result->projectName = proj->name();
+                const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
+                result->parsed = AppController::parseProjectJson(data, &result->error);
+            }
+            deliver();
+            return;
+        }
+
         if (fileStartsWithJsonObject(path)) {
             result->kind = LoadResult::Kind::Json;
             result->parsed = readProjectJsonFile(path, &result->error);
@@ -1715,6 +1735,29 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         return QStringLiteral("%1. %2")
             .arg(message, tr("Relinked %n clip(s) to ProRes transcodes", nullptr, relinked));
     };
+    if (result->kind == LoadResult::Kind::Vegas) {
+        m_app->applyParsedProject(std::move(*result->parsed));
+        m_embeddedSources.clear();
+        setCurrentProjectPath(QString());
+        setDirty(true);
+        deleteRecoveryFile();
+        m_app->setProjectLayoutChosen(true);
+        if (m_app->m_assetLibrary)
+            m_app->m_assetLibrary->setProject(&m_app->m_project);
+        const int missing = m_app->m_assetLibrary ? m_app->m_assetLibrary->missingCount() : 0;
+        const QString name = result->projectName.isEmpty() ? projectNameForUrl(url) : result->projectName;
+        QString message = missing > 0
+            ? tr("VEGAS Pro project imported: %1, but %n media file(s) could not be found", nullptr, missing)
+                  .arg(name)
+            : tr("VEGAS Pro project imported: %1").arg(name);
+        if (result->skipped > 0)
+            message += QLatin1Char(' ')
+                + tr("%n nested VEGAS Pro project(s) could not be imported.", nullptr, result->skipped);
+        m_app->setLastMessage(message, missing > 0 || result->skipped > 0 ? QStringLiteral("warning")
+                                                                           : QStringLiteral("success"));
+        finishProjectLoad(true, message);
+        return;
+    }
 
     if (result->kind == LoadResult::Kind::Json) {
         m_app->applyParsedProject(std::move(*result->parsed));

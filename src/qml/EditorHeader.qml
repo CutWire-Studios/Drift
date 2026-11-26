@@ -31,6 +31,7 @@ Item {
     // functions below and the RecentProjectsPopup connections when the readers are stable.
     readonly property var projectFilter: [
         qsTr("Drift project (*.drift)"),
+        qsTr("Sony / MAGIX VEGAS Pro (*.veg)"),
         qsTr("JSON document (*.json)"),
         qsTr("All Files (*)")
     ]

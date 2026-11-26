@@ -10726,6 +10726,10 @@
         <translation>Todos los archivos (*)</translation>
     </message>
     <message>
+        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name your project</source>
         <translation>Ponle un nombre a tu proyecto</translation>
     </message>
@@ -20669,6 +20673,28 @@ Si la reproducción se corta, prueba con otra opción.</translation>
             <numerusform></numerusform>
         </translation>
     </message>
+    <message>
+        <source>Failed to open VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>VEGAS Pro project imported: %1, but %n media file(s) could not be found</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>VEGAS Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nested VEGAS Pro project(s) could not be imported.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message numerus="yes">
         <source>Relinked %n clip(s) to ProRes transcodes</source>
         <translation type="unfinished">
@@ -21924,6 +21950,18 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Gyro pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a valid VEGAS Pro project file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The VEGAS Pro project header is corrupted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No timeline tracks found in the VEGAS Pro project</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

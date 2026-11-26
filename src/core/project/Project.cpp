@@ -987,10 +987,10 @@ bool Project::hasExportExcludedTracks() const
     return any;
 }
 
-QString Project::addSequence(TrackList tracks)
+QString Project::addSequence(TrackList tracks, const QString &preferredId)
 {
     Sequence sequence;
-    sequence.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    sequence.id = !preferredId.isEmpty() ? preferredId : QUuid::createUuid().toString(QUuid::WithoutBraces);
     sequence.tracks = std::move(tracks);
     drift::ensureTrackIds(sequence.tracks);
     m_sequences.insert(sequence.id, sequence);

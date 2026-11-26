@@ -601,6 +601,7 @@ private slots:
     void splatInputsAreModelPaths();
     void convertToProResTranscodesAndRelinks();
     void convertToProResNeverTouchesExistingFiles();
+    void loadVegasProjectViaLoadProject();
 };
 
 // A file dragged in from the file manager has no bin row yet, so the timeline's drop preview
@@ -20163,6 +20164,25 @@ void EditorStateTest::convertToProResNeverTouchesExistingFiles()
     QVERIFY(a->path != b->path);
     QCOMPARE(a->codecName, QStringLiteral("prores"));
     QCOMPARE(b->codecName, QStringLiteral("prores"));
+}
+
+void EditorStateTest::loadVegasProjectViaLoadProject()
+{
+    const QString testVeg = QDir(QStringLiteral(QT_TESTCASE_SOURCEDIR "/data")).filePath(QStringLiteral("sample.veg"));
+    if (!QFile::exists(testVeg)) {
+        QSKIP("Sample .veg file not present");
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    QSignalSpy loadFinished(state.projectFile(), &ProjectFileController::projectLoadFinished);
+
+    state.projectFile()->loadProject(QUrl::fromLocalFile(testVeg));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.projectFile()->projectLoadPending(), 10000);
+    QCOMPARE(loadFinished.count(), 1);
+    QVERIFY(loadFinished.at(0).at(0).toBool());
+    QVERIFY(state.tracks().size() >= 1);
+    QVERIFY(!state.project()->assets().isEmpty());
 }
 
 QTEST_MAIN(EditorStateTest)
