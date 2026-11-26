@@ -15,8 +15,18 @@ Column {
         width: parent.width
         inspector: root.inspector
     }
+    TextInspectorScriptSection {
+        visible: inspector.showContent && inspector.clipKind === "text"
+        width: parent.width
+        inspector: root.inspector
+    }
     TextInspectorFontSection {
         visible: inspector.showFont && inspector.hasTextStyle
+        width: parent.width
+        inspector: root.inspector
+    }
+    TextInspectorScrollSection {
+        visible: inspector.showSpacing && inspector.hasTextStyle && inspector.clipKind === "text"
         width: parent.width
         inspector: root.inspector
     }

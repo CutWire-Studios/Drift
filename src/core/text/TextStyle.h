@@ -9,6 +9,9 @@
 #include <QJsonObject>
 #include <QList>
 #include <QMap>
+#include <QPointF>
+#include <QRectF>
+#include <QSizeF>
 #include <QString>
 #include <QStringList>
 
@@ -19,6 +22,12 @@ namespace drift {
 enum class TextAlign { Left, Center, Right };
 enum class TextVAlign { Top, Middle, Bottom };
 enum class TextCase { None, Upper, Lower, Title, Sentence };
+// Travel of the whole block across the canvas over the clip's length. RollUp is end credits
+// (bottom to top); the crawls are a ticker, which lays the text out on one unwrapped line.
+enum class TextScroll { None, RollUp, CrawlLeft, CrawlRight };
+
+QString textScrollToString(TextScroll scroll);
+TextScroll textScrollFromString(const QString &scroll);
 
 // Which words a style pack accents. The positional rules are time-independent, so the layout
 // stays cacheable for the whole cue; Karaoke follows the word being spoken and re-lays-out as
@@ -92,6 +101,11 @@ struct TextStyle
     TextAlign align = TextAlign::Center;
     TextVAlign valign = TextVAlign::Middle;
     bool wordWrap = true;
+    TextScroll scroll = TextScroll::None;
+    // Whether the block starts / ends fully off the canvas edge it travels from / to. Off, that end
+    // rests where the clip's frame puts the text, so a credit can settle on screen.
+    bool scrollEnterOffscreen = true;
+    bool scrollExitOffscreen = true;
     double lineHeight = 1.2; // multiple of the font's natural line spacing
     double letterSpacing = 0.0; // px at pixelSize
     TextCase textCase = TextCase::None; // display transform; the clip's text stays as typed
@@ -122,6 +136,9 @@ struct TextStyle
     // property to a constant. Mirrors Mask::keyframes.
     QMap<QString, KeyframeTrack<double>> keyframes;
 
+    bool isCrawl() const { return scroll == TextScroll::CrawlLeft || scroll == TextScroll::CrawlRight; }
+    // A crawl is one line however wide, whatever the wrap setting says.
+    bool wraps() const { return wordWrap && !isCrawl(); }
     bool isAnimated() const; // has enabled keyframe tracks
     bool hasFragmentAnimation() const { return animation.isActive(); }
     // A copy with every keyframed property baked down to its value at clipTimeUs. The renderers
@@ -134,6 +151,12 @@ struct TextStyle
     QColor primaryColor() const;
     void setPrimaryColor(const QColor &color);
 };
+
+// How far the scroll has moved the block from where its frame lays it out, render px. `rest` is
+// the block's painted rect at rest, `canvas` the render canvas. Linear over the clip's duration,
+// so scrubbing lands on the same pixels as playing. Zero for a style that does not scroll.
+QPointF textScrollOffset(const TextStyle &style, const QRectF &rest, const QSizeF &canvas,
+                         TimeUs clipTimeUs, TimeUs clipDurationUs);
 
 // Convenience accessors the layout and painters use so nobody spells out layer lookups.
 QColor textFillColor(const TextStyle &style, bool accent);

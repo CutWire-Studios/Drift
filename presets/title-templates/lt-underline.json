@@ -1,0 +1,107 @@
+{
+  "format": 1,
+  "id": "lt-underline",
+  "label": "Lower third: minimal underline",
+  "category": "lower-third",
+  "order": 40,
+  "duration": 5,
+  "elements": [
+    {
+      "type": "text",
+      "key": "name",
+      "label": "Name",
+      "text": "Taylor Quinn",
+      "box": [
+        0.07,
+        0.715,
+        0.6,
+        0.08
+      ],
+      "font": "Inter",
+      "weight": 700,
+      "size": 0.055,
+      "color": "#FFFFFF",
+      "align": "left",
+      "valign": "middle",
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "in": {
+        "preset": "wipe",
+        "duration": 0.55,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "shape",
+      "name": "Line",
+      "shape": "rectangle",
+      "box": [
+        0.07,
+        0.805,
+        0.2,
+        0.004
+      ],
+      "fill": "#FFFFFF",
+      "start": 0.25,
+      "in": {
+        "anim": "slideRight",
+        "duration": 0.45,
+        "ease": "easeOut"
+      },
+      "out": {
+        "anim": "slideLeft",
+        "duration": 0.35,
+        "ease": "easeIn"
+      }
+    },
+    {
+      "type": "text",
+      "key": "role",
+      "label": "Role",
+      "text": "Documentary Filmmaker",
+      "box": [
+        0.07,
+        0.82,
+        0.6,
+        0.05
+      ],
+      "font": "Inter",
+      "weight": 400,
+      "size": 0.03,
+      "color": "#F3F4F6",
+      "align": "left",
+      "valign": "middle",
+      "shadow": {
+        "color": "#000000",
+        "y": 0.06,
+        "blur": 0.2,
+        "opacity": 0.45
+      },
+      "italic": true,
+      "start": 0.4,
+      "in": {
+        "preset": "fade",
+        "duration": 0.5,
+        "unit": "block",
+        "ease": "easeOut"
+      },
+      "out": {
+        "preset": "fade",
+        "duration": 0.35,
+        "unit": "block",
+        "ease": "easeIn"
+      }
+    }
+  ]
+}

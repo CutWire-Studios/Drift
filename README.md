@@ -72,6 +72,25 @@ What you see in the preview is what you export. One compositor, one look, no sur
 flatpak install flathub org.cutwire.Drift
 flatpak run org.cutwire.Drift
 ```
+
+**NixOS:** run it from the flake:
+
+```bash
+nix run github:CutWire-Studios/Drift
+```
+
+Or add the flake to your configuration:
+
+```nix
+inputs.drift.url = "github:CutWire-Studios/Drift";
+# optional: reuse the system nixpkgs instead of a second copy
+inputs.drift.inputs.nixpkgs.follows = "nixpkgs";
+
+environment.systemPackages = [
+  inputs.drift.packages.${pkgs.stdenv.hostPlatform.system}.default
+];
+```
+
 **macOS** — install via Homebrew:
 
 ```bash
@@ -126,7 +145,8 @@ then apply it to the rest.
 
 **Masks that follow the shot.** Shape, freeform and image masks with feather and invert. Point and
 planar trackers pin a mask, a title, or a sticker to something moving, or steady the clip. Blur or
-pixelate any masked area.
+pixelate any masked area — or blur every face in a clip in one click, each one tracked and
+editable afterwards.
 
 **150+ transitions and 40+ effects.** Every look previews on your footage. One click can drop a
 whole stack — Beat Drop, Glitch Cut, Neon Cutout. Trails of earlier frames, and grades that stick
@@ -169,6 +189,10 @@ you change speed, record a voiceover.
 
 **Find shots. Switch cameras.** Search footage for what’s on screen. Watch every angle at once and
 punch the cut.
+
+**Record the screen, or the webcam.** Capture a monitor, a window or the camera straight into the
+bin, with sound, then cut it like any other clip. On Linux it goes through the desktop's own
+screen-sharing portal, so it works on Wayland.
 
 **Stabilise, export, take the project with you.** Smooth shaky clips, upscale, play heavy files
 smoothly. MP4, GIF, audio-only, or just a range. Pack the media with the edit so paths stay whole.

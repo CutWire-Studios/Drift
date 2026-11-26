@@ -435,9 +435,8 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
                 return scalar;
             QString procKey;
             if (parseProceduralProp(clip, prop, &procKey)) {
-                const drift::ProceduralPackage package = proceduralForId(clip.procedural.packageId);
                 EffectPresetEntry def;
-                def.meta.parameters = package.parameters;
+                def.meta.parameters = proceduralSpecsFor(clip);
                 drift::Effect holder;
                 holder.parameters = clip.procedural.parameters;
                 const QMap<QString, QVariant> params = resolvedEffectParameters(holder, def);
@@ -644,7 +643,7 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
                 out.append(QStringLiteral("model3d.%1").arg(key));
         }
     }
-    if (clip.type == drift::ClipType::Procedural) {
+    if (clip.type == drift::ClipType::Procedural || clip.type == drift::ClipType::Generator) {
         for (auto it = clip.procedural.paramKeyframes.constBegin(); it != clip.procedural.paramKeyframes.constEnd(); ++it) {
             if (!it->isEmpty())
                 out.append(QStringLiteral("proc.%1").arg(it.key()));

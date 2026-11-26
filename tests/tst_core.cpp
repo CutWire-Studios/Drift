@@ -164,6 +164,7 @@ private slots:
     void clipEnabledRoundTrip();
     void maskingTrackingFieldsRoundTrip();
     void maskFramePatchesRoundTripAndLookUpByMediaTime();
+    void maskFaceSlotRoundTrip();
     void projectWithoutMaskPatchesLoadsEmpty();
     void assetWithoutSourceLabKeysLoadsEmpty();
     void sourceLabRebaseMath();
@@ -2310,7 +2311,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 32);
+    QCOMPARE(drift::Project::kCurrentVersion, 35);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2350,7 +2351,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 32);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -2375,6 +2376,49 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     QCOMPARE(mask.patchAt(drift::secondsToUs(2) + 1, frame / 2), QStringLiteral("/tmp/fix-b.png"));
     QCOMPARE(mask.patchKeyAt(drift::secondsToUs(3), frame / 2), drift::TimeUs(-1));
     QVERIFY(drift::Mask{}.patchAt(0, frame).isEmpty());
+}
+
+void CoreTest::maskFaceSlotRoundTrip()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip generated;
+    generated.id = QStringLiteral("mask-face");
+    generated.type = drift::ClipType::Adjustment;
+    generated.adjustmentKind = drift::AdjustmentKind::Mask;
+    generated.timelineDuration = drift::secondsToUs(4.0);
+    generated.mask.shape = drift::MaskShape::Ellipse;
+    generated.mask.faceSlot = 1;
+
+    drift::Clip drawn;
+    drawn.id = QStringLiteral("mask-drawn");
+    drawn.type = drift::ClipType::Adjustment;
+    drawn.adjustmentKind = drift::AdjustmentKind::Mask;
+    drawn.timelineDuration = drift::secondsToUs(4.0);
+    drawn.mask.shape = drift::MaskShape::Ellipse;
+
+    project.tracks()[0].clips.append(generated);
+    project.tracks()[0].clips.append(drawn);
+
+    const QJsonObject json = project.toJson();
+    const QJsonArray clips = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                 .value(QStringLiteral("clips")).toArray();
+    QCOMPARE(clips.at(0).toObject().value(QStringLiteral("mask")).toObject()
+                 .value(QStringLiteral("faceSlot")).toInt(-1), 1);
+    // Written only when set, so a hand-drawn mask carries no marker at all rather than a -1 that
+    // every older project would then be missing.
+    QVERIFY(!clips.at(1).toObject().value(QStringLiteral("mask")).toObject()
+                 .contains(QStringLiteral("faceSlot")));
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(loaded.tracks().at(0).clips.at(0).mask.faceSlot, 1);
+    // A mask with no marker loads as "not generated", which is what keeps regeneration from
+    // deleting it.
+    QCOMPARE(loaded.tracks().at(0).clips.at(1).mask.faceSlot, -1);
 }
 
 void CoreTest::projectWithoutMaskPatchesLoadsEmpty()
@@ -5243,7 +5287,8 @@ void CoreTest::fadeSerializationAndMultiplier()
     QCOMPARE(cc.fadeInCurve, drift::FadeCurve::Custom);
     QVERIFY(!cc.fadeInShape.isEmpty());
     QCOMPARE(cc.fadeOutCurve, drift::FadeCurve::EqualPower);
-    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(), 32);
+    QCOMPARE(customLoaded.toJson().value(QStringLiteral("version")).toInt(),
+             drift::Project::kCurrentVersion);
     const drift::TimeUs midIn = c.timelineStart + drift::secondsToUs(0.5);
     QVERIFY(qAbs(cc.fadeMultiplier(midIn) - 0.25) < 1e-6);
 
@@ -5654,7 +5699,7 @@ void CoreTest::layoutV31RoundTrip()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 32);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
     const QJsonObject clipJson = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                      .value(QStringLiteral("clips")).toArray().at(0).toObject();
     QVERIFY(!clipJson.contains(QStringLiteral("x")));

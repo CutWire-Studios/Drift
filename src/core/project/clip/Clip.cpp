@@ -29,6 +29,8 @@ QString clipTypeToString(ClipType type)
         return QStringLiteral("composite");
     case ClipType::Procedural:
         return QStringLiteral("procedural");
+    case ClipType::Generator:
+        return QStringLiteral("generator");
     }
     return QStringLiteral("video");
 }
@@ -57,6 +59,8 @@ ClipType clipTypeFromString(const QString &type)
         return ClipType::Composite;
     if (type == QStringLiteral("procedural"))
         return ClipType::Procedural;
+    if (type == QStringLiteral("generator"))
+        return ClipType::Generator;
     return ClipType::Video;
 }
 

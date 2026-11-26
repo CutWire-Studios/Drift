@@ -53,7 +53,7 @@ env:
     -DDRIFT_CHANNEL=${{ inputs.channel }}
     -DDRIFT_BUILD_ID=${{ inputs.build_id }}
     ${{ inputs.channel == 'nightly' && '-DDRIFT_UPDATE_FEED_URL=' || '' }}
-  QT_VERSION: "6.10.3"
+  QT_VERSION: "6.11.1"
   # Drift needs Quick, QuickControls2, QuickEffects, Widgets, OpenGL, Network, Concurrent and Test
   # (qtbase + qtdeclarative, both in the base install); qtmultimedia is the only extra it links.
   # qtimageformats is for the import side: without it webp/tiff stills cannot be added to a project.
@@ -580,7 +580,7 @@ jobs:
           # Disabled: vcpkg's skia[gl] is unsupported on arm64-windows.
           # - arch: arm64
           #   runner: windows-11-arm
-          #   # Native arm64 host kit: Qt 6.10 ships win64_msvc2022_arm64 for windows_arm64, so
+          #   # Native arm64 host kit: Qt 6.11 ships win64_msvc2022_arm64 for windows_arm64, so
           #   # moc/rcc/qmlcachegen run natively and no desktop host Qt (autodesktop) is needed.
           #   qt_host: windows_arm64
           #   qt_arch: win64_msvc2022_arm64
@@ -644,6 +644,9 @@ jobs:
           modules: ${{ env.QT_MODULES }}
           cache: true
           add-tools-to-path: true
+          # aqtinstall 3.3.0 (latest release) cannot read Qt 6.11's per-arch Windows repo layout;
+          # the fix (miurahr/aqtinstall#1000) is only on master. Drop this once a release has it.
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@4c759852b1108cc801d8e24979136b895b5155d4
 
       # The key covers this workflow too: the package list lives in the install step below, and
       # actions/cache never re-saves on a hit, so a key blind to it would keep serving a cache

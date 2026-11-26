@@ -5,7 +5,7 @@
 #   scripts/package-macos.sh --identity "Developer ID Application: ..." --notarize
 #   scripts/package-macos.sh --build-dir build-macos --skip-build
 #   scripts/package-macos.sh --channel nightly --build-id 20260922.ac5601e
-#   scripts/package-macos.sh --qt-prefix ~/Qt/6.10.3/macos --ffmpeg-dir .deps/ffmpeg
+#   scripts/package-macos.sh --qt-prefix ~/Qt/6.11.1/macos --ffmpeg-dir .deps/ffmpeg
 #
 # --ffmpeg-dir is for an official Qt, which ships its own FFmpeg dylibs under the same install
 # names as the FFmpeg Drift links: that directory's lib/ copies replace Qt's in the bundle.

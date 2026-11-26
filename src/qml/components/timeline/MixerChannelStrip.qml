@@ -18,6 +18,8 @@ Item {
     property bool isVideo: false
     property bool armPaused: false
     property real volume: 1.0
+    // Control-surface target for the fader while learn mode is on, e.g. "mixer.volume.1".
+    property string learnId: ""
     property real pan: 0.0
     property real levelL: 0
     property real levelR: 0
@@ -130,6 +132,13 @@ Item {
         MixerFader {
             channel: strip
         }
+    }
+
+    SurfaceLearnArea {
+        anchors.fill: meterRow
+        targetId: strip.learnId
+        label: qsTr("%1 volume").arg(strip.name)
+        visible: strip.learnId !== "" && EditorState.surfaces.learnMode
     }
 
     MixerChannelDivider {

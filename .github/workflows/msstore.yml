@@ -28,7 +28,7 @@ concurrency:
 env:
   CCACHE_VERSION: "4.14.2"
   # Same pins as package.yml; keep them in sync.
-  QT_VERSION: "6.10.3"
+  QT_VERSION: "6.11.1"
   QT_MODULES: >-
     qtmultimedia
     qtimageformats
@@ -139,6 +139,9 @@ jobs:
           modules: ${{ env.QT_MODULES }}
           cache: true
           add-tools-to-path: true
+          # aqtinstall 3.3.0 (latest release) cannot read Qt 6.11's per-arch Windows repo layout;
+          # the fix (miurahr/aqtinstall#1000) is only on master. Drop this once a release has it.
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@4c759852b1108cc801d8e24979136b895b5155d4
 
       # Same key as package.yml's windows job so a Store build reuses the installer job's vcpkg binaries.
       - name: Restore vcpkg binary cache

@@ -205,7 +205,7 @@ void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &t
         if (!inRange(track)) {
             if (anchors.contains(track.id)) {
                 hash.addData(track.id.toUtf8());
-                hash.addData("#", 1);
+                hash.addData("#");
             }
             continue;
         }
@@ -272,7 +272,7 @@ void hashTimeline(QCryptographicHash &hash, const Prepared &p, const Timeline &t
             if (!included.contains(partner->id))
                 include(*partner);
         }
-        hash.addData("|", 1);
+        hash.addData("|");
     }
 }
 

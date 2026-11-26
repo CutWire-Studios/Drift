@@ -1,10 +1,12 @@
 #include "app/editor/ProjectFileController.h"
+#include "app/editor/ProjectFolderController.h"
 #include "app/mcp/McpController.h"
 #include "app/bin/MediaBinController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/MaskingController.h"
 
 #include "app/editor/AppController.h"
+#include "ui/preview/PreviewController.h"
 
 #include "app/bin/AssetLibrary.h"
 #include "app/platform/RunningInstances.h"
@@ -69,6 +71,7 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
     : QObject(parent)
     , m_app(app)
 {
+    m_folder = new ProjectFolderController(this, this);
     // The state a fresh controller starts clean in, until the first save, load or new project.
     m_savedProject = std::make_shared<const drift::Project>(m_app->m_project);
     // Periodically snapshot unsaved work to a recovery file so a crash doesn't
@@ -650,6 +653,12 @@ void ProjectFileController::writeProjectBundle(const QUrl &url, const std::optio
     const QString path = writeTargetPath(url);
     if (path.isEmpty()) {
         m_app->setLastMessage(tr("That save location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+    if (m_folder->active() && !adopt && QDir::cleanPath(path) == m_folder->folderPath()) {
+        m_folder->flushNow();
+        m_app->setLastMessage(tr("Project saved"), QStringLiteral("success"));
+        emit projectSaved(true);
         return;
     }
     if (m_packaging) {
@@ -1444,6 +1453,10 @@ void ProjectFileController::cancelCollectMedia()
 
 void ProjectFileController::loadProject(const QUrl &url)
 {
+    if (url.isLocalFile() && QFileInfo(url.toLocalFile()).isDir()) {
+        loadProjectFolder(url.toLocalFile());
+        return;
+    }
     if (!beginProjectLoad()) {
         m_app->setLastMessage(tr("Still opening a project — try again in a moment."),
                        QStringLiteral("warning"));
@@ -1939,6 +1952,197 @@ void ProjectFileController::openRecentProject(const QString &path)
     loadProject(m_app->fileUrl(path));
 }
 
+void ProjectFileController::notify(const QString &message, const QString &kind)
+{
+    m_app->setLastMessage(message, kind);
+}
+
+ProjectFileController::FolderCapture ProjectFileController::captureFolder() const
+{
+    FolderCapture capture;
+    capture.project = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
+    capture.guides = m_app->sessionJson().value(QStringLiteral("guides")).toObject();
+    capture.revision = m_dirtyRevision;
+    return capture;
+}
+
+QJsonObject ProjectFileController::currentDocument() const
+{
+    return m_app->m_project.toJson(true);
+}
+
+void ProjectFileController::markFolderClean(const std::shared_ptr<const drift::Project> &project)
+{
+    markClean(project);
+    deleteRecoveryFile();
+}
+
+void ProjectFileController::loadProjectFolder(const QString &path)
+{
+    if (!beginProjectLoad()) {
+        m_app->setLastMessage(tr("Still opening a project — try again in a moment."),
+                              QStringLiteral("warning"));
+        return;
+    }
+    const QString root = QDir::cleanPath(QFileInfo(path).absoluteFilePath());
+    const ProjectFolderController::Composed composed = ProjectFolderController::compose(root);
+    QString error;
+    std::optional<AppController::ParsedProject> parsed;
+    if (composed.contents.project.isEmpty()) {
+        error = tr("%1 isn’t a project folder (there is no project.json in it)").arg(QFileInfo(root).fileName());
+    } else if (!composed.ok) {
+        for (const drift::projdir::Problem &p : composed.problems) {
+            if (p.severity == QLatin1String("error")) {
+                error = QStringLiteral("%1:%2:%3: %4").arg(p.file).arg(p.line).arg(p.column).arg(p.message);
+                break;
+            }
+        }
+    } else {
+        parsed = AppController::parseProjectJson(composed.doc, &error);
+    }
+    if (!parsed) {
+        m_app->setLastMessage(error, QStringLiteral("error"));
+        finishProjectLoad(false, error);
+        return;
+    }
+    ++m_loadGeneration;
+    m_app->applyParsedProject(std::move(*parsed));
+    m_embeddedSources.clear();
+    setCurrentProjectPath(root);
+    addRecentProject(root);
+    deleteRecoveryFile();
+    m_app->setProjectLayoutChosen(true);
+    m_folder->activate(root, composed);
+    // Scripts changed since the files were last written: the open project is ahead of the folder.
+    if (composed.scriptsChangedDoc)
+        m_folder->scheduleWrite();
+    const int missing = m_app->m_assetLibrary->missingCount();
+    const QString message = missing > 0
+        ? tr("Project folder loaded, but %n media file(s) could not be found", nullptr, missing)
+        : tr("Project folder loaded");
+    m_app->setLastMessage(message, missing > 0 ? QStringLiteral("warning") : QStringLiteral("success"));
+    finishProjectLoad(true, message);
+}
+
+void ProjectFileController::detachGenerated(const QString &clipId, const QString &script)
+{
+    const drift::Project before = m_app->m_project;
+    drift::Project after = before;
+    int changed = 0;
+    after.forEachTrackList([&](QList<drift::Track> &tracks) {
+        for (drift::Track &track : tracks) {
+            bool touched = false;
+            for (drift::Clip &clip : track.clips) {
+                const bool match = !clip.generatedBy.isEmpty()
+                    && (clipId.isEmpty() ? (script.isEmpty() || clip.generatedBy == script) : clip.id == clipId);
+                if (!match)
+                    continue;
+                clip.generatedBy.clear();
+                touched = true;
+                ++changed;
+            }
+            // A generated track holding a detached clip would be removed with the rest of its script's
+            // output, taking the clip with it.
+            if (!track.generatedBy.isEmpty() && (touched || (clipId.isEmpty() && (script.isEmpty() || track.generatedBy == script))))
+                track.generatedBy.clear();
+        }
+    });
+    if (clipId.isEmpty()) {
+        for (auto it = after.assets().begin(); it != after.assets().end(); ++it) {
+            if (!it->generatedBy.isEmpty() && (script.isEmpty() || it->generatedBy == script)) {
+                it->generatedBy.clear();
+                ++changed;
+            }
+        }
+    }
+    if (!changed)
+        return;
+    m_app->m_undoStack.push(new drift::ProjectSnapshotCommand(
+        &m_app->m_project, before, std::move(after), clipId.isEmpty() ? tr("Detach generated items") : tr("Detach clip")));
+    m_app->notifyTracksChanged();
+}
+
+void ProjectFileController::applyFolderProject(drift::Project project, const QJsonObject &root,
+                                               const QString &label)
+{
+    const drift::Project before = m_app->m_project;
+    const auto transcripts = project.transcripts();
+    // The command's redo() assigns the snapshot, which keeps the live transcripts rather than the
+    // new project's, so those are put back afterwards.
+    m_app->m_undoStack.push(new drift::ProjectSnapshotCommand(&m_app->m_project, before, std::move(project), label));
+    m_app->m_project.setTranscripts(transcripts);
+
+    if (root.contains(QStringLiteral("guides"))) {
+        const QJsonObject guides = root.value(QStringLiteral("guides")).toObject();
+        m_app->m_preview->restoreGuidesEnabled(guides.value(QStringLiteral("enabled")).toBool(false));
+        m_app->m_projectGuideSets.clear();
+        for (const QJsonValue &value : guides.value(QStringLiteral("sets")).toArray()) {
+            drift::GuideSet set = drift::guideSetFromJson(value.toObject());
+            if (!set.id.isEmpty())
+                m_app->m_projectGuideSets.append(set);
+        }
+        m_app->m_activeGuideSets.clear();
+        for (const QJsonValue &value : guides.value(QStringLiteral("active")).toArray()) {
+            const QString id = value.toString();
+            if (m_app->findGuideSet(id) && !m_app->m_activeGuideSets.contains(id))
+                m_app->m_activeGuideSets.append(id);
+        }
+        emit m_app->guidesChanged();
+    }
+    if (m_app->m_assetLibrary) {
+        m_app->m_assetLibrary->syncToProject();
+        m_app->m_assetLibrary->ensureAllMedia();
+    }
+    m_app->notifyTracksChanged();
+    if (m_app->mcp()) {
+        m_app->mcp()->setPendingChangeLabel(label);
+        m_app->mcp()->bumpEditRevision();
+    }
+    m_app->setLastMessage(label);
+    emit projectNameChanged();
+    emit backgroundChanged();
+}
+
+void ProjectFileController::adoptFolder(const QString &path, const drift::projdir::FileMap &files,
+                                        const std::shared_ptr<const drift::Project> &project)
+{
+    const QString root = QDir::cleanPath(path);
+    m_embeddedSources.clear();
+    setCurrentProjectPath(root);
+    addRecentProject(root);
+    ProjectFolderController::Composed composed;
+    composed.contents.project = files;
+    m_folder->activate(root, composed);
+    markClean(project);
+    deleteRecoveryFile();
+}
+
+void ProjectFileController::exportBundleCopy(const QUrl &url)
+{
+    const QString path = writeTargetPath(url);
+    if (path.isEmpty()) {
+        m_app->setLastMessage(tr("That save location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+    auto capture = std::make_shared<SaveCapture>(captureSave(/*embedSource=*/false));
+    (void)QtConcurrent::run([this, path, url, capture]() {
+        QList<drift::bundle::MediaEntry> media;
+        QString error;
+        bool ok = writeBundle(path, *capture, {}, &media, &error);
+        if (ok)
+            ok = commitWriteTarget(path, url, {}, &error);
+        else
+            discardWriteTarget(path, url);
+        QMetaObject::invokeMethod(
+            this,
+            [this, ok, error, path]() {
+                m_app->setLastMessage(ok ? tr("Exported %1").arg(QFileInfo(path).fileName()) : error,
+                                      ok ? QStringLiteral("success") : QStringLiteral("error"));
+            },
+            Qt::QueuedConnection);
+    });
+}
+
 QVariantList ProjectFileController::recentProjects() const
 {
     QSettings settings;
@@ -1951,7 +2155,7 @@ QVariantList ProjectFileController::recentProjects() const
     for (const QString &path : paths) {
         const bool isContent = path.startsWith(QLatin1String("content://"), Qt::CaseInsensitive);
         QString id = ids.value(path).toString();
-        if (id.isEmpty() && !isContent && QFileInfo::exists(path)) {
+        if (id.isEmpty() && !isContent && QFileInfo(path).isFile()) {
             QString error;
             if (const auto manifest = drift::bundle::readManifest(path, &error)) {
                 id = manifest->projectId;
@@ -2106,6 +2310,7 @@ void ProjectFileController::setDirty(bool dirty)
         return;
     }
     ++m_dirtyRevision;
+    emit documentEdited();
     if (m_dirty)
         return;
     m_dirty = true;
@@ -2116,6 +2321,8 @@ void ProjectFileController::setCurrentProjectPath(const QString &path)
 {
     if (m_currentProjectPath == path)
         return;
+    if (m_folder->active() && QDir::cleanPath(path) != m_folder->folderPath())
+        m_folder->close();
     m_currentProjectPath = path;
     // Cleared by newProject(); set after load/save/package so next launch can reopen.
     if (!m_isolatedSession)

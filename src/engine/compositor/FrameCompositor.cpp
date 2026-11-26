@@ -9,6 +9,9 @@
 #include "engine/compositor/effects/EffectProcessor.h"
 #include "engine/face/tracking/FaceTrack.h"
 #include "engine/compositor/GpuCompositor.h"
+#include "engine/compositor/ScriptedText.h"
+#include "engine/packages/assets/EmojiCatalog.h"
+#include "core/project/sources/GeneratorKinds.h"
 #include "engine/compositor/PreviewStream.h"
 #include "engine/encode/bake/BakeReader.h"
 #include "engine/gpu/effects/GpuEffectExecutor.h"
@@ -37,6 +40,7 @@
 #include "core/edit/TimelineOps.h"
 #include "core/project/Transition.h"
 #ifdef DRIFT_WITH_SKIA
+#include "engine/render2d/generators/SkiaGeneratorPainter.h"
 #include "engine/render2d/shapes/SkiaShapePainter.h"
 #include "engine/render2d/text/SkiaTextPainter.h"
 #endif
@@ -555,7 +559,7 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
             // the decoders must never open.
             if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector
                 || clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Pdf
-                || clip.type == drift::ClipType::Procedural)
+                || clip.type == drift::ClipType::Procedural || clip.type == drift::ClipType::Generator)
                 continue;
 
             if ((track.type == drift::TrackType::Video || track.type == drift::TrackType::Shape)
@@ -1646,9 +1650,12 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         drift::textanim::BlockProps block;
         // Being edited, the text is what the editor holds, empty or not: the clip name is only
         // the stand-in for a clip that has never had text.
+        // A script replaces the text outright; one that fails shows nothing, and the inspector says why.
+        const bool scripted = !clip.textScript.isEmpty() && !editingText;
+        const QString shown = scripted ? drift::scriptedTextAt(project, clip, timelineUs).text
+                                       : (editingText || !clip.textContent.isEmpty() ? clip.textContent : clip.name);
         QRectF rasterRect =
-            fillTextLayer(layer, textClip->textStyle,
-                          editingText || !clip.textContent.isEmpty() ? clip.textContent : clip.name, layoutRect,
+            fillTextLayer(layer, textClip->textStyle, shown, layoutRect,
                           contentRenderScale, karaokeWordIndex(clip, timelineUs), clip.timelineStart,
                           clip.timelineDuration, timelineUs, projectFps, &block, editingText);
         if (editingText && !layer.hasPixels()) {
@@ -1658,6 +1665,13 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         }
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
         destRect = rasterRect;
+        if (!editingText && layer.hasPixels() && textClip->textStyle.scroll != drift::TextScroll::None) {
+            const QPointF scroll = drift::textScrollOffset(
+                textClip->textStyle, rasterRect, QSizeF(projectWidth * renderScale, projectHeight * renderScale),
+                clipTimeUs, clip.timelineDuration);
+            block.dx += scroll.x();
+            block.dy += scroll.y();
+        }
         applyTextBlockMotion(layer, block, &destRect, &opacity, &rotation);
     } else if (clip.type == drift::ClipType::Subtitle) {
         const drift::TimeUs localUs = timelineUs - clip.timelineStart;
@@ -1694,6 +1708,30 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         if (!warned) {
             warned = true;
             qWarning("shape clips need DRIFT_WITH_SKIA; nothing drawn");
+        }
+#endif
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+    } else if (clip.type == drift::ClipType::Generator) {
+#ifdef DRIFT_WITH_SKIA
+        drift::skia::GeneratorPaintRequest request;
+        request.source = clip.procedural;
+        request.resolved = clip.procedural.isAnimated() ? clip.procedural.resolvedAt(clipTimeUs) : clip.procedural;
+        request.clipId = clip.id;
+        request.layoutRect = layoutRect;
+        request.renderScale = contentRenderScale;
+        request.clipTimeUs = clipTimeUs;
+        request.frameRate = projectFps;
+        request.textStyle = clip.textStyle.isAnimated() ? clip.textStyle.resolvedAt(clipTimeUs) : clip.textStyle;
+        QString sprite = request.resolved.parameters.value(QStringLiteral("spriteImage")).toString();
+        if (!sprite.isEmpty() && !QFileInfo::exists(sprite))
+            sprite = emojiImagePath(sprite);
+        request.spriteImagePath = sprite;
+        layer.vector = drift::skia::makeGeneratorPainter(request).painter;
+#else
+        static bool warned = false;
+        if (!warned) {
+            warned = true;
+            qWarning("generator clips need DRIFT_WITH_SKIA; nothing drawn");
         }
 #endif
         layer.effects = resolvedClipEffects(clip, clipTimeUs);

@@ -1,5 +1,7 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/decode/probe/MediaProbe.h"
+#include "engine/compositor/ScriptedText.h"
+#include "core/text/TextScriptPresets.h"
 #include "app/editor/ProjectFileController.h"
 
 #include "core/interchange/subtitles/SrtIO.h"
@@ -80,6 +82,52 @@ void AppController::addTextClip(const QString &text, double atSeconds, const QSt
             setPlayheadSeconds(drift::usToSeconds(start));
         emit inlineTextEditRequested(trackIndex, newClipIndex);
     }
+}
+
+bool AppController::setTextScript(int trackIndex, int clipIndex, const QString &script)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.type != drift::ClipType::Text)
+        return false;
+    if (clip.textScript == script)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.textScript = script;
+    pushProjectEdit(before, tr("Edit text script"));
+    finishEdit(tr("Text script updated"));
+    return true;
+}
+
+QVariantMap AppController::textScriptStatus(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return {};
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Text)
+        return {};
+    QVariantMap out{{QStringLiteral("script"), clip.textScript}, {QStringLiteral("text"), QString()},
+                    {QStringLiteral("error"), QString()}};
+    if (clip.textScript.isEmpty())
+        return out;
+    const bool inside = m_playheadUs >= clip.timelineStart && m_playheadUs < clip.timelineStart + clip.timelineDuration;
+    const drift::ScriptedText result = drift::scriptedTextAt(m_project, clip, inside ? m_playheadUs : clip.timelineStart);
+    out.insert(QStringLiteral("text"), result.text);
+    out.insert(QStringLiteral("error"), result.error);
+    return out;
+}
+
+QVariantList AppController::textScriptPresets() const
+{
+    QVariantList out;
+    for (const drift::TextScriptPreset &preset : drift::textScriptPresets()) {
+        out.append(QVariantMap{{QStringLiteral("id"), preset.id},
+                               {QStringLiteral("label"), preset.label},
+                               {QStringLiteral("script"), preset.script}});
+    }
+    return out;
 }
 
 void AppController::addSubtitleClip(double atSeconds)

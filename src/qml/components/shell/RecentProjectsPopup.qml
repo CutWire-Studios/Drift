@@ -15,9 +15,14 @@ Popup {
     signal openRecentRequested(string path)
     signal saveAsRequested()
     signal exportRequested()
+    signal renderQueueRequested()
     signal packageRequested()
     signal saveJsonRequested()
     signal openJsonRequested()
+    signal openFolderRequested()
+    signal saveFolderRequested()
+    signal exportBundleRequested()
+    signal renderTemplateRequested()
     signal importKdenliveRequested()
     signal importOtioRequested()
     // Disabled: these external project imports need more fixing before shipping. Re-enable the
@@ -249,6 +254,13 @@ Popup {
         }
 
         RecentProjectsActionRow {
+            popup: root
+            glyph: Theme.icons.layers
+            text: qsTr("Render queue…")
+            onTriggered: root.renderQueueRequested()
+        }
+
+        RecentProjectsActionRow {
             id: importExportRow
             popup: root
             glyph: Theme.icons.download
@@ -268,6 +280,28 @@ Popup {
                 ThemedMenuItem {
                     text: qsTr("Open project from JSON…")
                     onTriggered: { root.close(); root.openJsonRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Open project folder…")
+                    onTriggered: { root.close(); root.openFolderRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Save as project folder…")
+                    onTriggered: { root.close(); root.saveFolderRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Export .drift bundle…")
+                    onTriggered: { root.close(); root.exportBundleRequested() }
+                }
+
+                ThemedMenuItem {
+                    text: qsTr("Render with data…")
+                    visible: EditorState.projectFile.folder.isTemplate
+                    height: visible ? implicitHeight : 0
+                    onTriggered: { root.close(); root.renderTemplateRequested() }
                 }
 
                 ThemedMenuItem {

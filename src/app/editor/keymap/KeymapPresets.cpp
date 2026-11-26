@@ -19,6 +19,7 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("playPause"), {QStringLiteral("Space")}},
         {QStringLiteral("importMedia"), {QStringLiteral("Ctrl+I")}},
         {QStringLiteral("export"), {QStringLiteral("Ctrl+E")}},
+        {QStringLiteral("renderQueue"), {}},
         {QStringLiteral("openSettings"), {QStringLiteral("Ctrl+,")}},
         {QStringLiteral("openKeymap"), {QStringLiteral("F1")}},
         {QStringLiteral("stop"), {QStringLiteral("K")}},
@@ -243,6 +244,7 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("viewport3d.resetView"), {QStringLiteral("Shift+Home")}},
         {QStringLiteral("viewport3d.toggleFly"), {QStringLiteral("Shift+F")}},
         {QStringLiteral("viewport3d.toggleOrthographic"), {QStringLiteral("Num+5")}},
+        {QStringLiteral("viewport3d.toggleRecord"), {}},
         {QStringLiteral("viewport3d.lookThrough"), {QStringLiteral("Num+0")}},
         {QStringLiteral("viewport3d.viewFront"), {QStringLiteral("Num+1")}},
         {QStringLiteral("viewport3d.viewBack"), {QStringLiteral("Ctrl+Num+1")}},
@@ -264,6 +266,7 @@ QHash<QString, QStringList> driftChords()
         {QStringLiteral("fly3d.right"), {QStringLiteral("D")}},
         {QStringLiteral("fly3d.down"), {QStringLiteral("Q")}},
         {QStringLiteral("fly3d.up"), {QStringLiteral("E")}},
+        {QStringLiteral("fly3d.land"), {}},
         {QStringLiteral("nodes.undo"), {QStringLiteral("Ctrl+Z")}},
         {QStringLiteral("nodes.redo"), {QStringLiteral("Ctrl+Shift+Z")}},
         {QStringLiteral("nodes.redoAlt"), {QStringLiteral("Ctrl+Y")}},
@@ -501,7 +504,30 @@ QString translatedName(const Preset &preset)
     return QCoreApplication::translate("Keymap", preset.name);
 }
 
-QStringList presetChords(const Preset &preset, const QString &actionId, const QString &scope)
+namespace {
+
+// Controller bindings are not part of any editor's table: every preset gets the same ones.
+const QHash<QString, QStringList> &gamepadDefaults()
+{
+    static const QHash<QString, QStringList> defaults = {
+        {QStringLiteral("playPause"), {QStringLiteral("Pad+X")}},
+        {QStringLiteral("speedUp"), {QStringLiteral("Pad+RB")}},
+        {QStringLiteral("speedDown"), {QStringLiteral("Pad+LB")}},
+        {QStringLiteral("stepBack"), {QStringLiteral("Pad+DpadLeft")}},
+        {QStringLiteral("stepForward"), {QStringLiteral("Pad+DpadRight")}},
+        {QStringLiteral("previousEdit"), {QStringLiteral("Pad+DpadUp")}},
+        {QStringLiteral("nextEdit"), {QStringLiteral("Pad+DpadDown")}},
+        {QStringLiteral("markIn"), {QStringLiteral("Pad+A")}},
+        {QStringLiteral("markOut"), {QStringLiteral("Pad+B")}},
+        {QStringLiteral("viewport3d.toggleFly"), {QStringLiteral("Pad+Start")}},
+        {QStringLiteral("fly3d.up"), {QStringLiteral("Pad+RB")}},
+        {QStringLiteral("fly3d.down"), {QStringLiteral("Pad+LB")}},
+        {QStringLiteral("fly3d.land"), {QStringLiteral("Pad+B")}},
+    };
+    return defaults;
+}
+
+QStringList keyboardChords(const Preset &preset, const QString &actionId, const QString &scope)
 {
     const auto it = preset.chords.constFind(actionId);
     if (it != preset.chords.cend())
@@ -512,6 +538,39 @@ QStringList presetChords(const Preset &preset, const QString &actionId, const QS
     if (scope == QLatin1String(kGlobalScope))
         return {};
     return base ? base->chords.value(actionId) : QStringList{};
+}
+
+} // namespace
+
+QStringList presetChords(const Preset &preset, const QString &actionId, const QString &scope)
+{
+    return keyboardChords(preset, actionId, scope) + gamepadDefaults().value(actionId);
+}
+
+bool isPadChord(const QString &chord)
+{
+    return chord.startsWith(QLatin1String("Pad+"));
+}
+
+QString normalizePadChord(const QString &chord)
+{
+    static const QStringList buttons = {"A", "B", "X", "Y", "LB", "RB", "LT", "RT", "Back", "Start", "Guide", "LS", "RS",
+                                        "DpadUp", "DpadDown", "DpadLeft", "DpadRight"};
+    static const QStringList modifiers = {"LB", "RB", "LT", "RT"};
+    if (!isPadChord(chord))
+        return {};
+    QStringList parts = chord.mid(4).split(QLatin1Char('+'));
+    const QString button = parts.takeLast();
+    if (!buttons.contains(button))
+        return {};
+    QStringList ordered;
+    for (const QString &modifier : modifiers) {
+        if (parts.removeAll(modifier) > 0 && modifier != button)
+            ordered.append(modifier);
+    }
+    if (!parts.isEmpty())
+        return {};
+    return QStringLiteral("Pad+") + (ordered + QStringList{button}).join(QLatin1Char('+'));
 }
 
 void splitChord(const QString &chord, QStringList *modifiers, QString *key)

@@ -100,17 +100,45 @@ headless instance serving only stdio stays out of the registry.
 
 Both forms shut down on SIGINT (Ctrl-C) and SIGTERM.
 
-**Rendering needs a GL context, which is not the same as needing a window.** The
-compositor wants OpenGL 3.3 core on an offscreen surface, and Qt's `offscreen` platform
-plugin cannot provide one on a host with no `/dev/dri`. On a headless Linux box run:
+**Rendering needs a GL context, which is not the same as needing a window.** On Linux,
+`--headless` brings up its own EGL platform (`driftheadless`): contexts with no surface on a
+GPU's EGL device (NVIDIA's `EGL_EXT_platform_device`, Mesa's DRM and software devices), so it
+works with no `DISPLAY`, no `WAYLAND_DISPLAY` and no xvfb. The banner's `gpu` line says which device
+it took; `--gpu <index|name>` picks another (a renderer-name or DRM-node substring) and
+`drift --headless --list-gpus` prints the choices. If no EGL device can make a 3.3 core context
+it falls through to `xcb`, `wayland` and `offscreen`, and setting `QT_QPA_PLATFORM` yourself
+skips all of that, e.g. `QT_QPA_PLATFORM=xcb xvfb-run -a drift --headless`. Started without a usable
+context Drift still serves MCP and still edits projects — it says so on stderr, and only render,
+capture and export fail.
+
+## Rendering from the command line
 
 ```bash
-QT_QPA_PLATFORM=xcb xvfb-run -a drift --headless
+drift --headless --render project.json -o out.mp4 [--preset 1080p] [--codec h264] [--crf 18] \
+      [--height 1080] [--fps 30] [--start 5 --end 20] [--gpu 0]
 ```
 
-Mesa's llvmpipe covers 3.3 in software; a GPU host can use an EGL platform plugin
-instead. Started without a usable context, Drift still serves MCP and still edits
-projects — it says so on stderr, and only render, capture and export fail.
+Renders a project file (`.json` or a `.drift` bundle) with the export pipeline the Export dialog
+uses and exits 0 on success. Progress goes to stderr and the output path to stdout. Range bakes are
+not read.
+
+## Render queue and farm
+
+The Export dialog's **Add to queue** puts a frozen copy of the timeline in the render queue
+(File menu, *Render queue…*): held until started, or started at once with *Start immediately*.
+Jobs run one at a time in a `drift --headless --worker` child process (JSON lines on stdin and
+stdout), so editing stays responsive, or inside the editor when *Render in a separate process* is off.
+
+`drift --headless --farm-coordinator [--port 4800] [--token T] [--render project.json -o out.mp4]` and
+`drift --headless --farm-worker host:4800 --token T [--name N] [--cache-gb 20] [--gpu I]` run a LAN
+farm over HTTP and JSON. The editor can be the coordinator too (Settings, *Render farm*), which adds
+**Send to farm** to the Export dialog. Every request carries the shared token as a bearer header.
+Workers fetch the project and the media it names by content hash into an LRU cache, refuse a task
+whose add-ons they lack, and are heard from every two seconds; a worker silent for 20 s loses its
+task to another. Software H.264, H.265, ProRes, DNxHR and FFV1 exports are cut into chunks that start on
+keyframes, rendered in parallel, and joined by copying packets, with the audio rendered once on the
+coordinator; the frame count is checked per chunk and for the whole file, and a failed chunk is
+rendered again. Anything else is rendered whole by one worker.
 
 ## Workflow
 
@@ -785,6 +813,21 @@ Lua API and the shader contract are in [procedural.md](procedural.md), which is 
    refuses `in_use` unless `force:true` (clips keep their data and render nothing).
 
 Create, update and delete are not undoable. `layer3d` is ignored on a procedural clip, as on a model clip: it is always a 3D layer.
+
+### Generators and scripted text
+
+`list_generators` lists the built-in generator clips (solid colour, gradient, noise, colour bars, grid,
+checkerboard, countdown leader, particle emitter) with their params, and the particle presets (confetti,
+fireworks, sparks, snow, rain, smoke, magic dust, bubbles). `add_generator({id, at?, track?, duration?,
+seed?, name?, params?})` places one (`{id, track, index, kind}`), `set_generator({clip, params?, seed?})`
+changes static params, and `set_keyframe` on `proc.<key>` animates them (colours per channel, points per
+axis: `proc.emitter.x`). Particles are simulated from the clip start on a fixed 1/60 s step, so a scrub and
+an export agree. The countdown's number takes the clip's text style (`set_text`).
+
+`list_text_scripts` and `set_text_script({clip, script?|preset?})` make a text clip's words the result of a Lua
+script run for every frame (timecode burn-in, counters, tickers, clocks). The script reads `ctx` and the
+helpers `timecode`, `lerp`, `ease`, `pad`, `commas`, in the procedural sandbox; a failing script returns
+`error` and the clip draws nothing.
 
 ### Custom effects
 

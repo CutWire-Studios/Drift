@@ -121,6 +121,10 @@ struct GpuLayer
     QHash<QString, std::shared_ptr<const AudioFrame>> audioInputs;
     std::shared_ptr<const AudioFrame> globalAudio;
     QRectF rect;             // destination rect on the canvas, in canvas pixels
+    // Pixels a "padding" effect added to each side of the layer target (x on the left and right, y on
+    // top and bottom); `rect` already includes them. Set on the copy drawn after buildLayerTarget,
+    // never by the scene builder.
+    QPoint contentPad;
     double rotation = 0.0;   // degrees, clockwise, about the rect centre
     drift::ClipPose3d pose3d; // tilt and depth on top of rect/rotation, in canvas pixels
     bool flipH = false;

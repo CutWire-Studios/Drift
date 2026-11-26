@@ -2,17 +2,29 @@
   "id": "key.chroma",
   "displayName": "Chroma Key",
   "category": "background",
-  "keywords": ["green screen", "greenscreen", "blue screen", "remove background", "key out", "transparent background", "replace background", "cutout"],
+  "keywords": [
+    "green screen",
+    "greenscreen",
+    "blue screen",
+    "remove background",
+    "key out",
+    "transparent background",
+    "replace background",
+    "cutout"
+  ],
   "thumbnail": "thumbnail.webp",
   "order": 400,
-  "description": "Remove a green or blue screen background, or a black or white one with Key On set to Brightness. Pick Key Colour to match your backdrop, then raise Tolerance until the background disappears.",
+  "description": "Remove a green or blue screen background, or a black or white one with Key On set to Brightness. Pick Key Colour to match your backdrop, then raise Tolerance until the background disappears. Choke shrinks (positive) or grows (negative) the cut-out and Matte Blur softens its edge, both in pixels. View shows the matte as greyscale, or a status view with fully removed areas in blue and partly keyed edge pixels in magenta.",
   "backend": "gpu",
   "parameters": [
     {
       "identifier": "u_keyMode",
       "displayName": "Key On",
       "type": "choice",
-      "options": ["Colour", "Brightness"],
+      "options": [
+        "Colour",
+        "Brightness"
+      ],
       "defaultValue": 0
     },
     {
@@ -54,10 +66,50 @@
       "minValue": 0.0,
       "maxValue": 1.0,
       "defaultValue": 1.0
+    },
+    {
+      "identifier": "u_choke",
+      "displayName": "Choke",
+      "type": "float",
+      "minValue": -20.0,
+      "maxValue": 20.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "u_matteBlur",
+      "displayName": "Matte Blur",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 20.0,
+      "defaultValue": 0.0
+    },
+    {
+      "identifier": "u_matteView",
+      "displayName": "View",
+      "type": "choice",
+      "options": [
+        "Composite",
+        "Matte",
+        "Status"
+      ],
+      "defaultValue": 0
     }
   ],
   "pipeline": {
-    "intermediateBuffers": [],
+    "intermediateBuffers": [
+      {
+        "id": "keyed",
+        "scale": 1.0
+      },
+      {
+        "id": "choked",
+        "scale": 1.0
+      },
+      {
+        "id": "blurred",
+        "scale": 1.0
+      }
+    ],
     "passes": [
       {
         "passIndex": 0,
@@ -65,6 +117,48 @@
         "inputs": [
           {
             "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "keyed"
+        }
+      },
+      {
+        "passIndex": 1,
+        "fragmentShader": "choke.frag",
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "keyed"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "choked"
+        }
+      },
+      {
+        "passIndex": 2,
+        "fragmentShader": "blurh.frag",
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "choked"
+          }
+        ],
+        "output": {
+          "type": "buffer",
+          "id": "blurred"
+        }
+      },
+      {
+        "passIndex": 3,
+        "fragmentShader": "blurv.frag",
+        "inputs": [
+          {
+            "type": "buffer",
+            "id": "blurred"
           }
         ],
         "output": {

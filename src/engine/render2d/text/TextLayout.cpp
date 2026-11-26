@@ -47,7 +47,7 @@ quint64 styleHash(const drift::TextStyle &s)
     // time, so the laid-out pieces serve every frame.
     const drift::WordAccent &a = s.accent;
     return qHashMulti(0, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, drift::textLayersHash(s.layers),
-                      s.pathBend, static_cast<int>(s.align), static_cast<int>(s.valign), s.wordWrap,
+                      s.pathBend, static_cast<int>(s.align), static_cast<int>(s.valign), s.wraps(),
                       s.lineHeight, s.letterSpacing, static_cast<int>(s.textCase), s.boxEnabled,
                       s.boxColor.rgba(), s.boxPadding, s.boxRadius, highlightHash(s.wordHighlight), s.underlineEnabled,
                       s.underlineColor.rgba(), s.underlineWidth, s.underlineOffset, s.strikethroughEnabled,
@@ -62,7 +62,7 @@ quint64 layoutKey(const QString &text, const drift::TextStyle &s, double wrapWid
 {
     const drift::WordAccent &a = s.accent;
     return qHashMulti(0, text, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, static_cast<int>(s.align),
-                      static_cast<int>(s.valign), s.wordWrap, s.lineHeight, s.letterSpacing,
+                      static_cast<int>(s.valign), s.wraps(), s.lineHeight, s.letterSpacing,
                       static_cast<int>(s.textCase),
                       static_cast<int>(a.rule), a.n, a.phase, a.sizeScale, qRound(wrapWidth * 4.0),
                       qRound(blockHeight * 4.0), qRound(renderScale * 1000.0), activeWordIndex,
@@ -392,7 +392,7 @@ TextLayoutResult layoutStyledText(const QString &text, const drift::TextStyle &s
         start = end;
     }
     std::shared_ptr<skt::Paragraph> paragraph = builder->Build();
-    paragraph->layout(style.wordWrap ? float(qMax(1.0, wrapWidth)) : 1.0e6f);
+    paragraph->layout(style.wraps() ? float(qMax(1.0, wrapWidth)) : 1.0e6f);
 
     std::vector<skt::LineMetrics> lines;
     paragraph->getLineMetrics(lines);

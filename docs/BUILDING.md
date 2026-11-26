@@ -13,7 +13,7 @@ see is what you get.
 |---|---|
 | CMake | ≥ 3.21 |
 | C++ compiler | C++20 |
-| Qt | 6.10+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
+| Qt | 6.11+ (Quick, QuickControls2, Multimedia, Test, Concurrent, Widgets, OpenGL, Network, Svg, LinguistTools) |
 | Qt ImageFormats | runtime only — supplies the `qwebp` / `qtiff` plugins |
 | FFmpeg | 8.x (libavformat, libavcodec, libavutil, libswscale, libswresample, libavfilter) |
 | libzstd | any (addon package decompression) |
@@ -39,6 +39,24 @@ On Debian/Ubuntu install `libzstd-dev`, `libssl-dev`, `libsoundtouch-dev` and `z
 
 Optional: OpenCV for experimental background-removal builds (`-DWITH_BGREMOVAL=ON`). Only `core`, `imgproc`, and `imgcodecs` are linked.
 
+Optional, Linux only: **Qt 6 DBus** and **libpipewire-0.3** for screen recording
+(`-DDRIFT_WITH_PORTAL_CAPTURE=ON`, the default). Screen capture goes through
+`xdg-desktop-portal`'s ScreenCast interface and reads frames from PipeWire; Qt's own
+`QScreenCapture` is not used, because it has no Wayland path and silently delivers zero frames
+there. Configure prints which way it went:
+
+```
+-- Screen recording: xdg-desktop-portal + PipeWire 1.6.9
+-- Screen recording: disabled (needs Qt6 DBus and libpipewire-0.3)
+```
+
+A build without them is still a working editor — `makeScreenCaptureSource()` returns null and the
+UI hides the screen-recording action. Camera recording needs neither. On Debian/Ubuntu install
+`qt6-base-dev` (DBus is part of it) and `libpipewire-0.3-dev`; on Arch, `pipewire`.
+
+Recording the screen on Wayland always shows the compositor's own share dialog, and nothing is
+captured until the person answers it — that is the security model, not a bug to route around.
+
 Skia draws text, shapes and Lottie/SVG clips on the GPU and is on by default (`-DDRIFT_WITH_SKIA=OFF` builds a video/image/audio-only editor: text, shape and Lottie/SVG clips draw nothing). Skia has no distro package Drift can rely on, so `third_party/build-skia.sh <target>` compiles a pinned milestone into `third_party/prebuilt/skia/<target>/` (linux-x64 by default; also `linux-arm64`, `mac-arm64`, `mac-x64` and `android-<abi>`). It needs `clang`, `ninja`, `python3` and `git`, plus on Linux the development packages for HarfBuzz, ICU, FreeType, fontconfig, expat, libpng and zlib (`gn` is downloaded by the script unless one is on `PATH`). The first build takes 20–40 minutes; the result is picked up by `cmake/FindSkia.cmake` automatically, or point `DRIFT_SKIA_DIR` at any directory holding a generated `SkiaConfig.cmake`. Windows CI uses vcpkg's `skia[gl,harfbuzz,icu,freetype,png]:x64-windows-static-md` instead, which pins the same commit. Every packaging lane builds with the option on.
 
 **Nothing has to be placed by hand.** Fonts, emoji stickers, and speech models are addons (see below), so a clone builds and runs with no bundled assets.
@@ -56,6 +74,31 @@ Optional OpenCV background removal:
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DWITH_BGREMOVAL=ON
 cmake --build build -j$(nproc)
 ```
+
+## Nix
+
+`flake.nix` builds Drift and Skia the way the packaging lanes do:
+
+```bash
+nix build          # ./result/bin/drift
+```
+
+The dev shell has the toolchain plus the directories CMake would otherwise download: JUCE, libremidi,
+the ONNX Runtime headers and the Skia build. The normal `cmake` workflow works unchanged:
+
+```bash
+nix develop
+cmake -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+  -DDRIFT_JUCE_DIR="$DRIFT_JUCE_DIR" -DDRIFT_FETCH_JUCE=OFF \
+  -DDRIFT_LIBREMIDI_DIR="$DRIFT_LIBREMIDI_DIR" -DDRIFT_FETCH_LIBREMIDI=OFF -DDRIFT_FETCH_SDL=OFF \
+  -DDRIFT_SKIA_DIR="$DRIFT_SKIA_DIR" \
+  -DONNXRUNTIME_ROOT="$ONNXRUNTIME_ROOT" -DDRIFT_FETCH_ONNXRUNTIME=OFF \
+  -DDRIFT_BUNDLE_ONNXRUNTIME=OFF
+ninja -C build-dev drift
+```
+
+`nix build .#drift` is the packaged variant: Release, only the core effect set (the Addon Manager
+supplies the rest) and no in-app update feed, since Nix owns the install.
 
 ## Run
 
@@ -268,9 +311,9 @@ This is local process control of the editor, not a sandbox. Any process on the m
 
 `drift --mcp-stdio` attaches to a running editor, speaking newline-delimited JSON-RPC as the MCP stdio transport specifies. If Agent access is off it says so on stderr and answers each call with a JSON-RPC error rather than quitting, so switching Agent access on is enough to bring it to life.
 
-`drift --headless` instead runs the editor with no window and serves MCP itself — no editor, no token, no display needed for project edits. Rendering and export still want an OpenGL 3.3 context, so on a server run it as `QT_QPA_PLATFORM=xcb xvfb-run -a drift --headless`. See [MCP.md](MCP.md#headless) for the transports and flags.
+`drift --headless` instead runs the editor with no window and serves MCP itself — no editor, no token, no display needed for project edits. Rendering and export still want an OpenGL 3.3 context; on Linux headless mode makes one straight from EGL, so no xvfb is needed (`--gpu` picks the device). See [MCP.md](MCP.md#headless) for the transports and flags.
 
-Agents should call `catalog`, then `toolbox`, then `apply` with a list of ops. `inspect({clips:true})` returns clip ids. `capture` returns a JPEG of the composition. See [AGENTS.md](../AGENTS.md) for the full agent guide. The `export` toolbox encodes the timeline (settings + `export({path})`).
+Agents should call `catalog`, then `toolbox`, then `apply` with a list of ops. `inspect({clips:true})` returns clip ids. `capture` returns a JPEG of the composition. See [MCP.md](MCP.md) for the full agent guide. The `project` toolbox encodes the timeline (`export_video({path})`).
 
 **Flatpak:** importing host files may fail unless you grant filesystem access:
 

@@ -19,6 +19,7 @@ Item {
     property string section: "builtin"
 
     readonly property var presets: EditorState.textPresets()
+    readonly property var titleTemplates: EditorState.titleTemplates()
 
     // A QVariantList from an invokable is not reactive, so the section is refreshed by poking
     // this counter from the controller's signal.
@@ -68,6 +69,19 @@ Item {
         }
 
         IconButton {
+            id: templatesButton
+            visible: root.tabbed
+            anchors.right: mineButton.left
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.layers
+            variant: "text"
+            active: root.section === "templates"
+            tooltip: root.section === "templates" ? qsTr("Show built-in styles") : qsTr("Show title templates")
+            onClicked: root.section = root.section === "templates" ? "builtin" : "templates"
+        }
+
+        IconButton {
+            id: mineButton
             visible: root.tabbed
             anchors.right: importButton.left
             anchors.verticalCenter: parent.verticalCenter
@@ -91,6 +105,14 @@ Item {
                 variant: "outline"
                 selected: root.section === "builtin"
                 onClicked: root.section = "builtin"
+            }
+
+            ThemedChip {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Templates")
+                variant: "outline"
+                selected: root.section === "templates"
+                onClicked: root.section = "templates"
             }
 
             ThemedChip {
@@ -148,6 +170,32 @@ Item {
         delegate: TextStylePackCard {
             cardSize: packGrid.cardSize
             pickerMode: root.pickerMode
+            onAdded: root.added()
+        }
+    }
+
+    GridView {
+        id: templateGrid
+        readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth * 1.4 + Theme.assetCardGap)))
+        readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
+        x: Theme.pagePadding
+        y: toolbar.height + Theme.spacingSm
+        width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
+        height: parent.height - y
+        bottomMargin: Theme.spacing3xl
+        clip: true
+        reuseItems: true
+        boundsBehavior: Flickable.StopAtBounds
+        acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
+        ScrollBar.vertical: AppScrollBar { }
+        cellWidth: Math.floor(width / columnCount)
+        cellHeight: Math.round(cardSize * 9 / 16) + Theme.spacingSm
+                    + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+        visible: root.section === "templates"
+        model: root.titleTemplates
+
+        delegate: TitleTemplateCard {
+            cardSize: templateGrid.cardSize
             onAdded: root.added()
         }
     }

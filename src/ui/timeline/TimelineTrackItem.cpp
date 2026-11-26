@@ -1437,6 +1437,15 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                       m_window.right);
     }
 
+    // A clip a script made is locked: a dashed edge and a corner tab say so before an edit is refused.
+    if (!row.generatedBy.isEmpty()) {
+        appendDashedOutline(m_over, rect, s.rippleOutlineWidth, s.clipEffect, ox, m_window.left, m_window.right);
+        const double side = std::min(10.0, rect.height() * 0.4);
+        if (rect.width() > side * 3.0)
+            appendRoundedRect(m_over, QRectF(rect.right() - side - 3.0, rect.top() + 3.0, side, side), s.radiusXs,
+                              s.clipEffect, ox);
+    }
+
     // Give adjacent clips a visible edge even when neither is selected.
     QColor clipEdge = s.scrim;
     clipEdge.setAlphaF(s.clipEdgeOpacity);

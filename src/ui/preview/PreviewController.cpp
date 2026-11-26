@@ -7,6 +7,7 @@
 #include "app/mcp/McpController.h"
 
 #include "app/editor/sessions/MaskEditSession.h"
+#include "core/animation/KeyframeSimplify.h"
 #include "core/base/CameraEuler.h"
 #include "core/edit/TimelineOps.h"
 #include "engine/render3d/editor/ClipGizmo.h"
@@ -191,6 +192,10 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
     m_navigationScheme = settings.value(QStringLiteral("preview/navigationScheme"), m_navigationScheme).toString();
     if (m_navigationScheme != QLatin1String("maya"))
         m_navigationScheme = QStringLiteral("blender");
+    m_flyLook = settings.value(QStringLiteral("preview/flyLook"), m_flyLook).toString();
+    if (m_flyLook != QLatin1String("steer"))
+        m_flyLook = QStringLiteral("mouse");
+    m_recordSmoothing = std::clamp(settings.value(QStringLiteral("preview/recordSmoothing"), m_recordSmoothing).toDouble(), 0.0, 1.0);
     m_orbitAroundSelection =
         settings.value(QStringLiteral("preview/orbitAroundSelection"), m_orbitAroundSelection).toBool();
     m_editorFov = std::clamp(settings.value(QStringLiteral("preview/editorFov"), m_editorFov).toDouble(), 10.0, 120.0);
@@ -231,6 +236,16 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
     connect(this, &PreviewController::maskEditActiveChanged, this, &PreviewController::updateActiveTool);
 
     connect(&m_app, &AppController::playingChanged, this, &PreviewController::updateHandlesVisible);
+    connect(&m_app, &AppController::playingChanged, this, [this] {
+        if (m_app.playing() && m_recordArmed && !m_recording)
+            startRecording();
+        else if (!m_app.playing() && m_recording)
+            finishRecording();
+    });
+    connect(&m_app, &AppController::playheadSecondsChanged, this, [this] {
+        if (m_recording && m_app.playing())
+            sampleRecording();
+    });
     connect(&m_app, &AppController::scrubbingChanged, this, &PreviewController::updateHandlesVisible);
     connect(&m_app, &AppController::tracksChanged, this, &PreviewController::updateHandlesVisible);
     updateHandlesVisible();
@@ -433,6 +448,15 @@ void PreviewController::setNavigationScheme(const QString &scheme)
         return;
     m_navigationScheme = scheme;
     QSettings().setValue(QStringLiteral("preview/navigationScheme"), m_navigationScheme);
+    emit navigationChanged();
+}
+
+void PreviewController::setFlyLook(const QString &look)
+{
+    if (m_flyLook == look || (look != QLatin1String("mouse") && look != QLatin1String("steer")))
+        return;
+    m_flyLook = look;
+    QSettings().setValue(QStringLiteral("preview/flyLook"), m_flyLook);
     emit navigationChanged();
 }
 
@@ -952,7 +976,9 @@ void PreviewController::flyCamera(int trackIndex, int clipIndex, double turnRigh
                                   double forward, double right, double up)
 {
     drift::Clip &clip = m_app.m_project.tracks()[trackIndex].clips[clipIndex];
-    const drift::SceneCamera3d camera = drift::sceneCameraFromClip(clip, m_app.m_playheadUs, 1.0, projectSize());
+    const bool recordingThis = m_recording && m_recordsCamera;
+    const drift::SceneCamera3d camera =
+        recordingThis ? m_recCamera : drift::sceneCameraFromClip(clip, m_app.m_playheadUs, 1.0, projectSize());
     // The camera as a fly view: its eye, looking at a target straight ahead at the zoom distance.
     const double lens = std::max(1.0, camera.zoom);
     const QVector3D eye = drift::sceneCameraEye(camera);
@@ -964,8 +990,10 @@ void PreviewController::flyCamera(int trackIndex, int clipIndex, double turnRigh
     view.target = eye + ahead * float(lens);
     const drift::EditorView3d flown =
         drift::flyEditorView(view, turnRightDeg, turnUpDeg, forward * lens, right * lens, up * lens);
-    writeSceneCamera(trackIndex, clipIndex, drift::aimAt(camera, drift::editorViewEye(flown), flown.target),
-                     AppController::tr("Fly camera"));
+    const drift::SceneCamera3d next = drift::aimAt(camera, drift::editorViewEye(flown), flown.target);
+    if (recordingThis)
+        m_recCamera = next;
+    writeSceneCamera(trackIndex, clipIndex, next, AppController::tr("Fly camera"));
 }
 
 bool PreviewController::writeSceneCamera(int trackIndex, int clipIndex, const drift::SceneCamera3d &next,
@@ -976,8 +1004,13 @@ bool PreviewController::writeSceneCamera(int trackIndex, int clipIndex, const dr
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_app.m_playheadUs - clip.timelineStart);
     bool wrote = false;
     QStringList keys;
+    const bool recordingThis = m_recording && m_recordsCamera;
     const auto write = [&](drift::KeyframeTrack<double> &track, double value, const QString &key) {
-        if (writeKeyframeValue(track, relative, value, m_app.m_autoKeyEnabled, false)) {
+        if (recordingThis) {
+            recordKey(clip, key, value);
+            wrote = true;
+            keys << key;
+        } else if (writeKeyframeValue(track, relative, value, m_app.m_autoKeyEnabled, false)) {
             wrote = true;
             keys << key;
         }
@@ -1000,7 +1033,8 @@ bool PreviewController::writeSceneCamera(int trackIndex, int clipIndex, const dr
         m_flyBlocked = true;
         return false;
     }
-    m_flyEdited = true;
+    if (!recordingThis)
+        m_flyEdited = true;
     m_app.emitPreviewEdit(trackIndex, clipIndex, keys);
     return true;
 }
@@ -1045,6 +1079,170 @@ bool PreviewController::alignCameraToView()
     m_flyBlocked = false;
     m_app.commitPreviewDrag();
     return wrote;
+}
+
+namespace {
+
+drift::KeyframeTrack<double> *recordChannel(drift::Clip &clip, const QString &key)
+{
+    static const QHash<QString, drift::KeyframeTrack<double> drift::Clip::*> channels = {
+        {QStringLiteral("positionX"), &drift::Clip::positionX}, {QStringLiteral("positionY"), &drift::Clip::positionY},
+        {QStringLiteral("z"), &drift::Clip::positionZ},         {QStringLiteral("anchorX"), &drift::Clip::anchorX},
+        {QStringLiteral("anchorY"), &drift::Clip::anchorY},     {QStringLiteral("anchorZ"), &drift::Clip::anchorZ},
+        {QStringLiteral("rotationX"), &drift::Clip::rotationX}, {QStringLiteral("rotationY"), &drift::Clip::rotationY},
+        {QStringLiteral("rotation"), &drift::Clip::rotation},   {QStringLiteral("scaleX"), &drift::Clip::scaleX},
+        {QStringLiteral("scaleY"), &drift::Clip::scaleY},
+    };
+    const auto it = channels.constFind(key);
+    return it == channels.cend() ? nullptr : &(clip.*it.value());
+}
+
+// How far a thinned curve may stray from the recorded one, in the channel's own units, at full smoothing.
+double recordTolerance(const QString &key, double smoothing)
+{
+    if (key.startsWith(QLatin1String("scale")))
+        return smoothing * 0.02;
+    if (key.startsWith(QLatin1String("rotation")))
+        return smoothing * 1.0;
+    return smoothing * 10.0;
+}
+
+} // namespace
+
+void PreviewController::setRecordArmed(bool armed)
+{
+    if (m_recordArmed == armed)
+        return;
+    m_recordArmed = armed;
+    if (!armed && m_recording)
+        finishRecording();
+    emit recordingChanged();
+}
+
+void PreviewController::setRecordSmoothing(double smoothing)
+{
+    smoothing = std::clamp(smoothing, 0.0, 1.0);
+    if (qFuzzyCompare(1.0 + m_recordSmoothing, 1.0 + smoothing))
+        return;
+    m_recordSmoothing = smoothing;
+    QSettings().setValue(QStringLiteral("preview/recordSmoothing"), smoothing);
+    emit recordingChanged();
+}
+
+bool PreviewController::recordKey(drift::Clip &clip, const QString &key, double value)
+{
+    drift::KeyframeTrack<double> *track = recordChannel(clip, key);
+    if (!track)
+        return false;
+    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_app.m_playheadUs - clip.timelineStart);
+    track->setKeyframe(relative, value);
+    m_recTimes.insert(relative);
+    m_recEnd = std::max(m_recEnd, relative);
+    if (!m_recKeys.contains(key))
+        m_recKeys << key;
+    return true;
+}
+
+void PreviewController::startRecording()
+{
+    const int selectedTrack = m_app.selectedTrack();
+    const int selectedClip = m_app.selectedClip();
+    int trackIndex = -1;
+    int clipIndex = -1;
+    bool camera = false;
+    if (m_editor.view.lookThrough) {
+        const QVariantMap state = m_app.cameraStateAtPlayhead();
+        trackIndex = state.value(QStringLiteral("track")).toInt();
+        clipIndex = state.value(QStringLiteral("clip")).toInt();
+        camera = state.value(QStringLiteral("active")).toBool() && m_app.isValidClipIndex(trackIndex, clipIndex)
+                 && drift::isCameraClip(m_app.m_project.tracks().at(trackIndex).clips.at(clipIndex));
+    }
+    if (!camera) {
+        trackIndex = selectedTrack;
+        clipIndex = selectedClip;
+        if (!m_app.isValidClipIndex(trackIndex, clipIndex)
+            || drift::isCameraClip(m_app.m_project.tracks().at(trackIndex).clips.at(clipIndex)))
+            return;
+    }
+
+    const drift::Clip &clip = m_app.m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_app.m_playheadUs - clip.timelineStart);
+    m_recordsCamera = camera;
+    m_recTrack = trackIndex;
+    m_recClip = clipIndex;
+    m_recStart = m_recEnd = relative;
+    m_recTimes.clear();
+    m_recKeys.clear();
+    m_recPose.clear();
+    if (camera) {
+        m_recCamera = drift::sceneCameraFromClip(clip, m_app.m_playheadUs, 1.0, projectSize());
+    } else {
+        const auto held = [&](const drift::KeyframeTrack<double> &track, double fallback) {
+            return track.isEmpty() ? fallback : track.evaluateAt(relative);
+        };
+        m_recPose = {{QStringLiteral("positionX"), held(clip.positionX, projectSize().width() / 2)},
+                     {QStringLiteral("positionY"), held(clip.positionY, projectSize().height() / 2)},
+                     {QStringLiteral("scaleX"), held(clip.scaleX, 1.0)},
+                     {QStringLiteral("scaleY"), held(clip.scaleY, 1.0)},
+                     {QStringLiteral("rotation"), held(clip.rotation, 0.0)}};
+    }
+    // An explicit drag, so the auto-commit timer cannot split a take into several undo steps.
+    m_app.beginPreviewDrag(camera ? AppController::tr("Record camera") : AppController::tr("Record motion"));
+    m_recording = true;
+    emit recordingChanged();
+    sampleRecording();
+}
+
+void PreviewController::sampleRecording()
+{
+    if (!m_app.isValidClipIndex(m_recTrack, m_recClip))
+        return;
+    if (m_recordsCamera) {
+        writeSceneCamera(m_recTrack, m_recClip, m_recCamera, AppController::tr("Record camera"));
+        return;
+    }
+    drift::Clip &clip = m_app.m_project.tracks()[m_recTrack].clips[m_recClip];
+    for (auto it = m_recPose.cbegin(); it != m_recPose.cend(); ++it)
+        recordKey(clip, it.key(), it.value());
+    m_app.emitPreviewEdit(m_recTrack, m_recClip, m_recKeys);
+}
+
+void PreviewController::puppet(double seconds, double moveX, double moveY, double grow, double turn)
+{
+    if (!m_recording || m_recordsCamera)
+        return;
+    const double speed = projectSize().width() * 0.4;
+    m_recPose[QStringLiteral("positionX")] += moveX * speed * seconds;
+    m_recPose[QStringLiteral("positionY")] -= moveY * speed * seconds;
+    m_recPose[QStringLiteral("rotation")] += turn * 90.0 * seconds;
+    const double factor = std::exp(grow * 0.8 * seconds);
+    m_recPose[QStringLiteral("scaleX")] *= factor;
+    m_recPose[QStringLiteral("scaleY")] *= factor;
+    sampleRecording();
+}
+
+void PreviewController::finishRecording()
+{
+    m_recording = false;
+    if (m_app.isValidClipIndex(m_recTrack, m_recClip) && !m_recTimes.isEmpty()) {
+        drift::Clip &clip = m_app.m_project.tracks()[m_recTrack].clips[m_recClip];
+        for (const QString &key : std::as_const(m_recKeys)) {
+            drift::KeyframeTrack<double> *track = recordChannel(clip, key);
+            // Punch-in: whatever was keyed inside the take is replaced by it.
+            const QList<drift::TimeUs> times = track->keyframes().keys();
+            for (drift::TimeUs time : times) {
+                if (time >= m_recStart && time <= m_recEnd && !m_recTimes.contains(time))
+                    track->removeKeyframe(time);
+            }
+            if (m_recordSmoothing > 0.0)
+                drift::simplifyKeyframes(*track, m_recStart, m_recEnd, recordTolerance(key, m_recordSmoothing), true);
+        }
+        m_app.emitPreviewEdit(m_recTrack, m_recClip, m_recKeys);
+    }
+    m_app.commitPreviewDrag();
+    m_recTimes.clear();
+    m_recKeys.clear();
+    emit recordingChanged();
 }
 
 void PreviewController::setFlying(bool flying)

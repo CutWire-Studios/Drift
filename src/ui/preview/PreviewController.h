@@ -3,16 +3,23 @@
 #include "engine/render3d/scene/EditorView3d.h"
 #include "engine/render3d/scene/SceneCamera3d.h"
 
+#include "core/base/Time.h"
+
+#include <QHash>
 #include <QMatrix4x4>
 #include <QObject>
 #include <functional>
 #include <QPointF>
+#include <QSet>
 #include <QVariantList>
 #include <QVariantMap>
 
 class AppController;
 class Outliner3dModel;
 
+namespace drift {
+struct Clip;
+}
 namespace drift::snap {
 struct PlacedClip;
 }
@@ -60,6 +67,15 @@ class PreviewController : public QObject
     // Navigation: "blender" (middle-drag orbits, Shift pans, Ctrl dollies) or "maya" (Alt with the
     // left, middle or right button orbits, pans or dollies); the wheel zooms toward the pointer in both.
     Q_PROPERTY(QString navigationScheme READ navigationScheme WRITE setNavigationScheme NOTIFY navigationChanged)
+    // Fly mode look: "mouse" (locked pointer, raw mouse deltas) or "steer" (the view turns toward
+    // the pointer's offset from the centre, for touchpads).
+    Q_PROPERTY(QString flyLook READ flyLook WRITE setFlyLook NOTIFY navigationChanged)
+    // Arms recording: the next play records the scene camera's flight (looking through it), or else
+    // the selected clip's stick-driven position, scale and rotation, as keys at the playhead.
+    Q_PROPERTY(bool recordArmed READ recordArmed WRITE setRecordArmed NOTIFY recordingChanged)
+    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
+    // 0..1: how far a finished recording is thinned; 0 keeps every frame's key.
+    Q_PROPERTY(double recordSmoothing READ recordSmoothing WRITE setRecordSmoothing NOTIFY recordingChanged)
     // Orbit about the selection's centre when something is selected, else about the view's target.
     Q_PROPERTY(bool orbitAroundSelection READ orbitAroundSelection WRITE setOrbitAroundSelection NOTIFY navigationChanged)
     // While looking through the scene camera, orbit/pan/dolly move the camera clip rather than
@@ -132,6 +148,16 @@ public:
     void setScaleSnap(double step);
     QString navigationScheme() const { return m_navigationScheme; }
     void setNavigationScheme(const QString &scheme);
+    bool recordArmed() const { return m_recordArmed; }
+    void setRecordArmed(bool armed);
+    bool recording() const { return m_recording; }
+    double recordSmoothing() const { return m_recordSmoothing; }
+    void setRecordSmoothing(double smoothing);
+    // One step of puppet recording while it runs: stick-style inputs in -1..1 (move right, move up,
+    // grow, turn clockwise) for `seconds`. Does nothing unless a puppet recording is running.
+    Q_INVOKABLE void puppet(double seconds, double moveX, double moveY, double grow, double turn);
+    QString flyLook() const { return m_flyLook; }
+    void setFlyLook(const QString &look);
     bool orbitAroundSelection() const { return m_orbitAroundSelection; }
     void setOrbitAroundSelection(bool on);
     bool lockCameraToView() const { return m_lockCameraToView; }
@@ -330,6 +356,7 @@ signals:
     // MCP or another non-UI caller wants a 3D viewport on screen.
     void viewport3dRequested();
     void flyingChanged();
+    void recordingChanged();
     void viewChanged();
     void gizmoChanged();
     void navigationChanged();
@@ -377,6 +404,11 @@ private:
     void flyCamera(int trackIndex, int clipIndex, double turnRightDeg, double turnUpDeg, double forward,
                    double right, double up);
     void setView(const drift::EditorView3d &view);
+    void startRecording();
+    void finishRecording();
+    // Writes the held pose as keys at the playhead.
+    void sampleRecording();
+    bool recordKey(drift::Clip &clip, const QString &key, double value);
     void updateActiveTool();
     bool selectionIsPathShape() const;
     void updateHandlesVisible();
@@ -398,7 +430,21 @@ private:
     // (so the "turn on auto keyframes" notice shows once, not every frame).
     bool m_flyEdited = false;
     bool m_flyBlocked = false;
+    bool m_recordArmed = false;
+    bool m_recording = false;
+    bool m_recordsCamera = false;
+    double m_recordSmoothing = 0.5;
+    int m_recTrack = -1;
+    int m_recClip = -1;
+    drift::TimeUs m_recStart = 0;
+    drift::TimeUs m_recEnd = 0;
+    QSet<drift::TimeUs> m_recTimes;
+    QStringList m_recKeys;
+    drift::SceneCamera3d m_recCamera;
+    // Puppet: the held pose by key (positionX, positionY, scaleX, scaleY, rotation).
+    QHash<QString, double> m_recPose;
     QString m_navigationScheme = QStringLiteral("blender");
+    QString m_flyLook = QStringLiteral("mouse");
     bool m_orbitAroundSelection = true;
     bool m_lockCameraToView = false;
     double m_editorFov = 32.0;
