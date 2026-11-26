@@ -20670,6 +20670,13 @@ Se a reprodução travar, experimente outro.</translation>
         </translation>
     </message>
     <message numerus="yes">
+        <source>Relinked %n clip(s) to ProRes transcodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
             <numerusform>JSON do projeto carregado, mas %n arquivo de mídia não foi encontrado</numerusform>

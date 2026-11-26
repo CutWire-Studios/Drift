@@ -20670,6 +20670,13 @@ Se a reprodução engasgar, experimente outro.</translation>
             <numerusform></numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Relinked %n clip(s) to ProRes transcodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Project JSON loaded</source>
         <translation>JSON do projeto carregado</translation>

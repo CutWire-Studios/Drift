@@ -317,6 +317,7 @@ private slots:
     void sourceLabPureTrimCropReplaceIsOneUndoStep();
     void sourceLabPureTrimCropCopyKeepsCrop();
     void sourceLabReplaceWithSpeedRebasesEverything();
+    void loadRelinksVerifiedProResTranscodes();
     void sourceLabStreamCopyPlanReportsSnappedIn();
     void mogrtImportIntoExistingProject();
     void newProjectClearsEverything();
@@ -5104,6 +5105,81 @@ bool makeSourceLabFixture(const QString &path)
     return process.waitForFinished(60'000) && process.exitCode() == 0;
 }
 } // namespace
+
+namespace {
+bool transcodeToProRes(const QString &source, const QString &out)
+{
+    QProcess process;
+    process.start(QStandardPaths::findExecutable(QStringLiteral("ffmpeg")),
+                  {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                   QStringLiteral("-i"), source, QStringLiteral("-c:v"), QStringLiteral("prores_ks"),
+                   QStringLiteral("-an"), out});
+    return process.waitForFinished(60'000) && process.exitCode() == 0;
+}
+} // namespace
+
+void EditorStateTest::loadRelinksVerifiedProResTranscodes()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("clip.mp4"));
+    if (!makeSourceLabFixture(source))
+        QSKIP("ffmpeg not available to make a fixture");
+    QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("Transcodes_ProRes")));
+    const QString transcode = dir.filePath(QStringLiteral("Transcodes_ProRes/clip.mov"));
+    if (!transcodeToProRes(source, transcode))
+        QSKIP("ffmpeg cannot write ProRes");
+
+    const auto loadedAssetPath = [&](const QString &projectPath, QString *path, bool *dirty, bool *editFriendly) {
+        AssetLibrary library;
+        AppController state(&library);
+        drift::MediaAsset asset;
+        asset.kind = drift::MediaKind::Video;
+        asset.path = source;
+        asset.name = QStringLiteral("clip");
+        asset.durationUs = 4 * drift::kUsPerSecond;
+        asset.width = 320;
+        asset.height = 240;
+        asset.fps = 30.0;
+        const QString id = state.project()->addAsset(asset);
+        library.syncToProject();
+        state.projectFile()->saveProject(QUrl::fromLocalFile(projectPath));
+        state.projectFile()->waitForSave();
+
+        AppController reopened(&library);
+        reopened.projectFile()->loadProject(QUrl::fromLocalFile(projectPath));
+        QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+        const drift::MediaAsset *loaded = reopened.project()->asset(id);
+        *dirty = reopened.projectFile()->hasUnsavedChanges();
+        *editFriendly = loaded && loaded->editFriendly;
+        *path = loaded ? loaded->path : QString();
+    };
+
+    QString path;
+    bool dirty = false;
+    bool editFriendly = false;
+    loadedAssetPath(dir.filePath(QStringLiteral("a.drift")), &path, &dirty, &editFriendly);
+    QCOMPARE(path, transcode);
+    QVERIFY(dirty);
+    QVERIFY(editFriendly);
+
+    // A non-ProRes file in Transcodes_ProRes is not accepted.
+    QVERIFY(QFile::remove(transcode));
+    QVERIFY(QFile::copy(source, dir.filePath(QStringLiteral("Transcodes_ProRes/clip.mov"))));
+    loadedAssetPath(dir.filePath(QStringLiteral("b.drift")), &path, &dirty, &editFriendly);
+    QCOMPARE(path, source);
+    QVERIFY(!dirty);
+    QVERIFY(!editFriendly);
+
+    // A same-directory clip.mov is no longer a candidate.
+    QVERIFY(QFile::remove(dir.filePath(QStringLiteral("Transcodes_ProRes/clip.mov"))));
+    QVERIFY(transcodeToProRes(source, dir.filePath(QStringLiteral("clip.mov"))));
+    loadedAssetPath(dir.filePath(QStringLiteral("c.drift")), &path, &dirty, &editFriendly);
+    QCOMPARE(path, source);
+    QVERIFY(!dirty);
+}
 
 void EditorStateTest::sourceLabReplaceWithSpeedRebasesEverything()
 {

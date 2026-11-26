@@ -20578,6 +20578,12 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         </translation>
     </message>
     <message numerus="yes">
+        <source>Relinked %n clip(s) to ProRes transcodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
             <numerusform>Đã tải JSON dự án, nhưng không tìm thấy %n tệp phương tiện</numerusform>

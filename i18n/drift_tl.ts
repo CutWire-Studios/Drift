@@ -20671,6 +20671,13 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         </translation>
     </message>
     <message numerus="yes">
+        <source>Relinked %n clip(s) to ProRes transcodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
             <numerusform>Na-load ang Project JSON, ngunit hindi nahanap ang %n media file</numerusform>
