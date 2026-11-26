@@ -579,6 +579,8 @@ add_library(driftcore STATIC
     src/core/animation/AutoZoom.cpp
     src/core/input/InputLog.h
     src/core/input/InputLog.cpp
+    src/core/input/CursorDwell.h
+    src/core/input/CursorDwell.cpp
     src/core/animation/EasingPresetStore.h
     src/core/animation/EasingPresetStore.cpp
     src/core/animation/ClipAnimation.h

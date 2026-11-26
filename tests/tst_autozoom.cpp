@@ -1,6 +1,7 @@
 #include <QtTest>
 
 #include "core/animation/AutoZoom.h"
+#include "core/input/CursorDwell.h"
 #include "core/input/InputLog.h"
 
 #include <QTemporaryDir>
@@ -29,6 +30,14 @@ private slots:
     void clicksOutsideTheClipAreIgnored();
     void aClickAtTheStartOpensZoomed();
     void keysNeverRunPastTheClip();
+    // Cursor dwell
+    void dwellNeedsEnoughSamples();
+    void aSettledCursorBecomesAPoint();
+    void aMovingCursorYieldsNothing();
+    void slowDriftIsNotADwell();
+    void dwellsTooCloseTogetherCollapse();
+    void dwellReportsArrivalNotDeparture();
+    void dwellPointsDriveTheZoom();
 };
 
 namespace {
@@ -287,6 +296,103 @@ void AutoZoomTest::keysNeverRunPastTheClip()
                      qPrintable(QStringLiteral("key at %1 outside the clip").arg(key)));
         }
     }
+}
+
+namespace {
+
+CursorSample at(double seconds, double x, double y)
+{
+    CursorSample sample;
+    sample.timeUs = secondsToUs(seconds);
+    sample.position = QPointF(x, y);
+    return sample;
+}
+
+// A cursor parked at one spot, sampled every 50 ms.
+QList<CursorSample> parked(double from, double to, double x, double y)
+{
+    QList<CursorSample> out;
+    for (double t = from; t <= to + 1e-9; t += 0.05)
+        out.append(at(t, x, y));
+    return out;
+}
+
+} // namespace
+
+void AutoZoomTest::dwellNeedsEnoughSamples()
+{
+    QVERIFY(cursorDwellPoints({}).isEmpty());
+    QVERIFY(cursorDwellPoints({at(1.0, 0.5, 0.5)}).isEmpty());
+}
+
+void AutoZoomTest::aSettledCursorBecomesAPoint()
+{
+    const QList<InputEvent> points = cursorDwellPoints(parked(1.0, 2.0, 0.3, 0.7));
+    QCOMPARE(points.size(), 1);
+    QVERIFY(qFuzzyCompare(points.first().position.x(), 0.3));
+    QVERIFY(qFuzzyCompare(points.first().position.y(), 0.7));
+    // No button: inferred from where the cursor stopped, not observed. The overlay uses that to
+    // tell a real click from a guess.
+    QCOMPARE(points.first().button, 0);
+    QCOMPARE(points.first().kind, InputEventKind::Press);
+}
+
+void AutoZoomTest::aMovingCursorYieldsNothing()
+{
+    // Swept across the frame without stopping.
+    QList<CursorSample> sweep;
+    for (int i = 0; i < 40; ++i)
+        sweep.append(at(1.0 + i * 0.05, 0.05 + i * 0.02, 0.5));
+    QVERIFY(cursorDwellPoints(sweep).isEmpty());
+}
+
+void AutoZoomTest::slowDriftIsNotADwell()
+{
+    // A hand creeping the mouse along. Measuring against the previous sample instead of the run's
+    // start would call this still, because each step is tiny.
+    QList<CursorSample> drift;
+    for (int i = 0; i < 60; ++i)
+        drift.append(at(1.0 + i * 0.05, 0.2 + i * 0.004, 0.5));
+    QVERIFY(cursorDwellPoints(drift).isEmpty());
+}
+
+void AutoZoomTest::dwellsTooCloseTogetherCollapse()
+{
+    // Settles, twitches away, settles again right next to it. One zoom, not two.
+    QList<CursorSample> samples = parked(1.0, 1.5, 0.3, 0.3);
+    samples += parked(1.55, 2.1, 0.8, 0.8);
+    CursorDwellOptions options;
+    options.minGapUs = secondsToUs(5.0);
+    QCOMPARE(cursorDwellPoints(samples, options).size(), 1);
+}
+
+void AutoZoomTest::dwellReportsArrivalNotDeparture()
+{
+    // Parked from 1.0s to 6.0s: the zoom belongs at the start of that, not after it.
+    const QList<InputEvent> points = cursorDwellPoints(parked(1.0, 6.0, 0.5, 0.5));
+    QCOMPARE(points.size(), 1);
+    QCOMPARE(points.first().timeUs, secondsToUs(1.0));
+}
+
+void AutoZoomTest::dwellPointsDriveTheZoom()
+{
+    // The reason the generator takes timed points rather than "clicks": the same code serves a
+    // platform where buttons can be observed and one where only the cursor can.
+    QList<CursorSample> samples = parked(2.0, 2.8, 0.25, 0.25);
+    samples += parked(6.0, 6.8, 0.75, 0.75);
+
+    const QList<InputEvent> points = cursorDwellPoints(samples);
+    QCOMPARE(points.size(), 2);
+
+    const AutoZoomOptions options = optionsFor(2.0);
+    const AutoZoomTracks tracks = autoZoomFromClicks(points, secondsToUs(12), options);
+    QVERIFY(!tracks.isEmpty());
+    QVERIFY(qFuzzyCompare(tracks.scaleX.evaluateAt(secondsToUs(2.0)), 2.0));
+    QVERIFY(qFuzzyCompare(tracks.scaleX.evaluateAt(secondsToUs(6.0)), 2.0));
+    // And the dwell point is what gets centred.
+    const QPointF landed = canvasPointOf(tracks, secondsToUs(6.0), QPointF(0.75, 0.75), options.frame);
+    QVERIFY(qAbs(landed.x() - options.restPosition.x()) < 0.5);
+    QVERIFY(qAbs(landed.y() - options.restPosition.y()) < 0.5);
 }
 
 QTEST_MAIN(AutoZoomTest)
