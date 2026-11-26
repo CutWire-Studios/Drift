@@ -149,6 +149,14 @@ ThemedContextMenu {
                 onTriggered: AssetLibrary.removeProxies(ids)
             }
             ThemedMenuItem {
+                readonly property var targets: root.host.selectedAssetIds.length > 0 ? root.host.selectedAssetIds : [root.assetId]
+                text: targets.length > 1 ? qsTr("Convert %n clips to Apple ProRes 422…", "", targets.length)
+                                         : qsTr("Convert to Apple ProRes 422…")
+                icon.name: Theme.icons.rabbit
+                visible: root.kind === "video" && !root.host.editFriendlyOf(root.assetId) && !ShellBridge.phoneShell
+                onTriggered: EditorState.bin.convertToProRes(targets)
+            }
+            ThemedMenuItem {
                 text: qsTr("Convert to edit-friendly format")
                 icon.name: Theme.icons.rabbit
                 visible: root.kind === "video" && root.single && !root.host.editFriendlyOf(root.assetId)

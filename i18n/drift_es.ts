@@ -17771,6 +17771,13 @@
         <source>Playback</source>
         <translation type="unfinished">Reproducción</translation>
     </message>
+    <message numerus="yes">
+        <source>Convert %n clips to Apple ProRes 422…</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>Usar como máscara</translation>
@@ -17823,6 +17830,10 @@
     <message>
         <source>Remove proxy</source>
         <translation>Eliminar proxy</translation>
+    </message>
+    <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
@@ -18113,6 +18124,33 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Another conversion or media edit is currently running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those clips are already Apple ProRes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No valid video files to transcode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422 and relinked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The project was closed before the replace landed</source>
         <translation>El proyecto se cerró antes de que se aplicara el reemplazo</translation>
     </message>
@@ -18162,6 +18200,28 @@
     <message>
         <source>Couldn’t update the library</source>
         <translation>No se pudo actualizar la biblioteca</translation>
+    </message>
+    <message>
+        <source>Transcoding to Apple ProRes 422 (%1/%2)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>ProRes transcoding cancelled after %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422, %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not refresh “%1”: %2</source>
@@ -31321,6 +31381,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Open mask timeline</source>
         <translation>Abrir línea de tiempo de máscara</translation>
+    </message>
+    <message>
+        <source>Convert to Apple ProRes 422…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
