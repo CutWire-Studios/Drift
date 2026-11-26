@@ -582,7 +582,8 @@ ThemedContextMenu {
             ThemedMenuItem {
                 text: qsTr("Convert to Apple ProRes 422…")
                 icon.name: Theme.icons.rabbit
-                visible: clipContextMenu.owner.mediaAssetId.length > 0 && !clipContextMenu.owner.mediaEditFriendly
+                visible: clipContextMenu.owner.clipData.kind === "video" && clipContextMenu.owner.mediaAssetId.length > 0
+                         && !clipContextMenu.owner.mediaEditFriendly && !ShellBridge.phoneShell
                 onTriggered: EditorState.bin.convertToProRes([clipContextMenu.owner.mediaAssetId])
             }
             ThemedMenuItem {

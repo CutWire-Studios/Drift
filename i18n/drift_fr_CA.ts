@@ -17745,6 +17745,13 @@
         <source>Playback</source>
         <translation type="unfinished">Lecture</translation>
     </message>
+    <message numerus="yes">
+        <source>Convert %n clips to Apple ProRes 422…</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Use as mask</source>
         <translation>Utiliser comme masque</translation>
@@ -18095,29 +18102,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Could not create the folder %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those clips are already Apple ProRes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No valid video files to transcode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Transcoding to Apple ProRes 422…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform>%n clip</numerusform>
-            <numerusform>%n clips</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Starting Apple ProRes 422 transcode for %n file(s)…</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Transcode to Apple ProRes 422</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -18126,10 +18119,6 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>ProRes transcoding cancelled</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>ProRes transcoding failed</source>
@@ -18185,6 +18174,28 @@
     <message>
         <source>Couldn’t update the library</source>
         <translation>Impossible de mettre à jour la bibliothèque</translation>
+    </message>
+    <message>
+        <source>Transcoding to Apple ProRes 422 (%1/%2)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>ProRes transcoding cancelled after %n clip(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Transcoded %n clip(s) to Apple ProRes 422, %1 failed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>ProRes transcoding failed: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not refresh “%1”: %2</source>

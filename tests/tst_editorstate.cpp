@@ -599,6 +599,7 @@ private slots:
     void importFileNameStaysStorable();
     void splatInputsAreModelPaths();
     void convertToProResTranscodesAndRelinks();
+    void convertToProResNeverTouchesExistingFiles();
 };
 
 // A file dragged in from the file manager has no bin row yet, so the timeline's drop preview
@@ -19972,6 +19973,37 @@ void EditorStateTest::bakeFingerprintTracksTransformSpanEndMoves()
     QVERIFY(drift::bakeFingerprint(project, 0, 60) != before);
 }
 
+namespace {
+void addProResTestAsset(drift::Project &project, AssetLibrary &library, const QString &id, const QString &path)
+{
+    drift::MediaAsset asset;
+    asset.id = id;
+    asset.kind = drift::MediaKind::Video;
+    asset.path = path;
+    asset.name = QFileInfo(path).completeBaseName();
+    asset.durationUs = 4 * drift::kUsPerSecond;
+    asset.width = 320;
+    asset.height = 240;
+    asset.fps = 30.0;
+    asset.hasAudio = true;
+    asset.hasAudioKnown = true;
+    project.assets().insert(asset.id, asset);
+    project.assetOrder().append(asset.id);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-") + id;
+    clip.assetId = id;
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    drift::Track track{.type = drift::TrackType::Video};
+    track.id = QStringLiteral("track-") + id;
+    track.clips.append(clip);
+    project.tracks().append(track);
+    library.setProject(&project);
+}
+} // namespace
+
 void EditorStateTest::convertToProResTranscodesAndRelinks()
 {
     QTemporaryDir dir;
@@ -19984,45 +20016,77 @@ void EditorStateTest::convertToProResTranscodesAndRelinks()
     AssetLibrary library;
     AppController state(&library);
     drift::Project &project = *state.project();
-    drift::MediaAsset asset;
-    asset.id = QStringLiteral("vid-1");
-    asset.kind = drift::MediaKind::Video;
-    asset.path = source;
-    asset.name = QStringLiteral("test_clip");
-    asset.durationUs = 2 * drift::kUsPerSecond;
-    asset.width = 320;
-    asset.height = 240;
-    asset.fps = 30.0;
-    asset.hasAudio = true;
-    asset.hasAudioKnown = true;
-    project.assets().insert(asset.id, asset);
-    project.assetOrder().append(asset.id);
-
-    drift::Clip clip;
-    clip.id = QStringLiteral("c1");
-    clip.assetId = asset.id;
-    clip.type = drift::ClipType::Video;
-    clip.timelineStart = 0;
-    clip.timelineDuration = drift::secondsToUs(2.0);
-    drift::Track track{.type = drift::TrackType::Video};
-    track.id = QStringLiteral("t1");
-    track.clips.append(clip);
-    project.tracks().append(track);
-    library.setProject(&project);
+    addProResTestAsset(project, library, QStringLiteral("vid-1"), source);
 
     QSignalSpy spy(state.bin(), &MediaBinController::proresTranscodeFinished);
-    state.bin()->convertToProRes({asset.id}, QUrl::fromLocalFile(dir.filePath(QStringLiteral("project.drift"))));
+    state.bin()->convertToProRes({QStringLiteral("vid-1")});
 
-    QVERIFY(spy.wait(10000));
+    QVERIFY(spy.wait(20000));
     QCOMPARE(spy.count(), 1);
     QCOMPARE(spy.at(0).at(0).toInt(), 1); // 1 succeeded
     QCOMPARE(spy.at(0).at(1).toInt(), 0); // 0 failed
 
-    const drift::MediaAsset *updated = project.asset(asset.id);
+    const drift::MediaAsset *updated = project.asset(QStringLiteral("vid-1"));
     QVERIFY(updated != nullptr);
     QVERIFY(updated->path.endsWith(QStringLiteral(".mov")));
     QVERIFY(QFile::exists(updated->path));
+    QVERIFY(QFile::exists(source));
     QVERIFY(updated->editFriendly);
+    QCOMPARE(updated->codecName, QStringLiteral("prores"));
+    QString clipPath;
+    for (const drift::Track &track : project.tracks()) {
+        for (const drift::Clip &c : track.clips) {
+            if (c.assetId == QLatin1String("vid-1"))
+                clipPath = c.path;
+        }
+    }
+    QCOMPARE(clipPath, updated->path);
+}
+
+void EditorStateTest::convertToProResNeverTouchesExistingFiles()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString movSource = dir.filePath(QStringLiteral("clip_a.mov"));
+    const QString mp4Source = dir.filePath(QStringLiteral("clip_b.mp4"));
+    if (!makeSourceLabFixture(movSource) || !makeSourceLabFixture(mp4Source))
+        QSKIP("ffmpeg not available to make test fixture");
+    const QString stray = dir.filePath(QStringLiteral("clip_b.mov"));
+    {
+        QFile file(stray);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QByteArray(2 * 1024 * 1024, 'x'));
+    }
+    const QFileInfo movBefore(movSource);
+    const qint64 movSize = movBefore.size();
+    const QDateTime movModified = movBefore.lastModified();
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    addProResTestAsset(project, library, QStringLiteral("a"), movSource);
+    addProResTestAsset(project, library, QStringLiteral("b"), mp4Source);
+
+    QSignalSpy spy(state.bin(), &MediaBinController::proresTranscodeFinished);
+    state.bin()->convertToProRes({QStringLiteral("a"), QStringLiteral("b")});
+
+    QVERIFY(spy.wait(30000));
+    QCOMPARE(spy.at(0).at(0).toInt(), 2);
+    QCOMPARE(spy.at(0).at(1).toInt(), 0);
+
+    const QFileInfo movAfter(movSource);
+    QCOMPARE(movAfter.size(), movSize);
+    QCOMPARE(movAfter.lastModified(), movModified);
+    QCOMPARE(QFileInfo(stray).size(), qint64(2 * 1024 * 1024));
+
+    const drift::MediaAsset *a = project.asset(QStringLiteral("a"));
+    const drift::MediaAsset *b = project.asset(QStringLiteral("b"));
+    QVERIFY(a && b);
+    QVERIFY(a->path != movSource);
+    QVERIFY(b->path != stray);
+    QVERIFY(a->path != b->path);
+    QCOMPARE(a->codecName, QStringLiteral("prores"));
+    QCOMPARE(b->codecName, QStringLiteral("prores"));
 }
 
 QTEST_MAIN(EditorStateTest)

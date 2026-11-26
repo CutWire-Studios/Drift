@@ -44,6 +44,8 @@ MediaBinController::MediaBinController(AppController *app, QObject *parent)
                 if (ok)
                     refreshChangedSources();
             });
+    connect(this, &MediaBinController::editFinished, this, &MediaBinController::onProResEditFinished,
+            Qt::QueuedConnection);
     // Queued: the finished job's own bookkeeping is still unwinding when this is emitted.
     connect(this, &MediaBinController::editFinished, this, &MediaBinController::startNextConversion,
             Qt::QueuedConnection);
@@ -643,6 +645,10 @@ bool MediaBinController::saveAs(int assetIndex, const QUrl &url)
 void MediaBinController::cancelEdit()
 {
     m_conversionQueue.clear();
+    if (m_proresActive) {
+        m_proresQueue.clear();
+        m_proresCancelled = true;
+    }
     if (m_editing)
         m_editCancel.storeRelaxed(1);
 }
@@ -902,20 +908,27 @@ QString MediaBinController::appendSubclip(const QString &assetId, drift::TimeUs 
 }
 
 void MediaBinController::startEditJob(const QString &assetId, const QString &name,
-                                      const drift::MediaEditSpec &spec, bool conversion)
+                                      const drift::MediaEditSpec &spec, bool conversion,
+                                      const QString &status, bool reuseOutput)
 {
     m_app->setPlaying(false);
 
     m_editCancel.storeRelaxed(0);
     m_editProgress = 0.0;
-    m_editStatus = conversion ? tr("Converting…") : tr("Saving…");
+    m_editStatus = !status.isEmpty() ? status : (conversion ? tr("Converting…") : tr("Saving…"));
     m_editing = true;
     m_editingAssetId = assetId;
     m_editKeepName = name;
     m_editIsConversion = conversion;
     emit editChanged();
-    m_app->setLastMessage(conversion ? tr("Converting %1 to an edit-friendly format…").arg(name)
-                              : tr("Saving media…"));
+    m_app->setLastMessage(!status.isEmpty() ? status
+                          : conversion ? tr("Converting %1 to an edit-friendly format…").arg(name)
+                                       : tr("Saving media…"));
+
+    if (reuseOutput) {
+        landEdit(assetId, spec.outputPath, true, QString(), true);
+        return;
+    }
 
     (void)QtConcurrent::run([this, spec, assetId]() {
         QString error;
@@ -925,7 +938,9 @@ void MediaBinController::startEditJob(const QString &assetId, const QString &nam
             QMetaObject::invokeMethod(
                 this,
                 [this, fraction]() {
-                    m_editProgress = fraction;
+                    m_editProgress = m_proresInFlight && m_proresTotal > 0
+                        ? (m_proresDone + fraction) / m_proresTotal
+                        : fraction;
                     emit editChanged();
                 },
                 Qt::QueuedConnection);
@@ -934,46 +949,52 @@ void MediaBinController::startEditJob(const QString &assetId, const QString &nam
 
         QMetaObject::invokeMethod(
             this,
-            [this, ok, error, spec, assetId]() {
-                if (!ok) {
-                    QFile::remove(spec.outputPath);
-                    m_editing = false;
-                    m_editingAssetId.clear();
-                    m_editKeepName.clear();
-                    m_editProgress = 0.0;
-                    m_editStatus = error;
-                    emit editChanged();
-                    m_app->setLastMessage(error.isEmpty() ? tr("Couldn’t save that edit") : error,
-                                          QStringLiteral("error"));
-                    emit editFinished(false, error);
-                    return;
-                }
-
-                m_editStatus = tr("Updating the library…");
-                emit editChanged();
-                // By id: a conversion runs in the background, and the bin may have been sorted
-                // or had rows removed since it started.
-                const int assetIndex = m_app->m_assetLibrary
-                                           ? m_app->m_assetLibrary->indexOfId(assetId)
-                                           : -1;
-                m_editOutputPath = spec.outputPath;
-                m_editOutputAssetId = assetId;
-                if (assetIndex < 0
-                    || !replaceSource(assetIndex, QUrl::fromLocalFile(spec.outputPath))) {
-                    m_editOutputPath.clear();
-                    m_editOutputAssetId.clear();
-                    QFile::remove(spec.outputPath);
-                    m_editing = false;
-                    m_editingAssetId.clear();
-                    m_editKeepName.clear();
-                    m_editProgress = 0.0;
-                    m_editStatus = tr("Couldn’t update the library");
-                    emit editChanged();
-                    emit editFinished(false, m_editStatus);
-                }
+            [this, ok, error, assetId, path = spec.outputPath]() {
+                landEdit(assetId, path, ok, error, false);
             },
             Qt::QueuedConnection);
     });
+}
+
+void MediaBinController::landEdit(const QString &assetId, const QString &outputPath, bool ok,
+                                  const QString &error, bool keepOutput)
+{
+    if (!ok) {
+        if (!keepOutput)
+            QFile::remove(outputPath);
+        m_editing = false;
+        m_editingAssetId.clear();
+        m_editKeepName.clear();
+        m_editProgress = 0.0;
+        m_editStatus = error;
+        emit editChanged();
+        m_app->setLastMessage(error.isEmpty() ? tr("Couldn’t save that edit") : error,
+                              QStringLiteral("error"));
+        emit editFinished(false, error);
+        return;
+    }
+
+    m_editStatus = tr("Updating the library…");
+    emit editChanged();
+    // By id: a conversion runs in the background, and the bin may have been sorted
+    // or had rows removed since it started.
+    const int assetIndex = m_app->m_assetLibrary ? m_app->m_assetLibrary->indexOfId(assetId) : -1;
+    m_editOutputPath = outputPath;
+    m_editOutputAssetId = assetId;
+    m_editOutputKeep = keepOutput;
+    if (assetIndex < 0 || !replaceSource(assetIndex, QUrl::fromLocalFile(outputPath))) {
+        m_editOutputPath.clear();
+        m_editOutputAssetId.clear();
+        if (!keepOutput)
+            QFile::remove(outputPath);
+        m_editing = false;
+        m_editingAssetId.clear();
+        m_editKeepName.clear();
+        m_editProgress = 0.0;
+        m_editStatus = tr("Couldn’t update the library");
+        emit editChanged();
+        emit editFinished(false, m_editStatus);
+    }
 }
 
 void MediaBinController::convertToConstantFrameRate(const QStringList &assetIds)
@@ -986,223 +1007,211 @@ void MediaBinController::convertToConstantFrameRate(const QStringList &assetIds)
         startNextConversion();
 }
 
-void MediaBinController::convertToProRes(const QStringList &assetIds, const QUrl &projectUrl)
+void MediaBinController::convertToProRes(const QStringList &assetIds)
 {
     if (assetIds.isEmpty() || !m_app->m_assetLibrary)
         return;
 
-    if (m_editing) {
+    if (m_editing || m_proresActive) {
         m_app->setLastMessage(tr("Another conversion or media edit is currently running"),
                               QStringLiteral("warning"));
         return;
     }
 
-    struct TranscodeItem {
-        QString assetId;
-        QString name;
-        QString inputPath;
-        QString outputPath;
-        bool alreadyExists = false;
-    };
+    QDir projectDir;
+    const QString projectPath = m_app->projectFile()->currentProjectPath();
+    if (!projectPath.isEmpty() && QFileInfo(projectPath).isAbsolute())
+        projectDir = QFileInfo(projectPath).dir();
+    const bool haveProjectDir = !projectDir.path().isEmpty() && projectDir.path() != QLatin1String(".");
 
-    QList<TranscodeItem> items;
+    QList<ProResJob> jobs;
+    QSet<QString> claimed;
+    int skipped = 0;
+    int planFailed = 0;
+    QString planError;
 
     for (const QString &id : assetIds) {
-        if (!m_app->m_project.assets().contains(id))
+        const drift::MediaAsset *asset = m_app->m_project.asset(id);
+        if (!asset || asset->kind != drift::MediaKind::Video || asset->path.isEmpty()
+            || !QFileInfo::exists(asset->path))
             continue;
-        const drift::MediaAsset &asset = m_app->m_project.assets().value(id);
-        if (asset.kind != drift::MediaKind::Video || asset.path.isEmpty() || !QFileInfo::exists(asset.path))
+        if (asset->codecName.compare(QLatin1String("prores"), Qt::CaseInsensitive) == 0) {
+            ++skipped;
             continue;
+        }
 
-        const QFileInfo srcInfo(asset.path);
+        const QFileInfo srcInfo(asset->path);
         const QString srcDir = srcInfo.absolutePath();
         const QString srcBase = srcInfo.completeBaseName();
 
         QString targetDir;
-        if (projectUrl.isValid() && projectUrl.isLocalFile()) {
-            const QDir pDir = QFileInfo(projectUrl.toLocalFile()).dir();
-            const QString relDir = pDir.relativeFilePath(srcDir);
-            const QString candidate1 = pDir.filePath(QStringLiteral("../Transcodes_ProRes/") + pDir.dirName());
-            const QString candidate2 = pDir.filePath(QStringLiteral("Transcodes_ProRes"));
-
+        if (haveProjectDir) {
+            const QString relDir = projectDir.relativeFilePath(srcDir);
+            const QString sibling = projectDir.filePath(QStringLiteral("../Transcodes_ProRes"));
             if (!relDir.isEmpty() && !relDir.startsWith(QLatin1String("..")) && relDir != QLatin1String(".")) {
                 // Preserve source subdirectories (e.g. "Day 4") to avoid collisions between identical camera clip numbers
-                targetDir = pDir.filePath(QStringLiteral("Transcodes_ProRes/") + relDir);
-            } else if (QDir(candidate1).exists() || QDir(pDir.filePath(QStringLiteral("../Transcodes_ProRes"))).exists()) {
-                targetDir = candidate1;
+                targetDir = projectDir.filePath(QStringLiteral("Transcodes_ProRes/") + relDir);
+            } else if (QDir(sibling).exists()) {
+                targetDir = sibling + QLatin1Char('/') + projectDir.dirName();
             } else {
-                targetDir = candidate2;
+                targetDir = projectDir.filePath(QStringLiteral("Transcodes_ProRes"));
             }
-        }
-
-        if (targetDir.isEmpty()) {
-            const QDir sDir(srcDir);
-            const QString candidate1 = sDir.filePath(QStringLiteral("../Transcodes_ProRes/") + sDir.dirName());
-            if (QDir(sDir.filePath(QStringLiteral("../Transcodes_ProRes"))).exists()) {
-                targetDir = candidate1;
-            } else {
-                targetDir = sDir.filePath(QStringLiteral("Transcodes_ProRes"));
-            }
-        }
-
-        QDir(targetDir).mkpath(QStringLiteral("."));
-
-        QString outPath;
-        if (asset.path.endsWith(QLatin1String(".mov"), Qt::CaseInsensitive)) {
-            outPath = asset.path;
         } else {
-            const QString sameFolderMov = QDir(srcDir).filePath(srcBase + QStringLiteral(".mov"));
-            if (QFileInfo::exists(sameFolderMov) && QFileInfo(sameFolderMov).size() > 1024 * 1024) {
-                outPath = sameFolderMov;
-            } else {
-                outPath = QDir(targetDir).filePath(srcBase + QStringLiteral(".mov"));
-            }
+            const QDir sDir(srcDir);
+            const QString sibling = sDir.filePath(QStringLiteral("../Transcodes_ProRes"));
+            targetDir = QDir(sibling).exists() ? sibling + QLatin1Char('/') + sDir.dirName()
+                                               : sDir.filePath(QStringLiteral("Transcodes_ProRes"));
+        }
+        targetDir = QDir::cleanPath(targetDir);
+
+        if (!QDir().mkpath(targetDir)) {
+            planError = tr("Could not create the folder %1").arg(QDir::toNativeSeparators(targetDir));
+            ++planFailed;
+            continue;
         }
 
-        TranscodeItem item;
-        item.assetId = id;
-        item.name = asset.name.isEmpty() ? srcInfo.fileName() : asset.name;
-        item.inputPath = asset.path;
-        item.outputPath = outPath;
-        if (QFileInfo::exists(outPath) && QFileInfo(outPath).size() > 1024 * 1024) {
-            item.alreadyExists = true;
+        const auto samePath = [](const QString &a, const QString &b) {
+            return QDir::cleanPath(a).compare(QDir::cleanPath(b), Qt::CaseInsensitive) == 0;
+        };
+        const QString stem = samePath(QDir(targetDir).filePath(srcBase + QStringLiteral(".mov")), asset->path)
+            ? srcBase + QStringLiteral("_prores")
+            : srcBase;
+
+        ProResJob job;
+        job.assetId = id;
+        job.name = asset->name.isEmpty() ? srcInfo.fileName() : asset->name;
+        job.inputPath = asset->path;
+        job.rotation = drift::effectiveRotation(*asset);
+        for (int i = 0;; ++i) {
+            const QString candidate = QDir(targetDir).filePath(
+                (i == 0 ? stem : stem + QLatin1Char('_') + QString::number(i)) + QStringLiteral(".mov"));
+            if (claimed.contains(candidate.toLower()) || samePath(candidate, asset->path))
+                continue;
+            const int inLibrary = m_app->m_assetLibrary->indexOfPath(candidate);
+            if (inLibrary >= 0)
+                continue;
+            if (QFileInfo::exists(candidate)) {
+                // Only a finished ProRes transcode of this very source is worth keeping; anything
+                // else at the name belongs to someone else.
+                const MediaInfo info = MediaProbe::probe(candidate);
+                bool prores = false;
+                for (const StreamInfo &stream : info.streams) {
+                    if (stream.type == StreamInfo::Type::Video && !stream.attachedPicture
+                        && stream.codecName.compare(QLatin1String("prores"), Qt::CaseInsensitive) == 0)
+                        prores = true;
+                }
+                if (!info.ok || !prores || std::abs(info.durationUs - asset->durationUs) > 500'000)
+                    continue;
+                job.reuse = true;
+            }
+            job.outputPath = candidate;
+            break;
         }
-        items.append(item);
+        claimed.insert(job.outputPath.toLower());
+        jobs.append(job);
     }
 
-    if (items.isEmpty()) {
-        m_app->setLastMessage(tr("No valid video files to transcode"), QStringLiteral("warning"));
+    if (jobs.isEmpty()) {
+        m_app->setLastMessage(!planError.isEmpty() ? planError
+                              : skipped > 0 ? tr("Those clips are already Apple ProRes")
+                                            : tr("No valid video files to transcode"),
+                              QStringLiteral("warning"));
         return;
     }
 
-    const int total = int(items.size());
-    m_editing = true;
-    m_editIsConversion = true;
-    m_editProgress = 0.0;
-    m_editStatus = tr("Transcoding to Apple ProRes 422…");
-    m_editKeepName = tr("%n clip(s)", nullptr, total);
-    m_editCancel.storeRelaxed(0);
-    emit editChanged();
+    m_proresQueue = jobs;
+    m_proresProjectId = m_app->m_project.id();
+    m_proresTotal = int(jobs.size());
+    m_proresDone = 0;
+    m_proresFailed = planFailed;
+    m_proresLastError = planError;
+    m_proresActive = true;
+    m_proresInFlight = false;
+    m_proresCancelled = false;
+    startNextProRes();
+}
 
-    m_app->setLastMessage(tr("Starting Apple ProRes 422 transcode for %n file(s)…", nullptr, total),
-                          QStringLiteral("info"));
-
-    (void)QtConcurrent::run([this, items, total]() {
-        const int maxThreads = std::clamp(QThread::idealThreadCount() / 2, 1, 6);
-        QThreadPool pool;
-        pool.setMaxThreadCount(maxThreads);
-
-        struct SharedResult {
-            QMutex mutex;
-            QHash<QString, QString> remap;
-            QAtomicInt completed{0};
-            QAtomicInt failed{0};
-        } result;
-
-        for (const TranscodeItem &item : items) {
-            pool.start([this, item, &result, total]() {
-                if (m_editCancel.loadRelaxed() != 0)
-                    return;
-
-                if (item.alreadyExists) {
-                    {
-                        QMutexLocker locker(&result.mutex);
-                        result.remap.insert(item.inputPath, item.outputPath);
-                    }
-                    const int done = ++result.completed;
-                    const double frac = double(done) / double(total);
-                    QMetaObject::invokeMethod(
-                        this,
-                        [this, frac, done, total, name = item.name]() {
-                            m_editProgress = frac;
-                            m_editKeepName = QStringLiteral("%1 (%2/%3)").arg(name).arg(done).arg(total);
-                            emit editChanged();
-                            emit proresTranscodeProgress(done, total, frac);
-                        },
-                        Qt::QueuedConnection);
-                    return;
-                }
-
-                // Native Apple ProRes 422 transcode via libav* (src/engine/encode/)
-                drift::MediaEditSpec spec;
-                spec.inputPath = item.inputPath;
-                spec.outputPath = item.outputPath;
-                spec.kind = QStringLiteral("video");
-                spec.conformFrameRate = true;
-                spec.output.container = QStringLiteral("mov");
-                spec.output.videoCodec = QStringLiteral("prores");
-
-                QString transcodeError;
-                const bool ok = drift::editMedia(spec, &transcodeError, [this](double) {
-                    return m_editCancel.loadRelaxed() == 0;
-                });
-
-                if (ok && QFile::exists(item.outputPath) && QFileInfo(item.outputPath).size() > 0) {
-                    QMutexLocker locker(&result.mutex);
-                    result.remap.insert(item.inputPath, item.outputPath);
-                } else {
-                    ++result.failed;
-                }
-
-                const int done = ++result.completed;
-                const double frac = double(done) / double(total);
-                QMetaObject::invokeMethod(
-                    this,
-                    [this, frac, done, total, name = item.name]() {
-                        m_editProgress = frac;
-                        m_editKeepName = QStringLiteral("%1 (%2/%3)").arg(name).arg(done).arg(total);
-                        emit editChanged();
-                        emit proresTranscodeProgress(done, total, frac);
-                    },
-                    Qt::QueuedConnection);
-            });
+void MediaBinController::startNextProRes()
+{
+    while (m_proresActive && !m_editing) {
+        if (m_proresQueue.isEmpty() || m_app->m_project.id() != m_proresProjectId) {
+            finishProResBatch();
+            return;
+        }
+        const ProResJob job = m_proresQueue.takeFirst();
+        const drift::MediaAsset *asset = m_app->m_project.asset(job.assetId);
+        if (!asset || asset->path != job.inputPath) {
+            ++m_proresFailed;
+            continue;
         }
 
-        pool.waitForDone();
+        drift::MediaEditSpec spec;
+        spec.inputPath = job.inputPath;
+        spec.outputPath = job.outputPath;
+        spec.kind = QStringLiteral("video");
+        spec.conformFrameRate = true;
+        // Baked upright the way a crop is, so rebindClipsToAsset carries the bin's correction over.
+        spec.rotationOverride = job.rotation;
+        spec.output.container = QStringLiteral("mov");
+        spec.output.videoCodec = QStringLiteral("prores");
 
-        const QHash<QString, QString> remap = result.remap;
-        const int succeeded = int(remap.size());
-        const int failed = result.failed.loadRelaxed();
+        m_proresInFlight = true;
+        startEditJob(job.assetId, job.name, spec, true,
+                     tr("Transcoding to Apple ProRes 422 (%1/%2)…").arg(m_proresDone + m_proresFailed + 1).arg(m_proresTotal),
+                     job.reuse);
+        return;
+    }
+}
 
-        QMetaObject::invokeMethod(
-            this,
-            [this, remap, succeeded, failed]() {
-                m_editing = false;
-                m_editProgress = 1.0;
-                m_editKeepName.clear();
-                m_editStatus.clear();
-                emit editChanged();
-                emit proresTranscodeFinished(succeeded, failed);
+void MediaBinController::onProResEditFinished(bool ok, const QString &message)
+{
+    if (!m_proresActive || !m_proresInFlight)
+        return;
+    m_proresInFlight = false;
+    if (ok) {
+        ++m_proresDone;
+    } else if (!m_proresCancelled) {
+        ++m_proresFailed;
+        m_proresLastError = message;
+    }
+    if (m_proresCancelled) {
+        finishProResBatch();
+        return;
+    }
+    startNextProRes();
+}
 
-                if (succeeded > 0) {
-                    relinkPaths(remap, tr("Transcode to Apple ProRes 422"));
-                    for (auto it = remap.constBegin(); it != remap.constEnd(); ++it) {
-                        const QString &newPath = it.value();
-                        for (drift::MediaAsset &asset : m_app->m_project.assets()) {
-                            if (asset.path == newPath) {
-                                asset.editFriendly = true;
-                                asset.variableFrameRate = false;
-                                asset.frameRateKnown = true;
-                            }
-                        }
-                    }
-                    if (m_app->m_assetLibrary)
-                        m_app->m_assetLibrary->setProject(&m_app->m_project);
-                    m_app->notifyTracksChanged();
+void MediaBinController::finishProResBatch()
+{
+    const int done = m_proresDone;
+    const int failed = m_proresFailed;
+    const bool cancelled = m_proresCancelled;
+    const QString error = m_proresLastError;
+    m_proresActive = false;
+    m_proresInFlight = false;
+    m_proresCancelled = false;
+    m_proresQueue.clear();
+    m_proresLastError.clear();
+    m_editProgress = 1.0;
+    m_editStatus.clear();
+    emit editChanged();
 
-                    const QString message = tr("Transcoded %n clip(s) to Apple ProRes 422 and relinked", nullptr, succeeded);
-                    m_app->setLastMessage(message, QStringLiteral("success"));
-                    emit editFinished(true, message);
-                } else {
-                    const QString errorMsg = m_editCancel.loadRelaxed() != 0
-                        ? tr("ProRes transcoding cancelled")
-                        : tr("ProRes transcoding failed");
-                    m_app->setLastMessage(errorMsg, QStringLiteral("error"));
-                    emit editFinished(false, errorMsg);
-                }
-            },
-            Qt::QueuedConnection);
-    });
+    QString message;
+    QString level = QStringLiteral("success");
+    if (cancelled) {
+        message = tr("ProRes transcoding cancelled after %n clip(s)", nullptr, done);
+        level = QStringLiteral("warning");
+    } else if (done > 0 && failed == 0) {
+        message = tr("Transcoded %n clip(s) to Apple ProRes 422 and relinked", nullptr, done);
+    } else if (done > 0) {
+        message = tr("Transcoded %n clip(s) to Apple ProRes 422, %1 failed", nullptr, done).arg(failed);
+        level = QStringLiteral("warning");
+    } else {
+        message = error.isEmpty() ? tr("ProRes transcoding failed") : tr("ProRes transcoding failed: %1").arg(error);
+        level = QStringLiteral("error");
+    }
+    m_app->setLastMessage(message, level);
+    emit proresTranscodeFinished(done, failed);
 }
 
 void MediaBinController::startNextConversion()
@@ -1421,6 +1430,10 @@ QHash<QString, QString> MediaBinController::findSiblingRelinks(const QString &as
 
 void MediaBinController::dropPendingReplace()
 {
+    // The batch belongs to the project that was picked from; its message would describe the wrong one.
+    m_proresActive = false;
+    m_proresInFlight = false;
+    m_proresQueue.clear();
     // An edit (crop, trim, convert) whose render has started its replace. One still encoding
     // hasn't, and is left to finish.
     const QString editOutput = std::exchange(m_editOutputPath, QString());
@@ -1438,7 +1451,8 @@ void MediaBinController::dropPendingReplace()
     }
     if (!editOutput.isEmpty()) {
         // The edit's own render, which nothing else points at.
-        QFile::remove(editOutput);
+        if (!std::exchange(m_editOutputKeep, false))
+            QFile::remove(editOutput);
         // Conversions queued behind it were picked in the old project.
         m_conversionQueue.clear();
         // Unless a replace of the asset while it encoded ended the edit already.
