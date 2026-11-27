@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/interchange/InterchangeReport.h"
 #include "core/project/Project.h"
 
 #include <optional>
@@ -52,6 +53,11 @@ bool isMogrtData(const QByteArray &data);
 std::optional<MogrtTemplate> readTemplate(const QString &filePath,
                                          const QString &destDir = QString(),
                                          QString *error = nullptr);
+
+// Reads the template's definition and manifest in memory and reports what applyTemplateToProject cannot
+// reproduce. Nothing is written to disk. Returns false only if the file is not a readable archive.
+bool analyzeTemplate(const QString &path, MogrtTemplate *out, drift::interchange::InterchangeReport *report,
+                     QString *error = nullptr);
 
 // Applies the template to a project:
 // 1. Adds extracted media assets to the project's AssetLibrary in a dedicated bin folder.

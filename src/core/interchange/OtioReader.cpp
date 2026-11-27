@@ -5,6 +5,7 @@
 #include "core/project/Project.h"
 #include "core/project/Track.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -123,7 +124,7 @@ bool isOtioData(const QByteArray &data)
             || text.contains(QLatin1String("Track"), Qt::CaseInsensitive));
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error, int *skippedOut)
+std::optional<Project> readProject(const QString &filePath, QString *error, drift::interchange::InterchangeReport *report)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -134,11 +135,11 @@ std::optional<Project> readProject(const QString &filePath, QString *error, int 
 
     const QByteArray data = file.readAll();
     const QString sourceDir = QFileInfo(filePath).absolutePath();
-    return readProjectData(data, sourceDir, error, skippedOut);
+    return readProjectData(data, sourceDir, error, report);
 }
 
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
-                                      int *skippedOut)
+                                      drift::interchange::InterchangeReport *report)
 {
     if (data.isEmpty()) {
         if (error)
@@ -162,6 +163,14 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             *error = QObject::tr("Not an OpenTimelineIO Timeline or Stack (schema: %1)").arg(schema);
         return std::nullopt;
     }
+
+    using Severity = drift::interchange::InterchangeIssue::Severity;
+    const auto note = [report](Severity severity, const char *category, const QString &message,
+                               const QString &itemName = {}, TimeUs at = -1) {
+        if (report)
+            report->add(severity, QString::fromLatin1(category), message, itemName, at);
+    };
+    const auto tr = [](const char *text) { return QCoreApplication::translate("Interchange", text); };
 
     Project project;
 
@@ -195,6 +204,20 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         }
     }
 
+    bool fpsFound = globalStart.value(QStringLiteral("rate")).toDouble() > 0.0;
+    bool sizeFound = false;
+    for (auto it = meta.constBegin(); it != meta.constEnd(); ++it) {
+        if (!it.value().isObject())
+            continue;
+        const QJsonObject sub = it.value().toObject();
+        sizeFound = sizeFound || sub.value(QStringLiteral("width")).toInt() > 0;
+        fpsFound = fpsFound || sub.value(QStringLiteral("rate")).toDouble() > 0.0;
+    }
+    if (!fpsFound)
+        note(Severity::Degraded, "format", tr("The file does not state a frame rate; 24 fps was assumed."));
+    if (!sizeFound)
+        note(Severity::Degraded, "format", tr("The file does not state a resolution; 1920x1080 was assumed."));
+
     project.setResolution(width, height);
     project.setFps(qMax(1, qRound(projectFps)));
 
@@ -213,6 +236,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         Bookmark bm;
         bm.timeUs = mStartUs;
         bm.label = mName.isEmpty() ? QStringLiteral("Marker") : mName;
+        if (!mColor.isEmpty())
+            note(Severity::Degraded, "marker", tr("Marker colours are not kept."), bm.label, mStartUs);
         project.bookmarks().append(bm);
     }
 
@@ -227,8 +252,6 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
     QMap<QString, QString> mediaUrlToAssetId;
     QList<Track> builtTracks;
-    int skipped = 0;
-
     for (const QJsonValue &tVal : trackArray) {
         if (!tVal.isObject())
             continue;
@@ -244,7 +267,9 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         track.name = tName;
         track.hidden = !isAudio && !tObj.value(QStringLiteral("enabled")).toBool(true);
         track.muted = isAudio && !tObj.value(QStringLiteral("enabled")).toBool(true);
-        skipped += tObj.value(QStringLiteral("effects")).toArray().size();
+        for (const QJsonValue &eVal : tObj.value(QStringLiteral("effects")).toArray())
+            note(Severity::Dropped, "effect", tr("Track effects are not imported."),
+                 eVal.toObject().value(QStringLiteral("name")).toString());
 
         const QJsonArray children = tObj.value(QStringLiteral("children")).toArray();
         TimeUs currentTimelineUs = 0;
@@ -258,7 +283,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
             // Transitions overlap their neighbours rather than taking track time.
             if (itemSchema.startsWith(QLatin1String("Transition"), Qt::CaseInsensitive)) {
-                ++skipped;
+                note(Severity::Dropped, "transition", tr("Transitions are not imported."),
+                     cObj.value(QStringLiteral("name")).toString(), currentTimelineUs);
                 continue;
             }
 
@@ -275,7 +301,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
             // Nested stacks/tracks: keep their time so the rest of the track stays in place.
             if (!itemSchema.startsWith(QLatin1String("Clip"), Qt::CaseInsensitive)) {
-                ++skipped;
+                note(Severity::Dropped, "nested", tr("Nested stacks and tracks are left as a gap."),
+                     cObj.value(QStringLiteral("name")).toString(), currentTimelineUs);
                 currentTimelineUs += durUs;
                 continue;
             }
@@ -298,7 +325,12 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             const QString targetUrl = mRef.value(QStringLiteral("target_url")).toString();
             // Missing/generator references (solid colours, offline media) have nothing to point at.
             if (targetUrl.isEmpty()) {
-                ++skipped;
+                const QString refSchema = mRef.value(QStringLiteral("OTIO_SCHEMA")).toString();
+                const bool generator = refSchema.startsWith(QLatin1String("GeneratorReference"));
+                note(Severity::Dropped, generator ? "generator" : "media",
+                     generator ? tr("Generated media (such as solid colours) is left as a gap.")
+                               : tr("The clip has no media file and is left as a gap."),
+                     cObj.value(QStringLiteral("name")).toString(), currentTimelineUs);
                 currentTimelineUs += durUs;
                 continue;
             }
@@ -310,7 +342,11 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
                     && eObj.value(QStringLiteral("time_scalar")).toDouble() != 0.0)
                     speed = eObj.value(QStringLiteral("time_scalar")).toDouble();
                 else
-                    ++skipped;
+                    note(Severity::Dropped, "effect", tr("Effects other than a constant speed change are not imported."),
+                         eObj.value(QStringLiteral("name")).toString().isEmpty()
+                             ? eObj.value(QStringLiteral("effect_name")).toString()
+                             : eObj.value(QStringLiteral("name")).toString(),
+                         currentTimelineUs);
             }
 
             const QString clipName = cObj.value(QStringLiteral("name")).toString();
@@ -357,8 +393,6 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     std::stable_partition(builtTracks.begin(), builtTracks.end(),
                           [](const Track &t) { return t.type != TrackType::Audio; });
     project.tracks() = builtTracks;
-    if (skippedOut)
-        *skippedOut = skipped;
 
     if (project.tracks().isEmpty()) {
         project.resetToDefaultTimeline();

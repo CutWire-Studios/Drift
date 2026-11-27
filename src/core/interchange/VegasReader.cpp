@@ -6,6 +6,7 @@
 #include "core/project/Track.h"
 #include "engine/decode/probe/MediaProbe.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QColor>
 #include <QDirIterator>
@@ -690,6 +691,37 @@ QList<Effect> extractVideoEffects(const uint8_t *payload, qsizetype payloadSize)
     return effects;
 }
 
+// Plugin ids sit in the payload as UTF-16 strings like "{...:name}"; every id other than the three
+// effects extractVideoEffects maps is dropped.
+void reportUnsupportedEffects(const uint8_t *payload, qsizetype payloadSize, drift::interchange::InterchangeReport *report)
+{
+    if (!report)
+        return;
+    static const QStringList known = {QStringLiteral("levels"), QStringLiteral("colorcorrector"),
+                                      QStringLiteral("sharpen")};
+    static const QRegularExpression nameRe(QStringLiteral("^[A-Za-z][A-Za-z0-9_]{2,39}$"));
+    QString run;
+    const auto flush = [&]() {
+        if (run.size() >= 6 && run.contains(QLatin1Char('{')) && run.contains(QLatin1Char(':')) && run.endsWith(QLatin1Char('}'))) {
+            const QString body = run.left(run.size() - 1);
+            const QString name = body.mid(body.lastIndexOf(QLatin1Char(':')) + 1);
+            if (nameRe.match(name).hasMatch() && !known.contains(name, Qt::CaseInsensitive))
+                report->add(drift::interchange::InterchangeIssue::Severity::Dropped, QStringLiteral("effect"),
+                            QCoreApplication::translate("Interchange", "This VEGAS plugin is not supported and was dropped."),
+                            name);
+        }
+        run.clear();
+    };
+    for (qsizetype i = 0; i + 1 < payloadSize; i += 2) {
+        const uint8_t lo = payload[i];
+        if (payload[i + 1] == 0 && lo >= 0x20 && lo < 0x7f)
+            run.append(QChar(lo));
+        else
+            flush();
+    }
+    flush();
+}
+
 QString extractPathFromPayload(const uint8_t *data, qsizetype size)
 {
     if (size < 4)
@@ -796,7 +828,7 @@ struct ImportContext
     QSet<QString> stack;
     QHash<QString, std::shared_ptr<const Project>> parsed;
     int depth = 0;
-    int skipped = 0;
+    drift::interchange::InterchangeReport *report = nullptr;
 };
 
 std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourceDir, QString *error,
@@ -1016,6 +1048,7 @@ std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourc
                         if (imported != nestedEntries.constEnd()) {
                             MediaEntry entry = *imported;
                             entry.mediaEffects = extractVideoEffects(payload, payloadSize);
+                            reportUnsupportedEffects(payload, payloadSize, ctx.report);
                             mediaPool.insert(mid, entry);
                             cpos += alignedSize(csize);
                             continue;
@@ -1066,7 +1099,10 @@ std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourc
                             cpos += alignedSize(csize);
                             continue;
                         }
-                        ++ctx.skipped;
+                        if (ctx.report)
+                            ctx.report->add(drift::interchange::InterchangeIssue::Severity::Dropped, QStringLiteral("nested"),
+                                            QCoreApplication::translate("Interchange", "A nested VEGAS project could not be imported."),
+                                            diskName);
                     }
 
                     MediaEntry entry;
@@ -1074,6 +1110,7 @@ std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourc
                     entry.resolvedPath = resolved;
                     entry.assetId = assetId;
                     entry.mediaEffects = extractVideoEffects(payload, payloadSize);
+                    reportUnsupportedEffects(payload, payloadSize, ctx.report);
                     mediaPool.insert(mid, entry);
 
                     MediaAsset asset;
@@ -1668,22 +1705,20 @@ std::optional<Project> readDataImpl(const QByteArray &data, const QString &sourc
 
 } // namespace
 
-std::optional<Project> readProject(const QString &filePath, QString *error, int *skippedOut)
+std::optional<Project> readProject(const QString &filePath, QString *error, drift::interchange::InterchangeReport *report)
 {
     ImportContext ctx;
+    ctx.report = report;
     auto result = readFileImpl(filePath, error, ctx);
-    if (skippedOut)
-        *skippedOut = ctx.skipped;
     return result;
 }
 
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
-                                       int *skippedOut)
+                                       drift::interchange::InterchangeReport *report)
 {
     ImportContext ctx;
+    ctx.report = report;
     auto result = readDataImpl(data, sourceDir, error, ctx);
-    if (skippedOut)
-        *skippedOut = ctx.skipped;
     return result;
 }
 

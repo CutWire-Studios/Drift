@@ -318,6 +318,7 @@ QtObject {
             if (main.openMarketplace)
                 main.openMarketplace(params.page !== undefined ? params.page : "")
             break
+        case "interchange": if (main.openInterchange) main.openInterchange(params.tab !== undefined ? params.tab : "import", ""); break
         case "debugInfo": main.openDebugInfo(); break
         case "about": main.openAboutDialog(); break
         case "update": main.openUpdateDialog(); break

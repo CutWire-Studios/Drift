@@ -4,7 +4,9 @@
 #include "core/project/media/MediaAsset.h"
 #include "core/project/Project.h"
 #include "core/project/Track.h"
+#include "core/interchange/ZipEntries.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QDomDocument>
 #include <QFile>
@@ -14,182 +16,18 @@
 #include <QUrl>
 #include <QUuid>
 #include <QtMath>
-#include <cstring>
-#include <zlib.h>
+#include <functional>
 
 namespace drift::resolve {
 
 namespace {
 
 constexpr quint32 kZipLocalHeaderMagic = 0x04034b50;
-constexpr quint32 kZipCentralDirMagic = 0x02014b50;
-constexpr quint32 kZipEOCDMagic = 0x06054b50;
-
-quint16 readU16(const char *ptr)
-{
-    const auto *b = reinterpret_cast<const uint8_t *>(ptr);
-    return static_cast<quint16>(b[0] | (b[1] << 8));
-}
 
 quint32 readU32(const char *ptr)
 {
     const auto *b = reinterpret_cast<const uint8_t *>(ptr);
     return static_cast<quint32>(b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24));
-}
-
-qint64 findEOCD(QFile &file)
-{
-    const qint64 fileSize = file.size();
-    if (fileSize < 22)
-        return -1;
-
-    const qint64 maxScan = qMin<qint64>(fileSize, 65535 + 22);
-    const qint64 scanStart = fileSize - maxScan;
-
-    if (!file.seek(scanStart))
-        return -1;
-
-    const QByteArray buf = file.read(maxScan);
-    for (qint64 i = buf.size() - 22; i >= 0; --i) {
-        if (readU32(buf.constData() + i) == kZipEOCDMagic)
-            return scanStart + i;
-    }
-    return -1;
-}
-
-QByteArray inflateRawDeflate(const QByteArray &compressed, quint32 expectedSize)
-{
-    z_stream strm;
-    std::memset(&strm, 0, sizeof(strm));
-    if (inflateInit2(&strm, -MAX_WBITS) != Z_OK)
-        return {};
-
-    strm.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(compressed.constData()));
-    strm.avail_in = static_cast<uInt>(compressed.size());
-
-    QByteArray out;
-    out.resize(static_cast<int>(qMax(expectedSize, 1024u)));
-
-    strm.next_out = reinterpret_cast<Bytef *>(out.data());
-    strm.avail_out = static_cast<uInt>(out.size());
-
-    int ret = inflate(&strm, Z_SYNC_FLUSH);
-    while (ret == Z_OK && strm.avail_out == 0) {
-        const int oldSize = out.size();
-        out.resize(oldSize * 2);
-        strm.next_out = reinterpret_cast<Bytef *>(out.data() + oldSize);
-        strm.avail_out = static_cast<uInt>(oldSize);
-        ret = inflate(&strm, Z_SYNC_FLUSH);
-    }
-
-    if (ret == Z_STREAM_END || ret == Z_OK) {
-        out.resize(static_cast<int>(strm.total_out));
-    } else {
-        out.clear();
-    }
-    inflateEnd(&strm);
-    return out;
-}
-
-struct ZipEntryInfo
-{
-    QString path;
-    quint16 method = 0;
-    quint32 compressedSize = 0;
-    quint32 uncompressedSize = 0;
-    quint32 localOffset = 0;
-    bool isDir = false;
-};
-
-QList<ZipEntryInfo> readZipEntries(QFile &file, QString *error)
-{
-    const qint64 eocdPos = findEOCD(file);
-    if (eocdPos < 0) {
-        if (error)
-            *error = QObject::tr("Not a valid ZIP archive");
-        return {};
-    }
-
-    if (!file.seek(eocdPos))
-        return {};
-
-    const QByteArray eocdData = file.read(22);
-    if (eocdData.size() < 22)
-        return {};
-
-    const quint16 totalEntries = readU16(eocdData.constData() + 10);
-    const quint32 cdOffset = readU32(eocdData.constData() + 16);
-
-    if (!file.seek(cdOffset))
-        return {};
-
-    QList<ZipEntryInfo> entries;
-    entries.reserve(totalEntries);
-
-    for (int i = 0; i < totalEntries; ++i) {
-        const QByteArray cdHeader = file.read(46);
-        if (cdHeader.size() < 46)
-            break;
-
-        if (readU32(cdHeader.constData()) != kZipCentralDirMagic)
-            break;
-
-        ZipEntryInfo entry;
-        entry.method = readU16(cdHeader.constData() + 10);
-        entry.compressedSize = readU32(cdHeader.constData() + 20);
-        entry.uncompressedSize = readU32(cdHeader.constData() + 24);
-        const quint16 fileNameLen = readU16(cdHeader.constData() + 28);
-        const quint16 extraLen = readU16(cdHeader.constData() + 30);
-        const quint16 commentLen = readU16(cdHeader.constData() + 32);
-        entry.localOffset = readU32(cdHeader.constData() + 42);
-
-        const QByteArray nameData = file.read(fileNameLen);
-        entry.path = QString::fromUtf8(nameData);
-        entry.isDir = entry.path.endsWith(QLatin1Char('/')) || entry.path.endsWith(QLatin1Char('\\'));
-
-        if (extraLen + commentLen > 0)
-            file.seek(file.pos() + extraLen + commentLen);
-
-        entries.append(entry);
-    }
-
-    return entries;
-}
-
-bool extractEntryData(QFile &file, const ZipEntryInfo &entry, QByteArray &outData)
-{
-    if (entry.isDir)
-        return true;
-
-    if (!file.seek(entry.localOffset))
-        return false;
-
-    const QByteArray localHeader = file.read(30);
-    if (localHeader.size() < 30 || readU32(localHeader.constData()) != kZipLocalHeaderMagic)
-        return false;
-
-    const quint16 localNameLen = readU16(localHeader.constData() + 26);
-    const quint16 localExtraLen = readU16(localHeader.constData() + 28);
-
-    const qint64 dataOffset = entry.localOffset + 30 + localNameLen + localExtraLen;
-    if (!file.seek(dataOffset))
-        return false;
-
-    const QByteArray rawData = file.read(entry.compressedSize);
-    if (rawData.size() != static_cast<int>(entry.compressedSize))
-        return false;
-
-    if (entry.method == 0) {
-        outData = rawData;
-        return true;
-    }
-
-    if (entry.method == 8) {
-        outData = inflateRawDeflate(rawData, entry.uncompressedSize);
-        return !outData.isEmpty() || entry.uncompressedSize == 0;
-    }
-
-    return false;
 }
 
 QString normalizePath(const QString &rawPath)
@@ -257,6 +95,51 @@ TimeUs parseFcpxmlTime(const QString &str)
     return 0;
 }
 
+using Severity = drift::interchange::InterchangeIssue::Severity;
+
+void note(drift::interchange::InterchangeReport *report, Severity severity, const char *category,
+          const char *message, const QString &itemName = {}, TimeUs at = -1)
+{
+    if (report)
+        report->add(severity, QString::fromLatin1(category), QCoreApplication::translate("Interchange", message),
+                    itemName, at);
+}
+
+void reportFcpxmlElement(drift::interchange::InterchangeReport *report, const QDomElement &el, int depth,
+                         const QString &name, TimeUs at)
+{
+    if (!report)
+        return;
+    const QString tag = el.tagName();
+    if (tag == QLatin1String("transition")) {
+        note(report, Severity::Dropped, "transition", "Transitions are not imported.", name, at);
+    } else if (tag.startsWith(QLatin1String("filter-"))) {
+        note(report, Severity::Dropped, "effect", "Effects and filters are not imported.", name, at);
+    } else if (tag == QLatin1String("adjust-volume") || tag == QLatin1String("adjust-panner")
+               || tag == QLatin1String("adjust-loudness") || tag == QLatin1String("adjust-noiseReduction")
+               || tag == QLatin1String("adjust-EQ") || tag == QLatin1String("adjust-humReduction")) {
+        note(report, Severity::Dropped, "audio", "Audio levels and pan are not imported.", name, at);
+    } else if (tag.startsWith(QLatin1String("adjust-")) && tag != QLatin1String("adjust-conform")) {
+        note(report, Severity::Dropped, "effect", "Transform, crop and other adjustments are not imported.", name,
+             at);
+    } else if (tag == QLatin1String("keyframeAnimation")) {
+        note(report, Severity::Dropped, "keyframes", "Keyframes are not imported.", name, at);
+    } else if (tag == QLatin1String("timeMap")) {
+        note(report, Severity::Dropped, "speed", "Speed changes and retiming are not imported.", name, at);
+    } else if (tag == QLatin1String("marker") || tag == QLatin1String("chapter-marker")) {
+        note(report, Severity::Dropped, "marker", "Markers are not imported.", name, at);
+    } else if (tag == QLatin1String("ref-clip") || tag == QLatin1String("mc-clip") || tag == QLatin1String("sync-clip")
+               || tag == QLatin1String("audition")) {
+        note(report, Severity::Dropped, "nested",
+             "Compound, multicam and synchronized clips are not expanded; they import as a single clip.", name, at);
+    } else if (depth > 0 && el.hasAttribute(QStringLiteral("lane"))) {
+        note(report, Severity::Dropped, "format",
+             "Connected clips on other lanes are not imported; only the primary storyline is kept.", name, at);
+    }
+    for (QDomElement c = el.firstChildElement(); !c.isNull(); c = c.nextSiblingElement())
+        reportFcpxmlElement(report, c, depth + 1, name, at);
+}
+
 struct FcpxmlFormat
 {
     int width = 1920;
@@ -293,11 +176,11 @@ bool isResolveProject(const QString &filePath)
         return true;
 
     if (header.size() >= 4 && readU32(header.constData()) == kZipLocalHeaderMagic) {
-        const auto entries = readZipEntries(file, nullptr);
-        for (const auto &e : entries) {
-            if (e.path.compare(QLatin1String("project.xml"), Qt::CaseInsensitive) == 0
-                || e.path.startsWith(QLatin1String("SeqContainer"), Qt::CaseInsensitive)
-                || e.path.startsWith(QLatin1String("MediaPool"), Qt::CaseInsensitive)) {
+        const QStringList names = drift::interchange::zipEntryNames(filePath);
+        for (const QString &name : names) {
+            if (name.compare(QLatin1String("project.xml"), Qt::CaseInsensitive) == 0
+                || name.startsWith(QLatin1String("SeqContainer"), Qt::CaseInsensitive)
+                || name.startsWith(QLatin1String("MediaPool"), Qt::CaseInsensitive)) {
                 return true;
             }
         }
@@ -324,10 +207,10 @@ bool isResolveData(const QByteArray &data)
     return false;
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error)
+std::optional<Project> readProject(const QString &filePath, QString *error, drift::interchange::InterchangeReport *report)
 {
     if (filePath.endsWith(QLatin1String(".drp"), Qt::CaseInsensitive)) {
-        return readDrpArchive(filePath, error);
+        return readDrpArchive(filePath, error, report);
     }
 
     QFile file(filePath);
@@ -341,13 +224,14 @@ std::optional<Project> readProject(const QString &filePath, QString *error)
     const QString sourceDir = QFileInfo(filePath).absolutePath();
 
     if (isResolveData(data) && readU32(data.constData()) == kZipLocalHeaderMagic) {
-        return readDrpArchive(filePath, error);
+        return readDrpArchive(filePath, error, report);
     }
 
-    return readProjectData(data, sourceDir, error);
+    return readProjectData(data, sourceDir, error, report);
 }
 
-std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error)
+std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
+                                      drift::interchange::InterchangeReport *report)
 {
     if (data.isEmpty()) {
         if (error)
@@ -355,10 +239,11 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         return std::nullopt;
     }
 
-    return readFcpxmlData(data, sourceDir, error);
+    return readFcpxmlData(data, sourceDir, error, report);
 }
 
-std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sourceDir, QString *error)
+std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sourceDir, QString *error,
+                                      drift::interchange::InterchangeReport *report)
 {
     QDomDocument doc;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
@@ -454,6 +339,9 @@ std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sou
         project.setName(projEl.attribute(QStringLiteral("name")));
 
     const QDomElement seqEl = root.elementsByTagName(QStringLiteral("sequence")).item(0).toElement();
+    for (int i = 1; i < root.elementsByTagName(QStringLiteral("sequence")).size(); ++i)
+        note(report, Severity::Dropped, "sequence", "Only the first sequence is imported.",
+             root.elementsByTagName(QStringLiteral("sequence")).item(i).toElement().attribute(QStringLiteral("name")));
     if (!seqEl.isNull()) {
         const QString fmtId = seqEl.attribute(QStringLiteral("format"));
         if (formats.contains(fmtId)) {
@@ -470,7 +358,7 @@ std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sou
     // 3. Spine and clips
     const QDomElement spineEl = root.elementsByTagName(QStringLiteral("spine")).item(0).toElement();
     if (spineEl.isNull()) {
-        // Create default empty tracks if no spine
+        note(report, Severity::Error, "format", "The file has no timeline (no spine); an empty timeline was created.");
         project.tracks().clear();
         Track vTrack;
         vTrack.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -504,8 +392,12 @@ std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sou
 
         if (tag == QLatin1String("gap")) {
             spineCursorUs = offsetUs + durUs;
+            for (QDomElement c = child.firstChildElement(); !c.isNull(); c = c.nextSiblingElement())
+                reportFcpxmlElement(report, c, 1, child.attribute(QStringLiteral("name")), offsetUs);
             continue;
         }
+
+        reportFcpxmlElement(report, child, 0, child.attribute(QStringLiteral("name")), offsetUs);
 
         if (tag == QLatin1String("title")) {
             Clip clip;
@@ -597,6 +489,7 @@ std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sou
     }
 
     if (project.tracks().isEmpty()) {
+        note(report, Severity::Error, "format", "The timeline has no clips; the default timeline was used.");
         project.resetToDefaultTimeline();
     }
 
@@ -604,30 +497,34 @@ std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sou
     return project;
 }
 
-std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error)
+std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error,
+                                      drift::interchange::InterchangeReport *report)
 {
-    QFile file(drpFilePath);
-    if (!file.open(QIODevice::ReadOnly)) {
+    const auto isDrpEntry = [](const QString &name) {
+        const QString lower = name.toLower();
+        return lower.endsWith(QLatin1String("project.xml"))
+            || (lower.contains(QLatin1String("seqcontainer/")) && lower.endsWith(QLatin1String(".xml")))
+            || (lower.contains(QLatin1String("mediapool/")) && lower.endsWith(QLatin1String(".xml")))
+            || lower.endsWith(QLatin1String(".fcpxml"))
+            || (lower.contains(QLatin1String("timeline")) && lower.endsWith(QLatin1String(".xml")));
+    };
+    QString zipError;
+    const QList<drift::interchange::ZipEntryData> entries
+        = drift::interchange::readZipEntries(drpFilePath, isDrpEntry, &zipError);
+    if (!zipError.isEmpty()) {
         if (error)
-            *error = QObject::tr("Cannot open DaVinci Resolve project archive: %1").arg(drpFilePath);
-        return std::nullopt;
-    }
-
-    const QList<ZipEntryInfo> entries = readZipEntries(file, error);
-    if (entries.isEmpty()) {
-        if (error && error->isEmpty())
-            *error = QObject::tr("DaVinci Resolve project archive is empty or invalid");
+            *error = zipError;
         return std::nullopt;
     }
 
     // Look for project.xml and any sequence XMLs in SeqContainer/
-    const ZipEntryInfo *projXmlEntry = nullptr;
-    const ZipEntryInfo *fcpxmlEntry = nullptr;
-    QList<const ZipEntryInfo *> seqEntries;
-    QList<const ZipEntryInfo *> mediaPoolEntries;
+    const drift::interchange::ZipEntryData *projXmlEntry = nullptr;
+    const drift::interchange::ZipEntryData *fcpxmlEntry = nullptr;
+    QList<const drift::interchange::ZipEntryData *> seqEntries;
+    QList<const drift::interchange::ZipEntryData *> mediaPoolEntries;
 
-    for (const ZipEntryInfo &e : entries) {
-        const QString lower = e.path.toLower();
+    for (const drift::interchange::ZipEntryData &e : entries) {
+        const QString lower = e.name.toLower();
         if (lower.endsWith(QLatin1String("project.xml"))) {
             projXmlEntry = &e;
         } else if (lower.contains(QLatin1String("seqcontainer/")) && lower.endsWith(QLatin1String(".xml"))) {
@@ -641,11 +538,8 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
 
     // If an embedded FCPXML or timeline XML was found, extract and parse it directly
     if (fcpxmlEntry != nullptr) {
-        QByteArray fcpxmlBytes;
-        if (extractEntryData(file, *fcpxmlEntry, fcpxmlBytes)) {
-            const QString sourceDir = QFileInfo(drpFilePath).absolutePath();
-            return readFcpxmlData(fcpxmlBytes, sourceDir, error);
-        }
+        const QString sourceDir = QFileInfo(drpFilePath).absolutePath();
+        return readFcpxmlData(fcpxmlEntry->data, sourceDir, error, report);
     }
 
     Project project;
@@ -654,38 +548,39 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
     project.setFps(24);
 
     double fps = 24.0;
+    bool sizeRead = false;
+    bool fpsRead = false;
     const QString sourceDir = QFileInfo(drpFilePath).absolutePath();
 
     // 1. Parse project.xml if present
     if (projXmlEntry != nullptr) {
-        QByteArray projBytes;
-        if (extractEntryData(file, *projXmlEntry, projBytes)) {
-            QDomDocument doc;
-            if (doc.setContent(projBytes)) {
-                const QDomElement root = doc.documentElement();
+        QDomDocument doc;
+        if (doc.setContent(projXmlEntry->data)) {
+            const QDomElement root = doc.documentElement();
 
-                // Project Name
-                const QDomElement nameEl = root.elementsByTagName(QStringLiteral("Name")).item(0).toElement();
-                if (!nameEl.isNull() && !nameEl.text().isEmpty())
-                    project.setName(nameEl.text().trimmed());
+            // Project Name
+            const QDomElement nameEl = root.elementsByTagName(QStringLiteral("Name")).item(0).toElement();
+            if (!nameEl.isNull() && !nameEl.text().isEmpty())
+                project.setName(nameEl.text().trimmed());
 
-                // Resolution
-                const QDomElement wEl = root.elementsByTagName(QStringLiteral("TimelineResolutionWidth")).item(0).toElement();
-                const QDomElement hEl = root.elementsByTagName(QStringLiteral("TimelineResolutionHeight")).item(0).toElement();
-                int w = 1920;
-                int h = 1080;
-                if (!wEl.isNull() && wEl.text().toInt() > 0)
-                    w = wEl.text().toInt();
-                if (!hEl.isNull() && hEl.text().toInt() > 0)
-                    h = hEl.text().toInt();
-                project.setResolution(w, h);
+            // Resolution
+            const QDomElement wEl = root.elementsByTagName(QStringLiteral("TimelineResolutionWidth")).item(0).toElement();
+            const QDomElement hEl = root.elementsByTagName(QStringLiteral("TimelineResolutionHeight")).item(0).toElement();
+            int w = 1920;
+            int h = 1080;
+            if (!wEl.isNull() && wEl.text().toInt() > 0)
+                w = wEl.text().toInt();
+            if (!hEl.isNull() && hEl.text().toInt() > 0)
+                h = hEl.text().toInt();
+            project.setResolution(w, h);
+            sizeRead = wEl.text().toInt() > 0 && hEl.text().toInt() > 0;
 
-                // Frame rate
-                const QDomElement fpsEl = root.elementsByTagName(QStringLiteral("TimelineFrameRate")).item(0).toElement();
-                if (!fpsEl.isNull() && fpsEl.text().toDouble() > 0.0) {
-                    fps = fpsEl.text().toDouble();
-                    project.setFps(qMax(1, qRound(fps)));
-                }
+            // Frame rate
+            const QDomElement fpsEl = root.elementsByTagName(QStringLiteral("TimelineFrameRate")).item(0).toElement();
+            if (!fpsEl.isNull() && fpsEl.text().toDouble() > 0.0) {
+                fps = fpsEl.text().toDouble();
+                fpsRead = true;
+                project.setFps(qMax(1, qRound(fps)));
             }
         }
     }
@@ -700,12 +595,8 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
     QMap<QString, ResolveMediaItem> mediaItems;
 
     for (const auto *mpEntry : mediaPoolEntries) {
-        QByteArray mpBytes;
-        if (!extractEntryData(file, *mpEntry, mpBytes))
-            continue;
-
         QDomDocument doc;
-        if (!doc.setContent(mpBytes))
+        if (!doc.setContent(mpEntry->data))
             continue;
 
         const QDomNodeList clipNodes = doc.elementsByTagName(QStringLiteral("Clip"));
@@ -775,16 +666,21 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
     }
 
     // 3. Parse Timeline Sequences in SeqContainer/
+    if (!sizeRead)
+        note(report, Severity::Degraded, "format", "The project resolution was not found; 1920x1080 was assumed.");
+    if (!fpsRead)
+        note(report, Severity::Degraded, "format", "The project frame rate was not found; 24 fps was assumed.");
+    if (seqEntries.size() > 1)
+        note(report, Severity::Degraded, "sequence", "Several timelines were merged onto a single track.");
+
     QList<Clip> videoClips;
     QList<Clip> audioClips;
+    int videoTrackCount = 0;
+    int audioTrackCount = 0;
 
     for (const auto *seqEntry : seqEntries) {
-        QByteArray seqBytes;
-        if (!extractEntryData(file, *seqEntry, seqBytes))
-            continue;
-
         QDomDocument doc;
-        if (!doc.setContent(seqBytes))
+        if (!doc.setContent(seqEntry->data))
             continue;
 
         const QDomElement root = doc.documentElement();
@@ -811,6 +707,7 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
             const bool isAudio = (typeStr.contains(QLatin1String("audio"))
                                   || tagStr.contains(QLatin1String("audiotrack"))
                                   || tEl.attribute(QStringLiteral("trackType")).compare(QLatin1String("audio"), Qt::CaseInsensitive) == 0);
+            ++(isAudio ? audioTrackCount : videoTrackCount);
 
             // Parse Clips in track
             const auto clipNodes = tEl.elementsByTagName(QStringLiteral("Clip"));
@@ -857,6 +754,35 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
                     clip.assetId = resolveIdToAssetId.value(cName);
                 }
 
+                if (report) {
+                    const std::function<void(const QDomElement &)> scan = [&](const QDomElement &el) {
+                        for (QDomElement c = el.firstChildElement(); !c.isNull(); c = c.nextSiblingElement()) {
+                            const QString t = c.tagName().toLower();
+                            if (t.contains(QLatin1String("transition")))
+                                note(report, Severity::Dropped, "transition", "Transitions are not imported.", clip.name,
+                                     clip.timelineStart);
+                            else if (t.contains(QLatin1String("keyframe")))
+                                note(report, Severity::Dropped, "keyframes", "Keyframes are not imported.", clip.name,
+                                     clip.timelineStart);
+                            else if (t.contains(QLatin1String("speed")) || t.contains(QLatin1String("retime")))
+                                note(report, Severity::Dropped, "speed", "Speed changes and retiming are not imported.",
+                                     clip.name, clip.timelineStart);
+                            else if (t.contains(QLatin1String("effect")) || t.contains(QLatin1String("filter"))
+                                     || t.contains(QLatin1String("fusion")))
+                                note(report, Severity::Dropped, "effect", "Effects and filters are not imported.",
+                                     clip.name, clip.timelineStart);
+                            else if (t.contains(QLatin1String("volume")) || t.contains(QLatin1String("pan")))
+                                note(report, Severity::Dropped, "audio", "Audio levels and pan are not imported.",
+                                     clip.name, clip.timelineStart);
+                            else if (t.contains(QLatin1String("marker")))
+                                note(report, Severity::Dropped, "marker", "Markers are not imported.", clip.name,
+                                     clip.timelineStart);
+                            scan(c);
+                        }
+                    };
+                    scan(cEl);
+                }
+
                 if (isAudio)
                     audioClips.append(clip);
                 else
@@ -864,6 +790,9 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
             }
         }
     }
+
+    if (videoTrackCount > 1 || audioTrackCount > 1)
+        note(report, Severity::Degraded, "format", "All video tracks were merged into one, and all audio tracks into one.");
 
     if (!videoClips.isEmpty() || !audioClips.isEmpty()) {
         project.tracks().clear();
@@ -888,6 +817,7 @@ std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error
     }
 
     if (project.tracks().isEmpty()) {
+        note(report, Severity::Error, "format", "The timeline has no clips; the default timeline was used.");
         project.resetToDefaultTimeline();
     }
 

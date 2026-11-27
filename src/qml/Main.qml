@@ -304,7 +304,7 @@ ApplicationWindow {
         }
         const tools = [segmentationWindowLoader, denoiseWindowLoader, restoreWindowLoader,
                        multicamWindowLoader, speedCurveWindowLoader, fadeCurveWindowLoader,
-                       marketplaceWindowLoader, extrasWindowLoader]
+                       marketplaceWindowLoader, extrasWindowLoader, interchangeWindowLoader]
         for (var t = 0; t < tools.length; ++t) {
             if (tools[t].shown) {
                 tools[t].item.close()
@@ -524,6 +524,14 @@ ApplicationWindow {
         keepLoaded: true
         sourceComponent: Component {
             ExtrasWindow { }
+        }
+    }
+
+    LazyLoader {
+        id: interchangeWindowLoader
+        keepLoaded: true
+        sourceComponent: Component {
+            InterchangeWindow { }
         }
     }
 
@@ -1007,6 +1015,15 @@ ApplicationWindow {
     // Shared with the effects panel's Import button.
     function importUserPackage(url) {
         userPackageImporter.importFile(url)
+    }
+
+    // tab: "import" | "export". A non-empty url is analysed straight away.
+    function openInterchange(tab, url) {
+        interchangeWindowLoader.ensure().open(tab || "import", url || "")
+    }
+
+    function confirmDiscardForImport(proceed) {
+        editorHeader.confirmIfDirty(proceed)
     }
 
     function openExtras() {
@@ -1766,6 +1783,7 @@ ApplicationWindow {
                 // when the screen is allowed to disappear.
                 onNewProjectRequested: window.requestNewProject()
                 onOpenProjectRequested: window.requestOpenProjectDialog()
+                onImportExportRequested: window.openInterchange("import", "")
                 onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
                 onHelpRequested: window.openHelpDialog()
                 onMoreSettingsRequested: window.openSettings()

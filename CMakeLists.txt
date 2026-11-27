@@ -669,6 +669,12 @@ add_library(driftcore STATIC
     src/core/interchange/EdlReader.cpp
     src/core/interchange/OtioReader.h
     src/core/interchange/OtioReader.cpp
+    src/core/interchange/InterchangeReport.h
+    src/core/interchange/InterchangeReport.cpp
+    src/core/interchange/InterchangeFormats.h
+    src/core/interchange/InterchangeFormats.cpp
+    src/core/interchange/ZipEntries.h
+    src/core/interchange/ZipEntries.cpp
     src/core/interchange/TimelineExporter.h
     src/core/interchange/TimelineExporter.cpp
     src/core/interchange/VegasReader.h
@@ -1588,6 +1594,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/PreferencesController.cpp
     src/app/GraphicsApiChoice.h
     src/app/GraphicsApiChoice.cpp
+    src/app/editor/InterchangeController.h
+    src/app/editor/InterchangeController.cpp
     src/app/editor/ProjectFileController.h
     src/app/editor/ProjectFileController.cpp
     src/app/editor/ProjectFolderController.h
@@ -2242,6 +2250,7 @@ qt_add_qml_module(drift
         src/qml/RestoreWindow.qml
         src/qml/MarketplaceWindow.qml
         src/qml/ExtrasWindow.qml
+        src/qml/InterchangeWindow.qml
         src/qml/SpeedCurveWindow.qml
         src/qml/FadeCurveWindow.qml
         src/qml/MediaPreviewWindow.qml
@@ -3056,6 +3065,10 @@ qt_add_qml_module(drift
         src/qml/components/quicksetup/QuickSetupDownloads.qml
         src/qml/components/quicksetup/QuickSetupAddonRow.qml
         src/qml/components/quicksetup/QuickSetupMockEditor.qml
+        src/qml/components/interchange/InterchangeFormatList.qml
+        src/qml/components/interchange/InterchangeGapList.qml
+        src/qml/components/interchange/InterchangeReportView.qml
+        src/qml/components/interchange/InterchangeStabilityChip.qml
         src/qml/components/extras/ExtrasIcon.qml
         src/qml/components/extras/ExtrasIconTile.qml
         src/qml/components/extras/ExtrasCard.qml

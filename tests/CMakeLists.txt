@@ -21,7 +21,7 @@ add_test(NAME FFmpegAbi COMMAND tst_ffmpegabi)
 
 qt_add_executable(tst_core tst_core.cpp)
 target_include_directories(tst_core PRIVATE ../src)
-target_link_libraries(tst_core PRIVATE Qt6::Test driftcore)
+target_link_libraries(tst_core PRIVATE Qt6::Test driftcore driftengine)
 target_compile_definitions(tst_core PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME Core COMMAND tst_core)
 
@@ -389,6 +389,7 @@ qt_add_executable(tst_mcp
     ../src/app/mcp/AgentImageLog.cpp
     ../src/app/editor/PreferencesController.cpp
     ../src/app/GraphicsApiChoice.cpp
+    ../src/app/editor/InterchangeController.cpp
     ../src/app/editor/ProjectFileController.cpp
     ../src/app/editor/ProjectFolderController.cpp
     ../src/app/bin/AssetPreviewController.cpp

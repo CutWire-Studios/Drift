@@ -4,6 +4,7 @@
 
 #include <QColor>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -26,6 +27,9 @@
 #include "core/interchange/ResolveReader.h"
 #include "core/interchange/EdlReader.h"
 #include "core/interchange/OtioReader.h"
+#include "core/interchange/InterchangeFormats.h"
+#include "core/interchange/InterchangeReport.h"
+#include "core/interchange/premiere/MogrtReader.h"
 #include "core/interchange/TimelineExporter.h"
 #include "core/interchange/subtitles/SrtIO.h"
 #include "core/interchange/subtitles/VttIO.h"
@@ -279,7 +283,15 @@ private slots:
     void shotcutImportMapsTracksSpeedAndRoot();
     void kdenliveImportExpandsNestedTractors();
     void otioImportMapsTracksAndTimeWarp();
+    void interchangeReportAggregates();
+    void otioReportCategorisesDrops();
+    void detectImportFormatByExtensionAndContent();
+    void edlReportFlagsTransitionsAndSpeed();
+    void fcpxmlReportFlagsTransitionsAndMarkers();
+    void analyzeExportReportsEdlLosses();
+    void analyzeExportTsvDropsClips();
     void timelineExporterRoundTripsFcpxmlEdlOtioAndTsv();
+    void mogrtAnalyzeReadsWithoutWritingFiles();
 };
 
 void CoreTest::timeConversion()
@@ -2882,6 +2894,68 @@ void CoreTest::dotLottieUnpacks()
     junk.write("not a zip");
     junk.close();
     QVERIFY(drift::unpackDotLottie(junk.fileName(), dir.filePath("unpacked"), &error).isEmpty());
+    QVERIFY(!error.isEmpty());
+}
+
+void CoreTest::mogrtAnalyzeReadsWithoutWritingFiles()
+{
+    using drift::interchange::InterchangeIssue;
+    using drift::mogrt::MogrtTemplate;
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const QByteArray definition =
+        "{\"name\":\"Lower Third\",\"width\":1280,\"height\":720,\"fps\":25,\"duration\":3,"
+        "\"properties\":[{\"id\":\"t\",\"name\":\"Title\",\"type\":\"text\",\"value\":\"Hello\"},"
+        "{\"id\":\"s\",\"name\":\"Scale\",\"type\":\"slider\",\"value\":50}]}";
+    const QString mogrt = dir.filePath("lower.mogrt");
+    QVERIFY(writeStoredZip(mogrt, {
+        {QStringLiteral("definition.json"), definition},
+        {QStringLiteral("media/bg.png"), QByteArray("png-bytes")},
+    }));
+
+    auto listing = [&dir] {
+        QStringList files;
+        QDirIterator it(dir.path(), QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext())
+            files.append(it.next());
+        files.sort();
+        return files;
+    };
+    const QStringList before = listing();
+
+    MogrtTemplate tmpl;
+    drift::interchange::InterchangeReport report;
+    QString error;
+    QVERIFY(drift::mogrt::analyzeTemplate(mogrt, &tmpl, &report, &error));
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(listing(), before);
+
+    QCOMPARE(tmpl.title, QStringLiteral("Lower Third"));
+    QCOMPARE(tmpl.width, 1280);
+    QCOMPARE(tmpl.height, 720);
+    QCOMPARE(tmpl.fps, 25);
+    QCOMPARE(tmpl.durationUs, drift::secondsToUs(3.0));
+    QCOMPARE(tmpl.properties.size(), 2);
+    QVERIFY(tmpl.assetPaths.isEmpty());
+    QVERIFY(tmpl.extractDir.isEmpty());
+
+    auto hasIssue = [&report](InterchangeIssue::Severity severity, const QString &category) {
+        for (const InterchangeIssue &issue : report.issues) {
+            if (issue.severity == severity && issue.category == category)
+                return true;
+        }
+        return false;
+    };
+    QVERIFY(hasIssue(InterchangeIssue::Severity::Dropped, QStringLiteral("effect")));
+    QVERIFY(hasIssue(InterchangeIssue::Severity::Degraded, QStringLiteral("text")));
+    QVERIFY(!hasIssue(InterchangeIssue::Severity::Error, QStringLiteral("format")));
+
+    QFile junk(dir.filePath("junk.mogrt"));
+    QVERIFY(junk.open(QIODevice::WriteOnly));
+    junk.write("not a zip");
+    junk.close();
+    QVERIFY(!drift::mogrt::analyzeTemplate(junk.fileName(), &tmpl, &report, &error));
     QVERIFY(!error.isEmpty());
 }
 
@@ -9314,13 +9388,13 @@ void CoreTest::shotcutImportMapsTracksSpeedAndRoot()
     const QString root = QFileInfo(dir.path()).canonicalFilePath();
 
     QString error;
-    int skipped = -1;
+    drift::interchange::InterchangeReport report;
     const auto proj = drift::kdenlive::readProjectData(interchangeFixture(QStringLiteral("shotcut.mlt"), root),
-                                                       QString(), &error, &skipped);
+                                                       QString(), &error, &report);
     QVERIFY2(proj.has_value(), qPrintable(error));
 
     // The brightness filter and the colour clip; compositing transitions are structural.
-    QCOMPARE(skipped, 2);
+    QCOMPARE(report.droppedCount(), 2);
     QCOMPARE(proj->fps(), 25);
 
     // Background track dropped; MLT's bottom-to-top order flipped, audio last.
@@ -9365,13 +9439,13 @@ void CoreTest::kdenliveImportExpandsNestedTractors()
     const QString root = QFileInfo(dir.path()).canonicalFilePath();
 
     QString error;
-    int skipped = -1;
+    drift::interchange::InterchangeReport report;
     const auto proj = drift::kdenlive::readProjectData(interchangeFixture(QStringLiteral("kdenlive23.kdenlive"), root),
-                                                       QString(), &error, &skipped);
+                                                       QString(), &error, &report);
     QVERIFY2(proj.has_value(), qPrintable(error));
 
     // Only the fade; Kdenlive's internal_added track filters and mixes are not user effects.
-    QCOMPARE(skipped, 1);
+    QCOMPARE(report.droppedCount(), 1);
 
     // project tractor -> sequence -> three track tractors; their empty mix playlists are dropped.
     const QList<drift::Track> &tracks = proj->tracks();
@@ -9406,12 +9480,12 @@ void CoreTest::otioImportMapsTracksAndTimeWarp()
     QVERIFY(QFile::copy(QStringLiteral(DRIFT_TEST_DATA_DIR "/interchange/cut.otio"), otioPath));
 
     QString error;
-    int skipped = -1;
-    const auto proj = drift::otio::readProject(otioPath, &error, &skipped);
+    drift::interchange::InterchangeReport report;
+    const auto proj = drift::otio::readProject(otioPath, &error, &report);
     QVERIFY2(proj.has_value(), qPrintable(error));
 
     // The transition and the clip with a MissingReference.
-    QCOMPARE(skipped, 2);
+    QCOMPARE(report.droppedCount(), 2);
     QCOMPARE(proj->fps(), 30);
 
     const QList<drift::Track> &tracks = proj->tracks();
@@ -9435,6 +9509,197 @@ void CoreTest::otioImportMapsTracksAndTimeWarp()
     QCOMPARE(tracks[1].clips[0].assetId, video.assetId);
     QCOMPARE(proj->assets().size(), 1);
     QCOMPARE(proj->assets().cbegin().value().kind, drift::MediaKind::Video);
+}
+
+void CoreTest::interchangeReportAggregates()
+{
+    using drift::interchange::InterchangeIssue;
+    drift::interchange::InterchangeReport r;
+    r.add(InterchangeIssue::Severity::Dropped, QStringLiteral("effect"), QStringLiteral("m"), QStringLiteral("a"), 5);
+    r.add(InterchangeIssue::Severity::Dropped, QStringLiteral("effect"), QStringLiteral("m"), QStringLiteral("a"), 9);
+    r.add(InterchangeIssue::Severity::Dropped, QStringLiteral("effect"), QStringLiteral("m"), QStringLiteral("b"));
+    r.add(InterchangeIssue::Severity::Degraded, QStringLiteral("effect"), QStringLiteral("m"), QStringLiteral("a"));
+    QCOMPARE(r.issues.size(), 3);
+    QCOMPARE(r.issues[0].count, 2);
+    QCOMPARE(r.issues[0].at, drift::TimeUs(5));
+    QCOMPARE(r.droppedCount(), 3);
+
+    drift::Project p;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("x");
+    asset.path = QStringLiteral("/definitely/not/here.mp4");
+    p.assets().insert(asset.id, asset);
+    drift::interchange::fillSummary(p, r);
+    QCOMPARE(r.assets, 1);
+    QCOMPARE(r.missingAssets, 1);
+    QCOMPARE(r.sequences, 1);
+}
+
+void CoreTest::otioReportCategorisesDrops()
+{
+    const QByteArray json = R"({
+      "OTIO_SCHEMA": "Timeline.1", "name": "t",
+      "tracks": {"OTIO_SCHEMA": "Stack.1", "children": [
+        {"OTIO_SCHEMA": "Track.1", "kind": "Video", "children": [
+          {"OTIO_SCHEMA": "Clip.1", "name": "c",
+           "source_range": {"start_time": {"value": 0, "rate": 24}, "duration": {"value": 24, "rate": 24}},
+           "effects": [{"OTIO_SCHEMA": "Effect.1", "name": "Blur"}],
+           "media_reference": {"OTIO_SCHEMA": "ExternalReference.1", "target_url": "/tmp/x.mp4"}},
+          {"OTIO_SCHEMA": "Transition.1", "name": "Dissolve"}
+        ]}
+      ]}
+    })";
+    QString error;
+    drift::interchange::InterchangeReport report;
+    const auto proj = drift::otio::readProjectData(json, QString(), &error, &report);
+    QVERIFY2(proj.has_value(), qPrintable(error));
+    QStringList categories;
+    for (const auto &issue : report.issues)
+        categories << issue.category;
+    QVERIFY(categories.contains(QStringLiteral("transition")));
+    QVERIFY(categories.contains(QStringLiteral("effect")));
+    QCOMPARE(report.droppedCount(), 2);
+}
+
+void CoreTest::detectImportFormatByExtensionAndContent()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto make = [&](const QString &name, const QByteArray &content) {
+        const QString path = dir.filePath(name);
+        QFile f(path);
+        f.open(QIODevice::WriteOnly);
+        f.write(content);
+        f.close();
+        return path;
+    };
+    using drift::interchange::detectImportFormat;
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.veg"), "x")), QStringLiteral("veg"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.prproj"), "x")), QStringLiteral("prproj"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.xml"), "x")), QStringLiteral("prproj"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.drp"), "x")), QStringLiteral("resolve"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.fcpxml"), "x")), QStringLiteral("resolve"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.kdenlive"), "x")), QStringLiteral("kdenlive"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.mlt"), "x")), QStringLiteral("kdenlive"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.mogrt"), "x")), QStringLiteral("mogrt"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.edl"), "x")), QStringLiteral("edl"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.otio"), "x")), QStringLiteral("otio"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("noext1"), "{\"OTIO_SCHEMA\": \"Timeline.1\"}")), QStringLiteral("otio"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("noext2"), "<mlt LC_NUMERIC=\"C\"></mlt>")), QStringLiteral("kdenlive"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("noext3"), "TITLE: x\nFCM: NON-DROP FRAME\n")), QStringLiteral("edl"));
+    QCOMPARE(detectImportFormat(make(QStringLiteral("a.txt"), "hello")), QString());
+}
+
+void CoreTest::edlReportFlagsTransitionsAndSpeed()
+{
+    const QByteArray edl =
+        "TITLE: t\n"
+        "FCM: NON-DROP FRAME\n"
+        "001  AX  V  C        00:00:00:00 00:00:05:00 00:00:00:00 00:00:05:00\n"
+        "* FROM CLIP NAME: First\n"
+        "002  AX  V  D    030 00:00:00:00 00:00:05:00 00:00:05:00 00:00:10:00\n"
+        "* FROM CLIP NAME: Second\n"
+        "M2   AX  060.0  00:00:00:00\n";
+    QString error;
+    drift::interchange::InterchangeReport report;
+    const auto proj = drift::edl::readProjectData(edl, QString(), &error, &report);
+    QVERIFY2(proj.has_value(), qPrintable(error));
+    bool transition = false;
+    bool speed = false;
+    for (const auto &issue : report.issues) {
+        if (issue.category == QLatin1String("transition") && issue.itemName == QLatin1String("Second"))
+            transition = true;
+        if (issue.category == QLatin1String("speed"))
+            speed = true;
+    }
+    QVERIFY(transition);
+    QVERIFY(speed);
+}
+
+void CoreTest::fcpxmlReportFlagsTransitionsAndMarkers()
+{
+    const QByteArray xml = R"(<?xml version="1.0"?>
+<fcpxml version="1.10">
+  <resources>
+    <format id="r1" frameDuration="100/2400s" width="1920" height="1080"/>
+    <asset id="r2" name="a" src="file:///tmp/a.mp4" duration="10/1s"/>
+  </resources>
+  <library><event name="e"><project name="p"><sequence format="r1"><spine>
+    <asset-clip ref="r2" name="Clip A" offset="0/1s" start="0/1s" duration="5/1s">
+      <marker start="1/1s" duration="1/24s" value="M"/>
+      <filter-video ref="r3" name="Blur"/>
+    </asset-clip>
+    <transition name="Cross Dissolve" offset="4/1s" duration="1/1s"/>
+    <asset-clip ref="r2" name="Clip B" offset="5/1s" start="0/1s" duration="5/1s"/>
+  </spine></sequence></project></event></library>
+</fcpxml>)";
+    QString error;
+    drift::interchange::InterchangeReport report;
+    const auto proj = drift::resolve::readFcpxmlData(xml, QString(), &error, &report);
+    QVERIFY2(proj.has_value(), qPrintable(error));
+    QStringList categories;
+    for (const auto &issue : report.issues)
+        categories.append(issue.category);
+    QVERIFY(categories.contains(QStringLiteral("transition")));
+    QVERIFY(categories.contains(QStringLiteral("marker")));
+    QVERIFY(categories.contains(QStringLiteral("effect")));
+}
+
+void CoreTest::analyzeExportReportsEdlLosses()
+{
+    drift::Project p;
+    drift::Clip fast;
+    fast.id = QStringLiteral("c1");
+    fast.name = QStringLiteral("Fast");
+    fast.path = QStringLiteral("/tmp/fast.mp4");
+    fast.timelineDuration = drift::secondsToUs(2.0);
+    fast.srcOut = drift::secondsToUs(4.0);
+    fast.speed = 2.0;
+    p.tracks()[0].clips.append(fast);
+
+    drift::Clip off;
+    off.id = QStringLiteral("c2");
+    off.name = QStringLiteral("Off");
+    off.path = QStringLiteral("/tmp/off.mp4");
+    off.timelineStart = drift::secondsToUs(2.0);
+    off.timelineDuration = drift::secondsToUs(2.0);
+    off.srcOut = drift::secondsToUs(2.0);
+    off.enabled = false;
+    p.tracks()[0].clips.append(off);
+
+    const auto report = drift::interchange::analyzeExport(p, QStringLiteral("edl"));
+    bool speed = false;
+    bool disabled = false;
+    for (const auto &issue : report.issues) {
+        QCOMPARE(issue.severity, drift::interchange::InterchangeIssue::Severity::Dropped);
+        if (issue.category == QLatin1String("speed") && issue.itemName == QLatin1String("Fast"))
+            speed = true;
+        if (issue.category == QLatin1String("disabled") && issue.itemName == QLatin1String("Off"))
+            disabled = true;
+    }
+    QVERIFY(speed);
+    QVERIFY(disabled);
+    QCOMPARE(report.clips, 2);
+
+    const auto otio = drift::interchange::analyzeExport(p, QStringLiteral("otio"));
+    for (const auto &issue : otio.issues)
+        QVERIFY(issue.category != QLatin1String("disabled"));
+}
+
+void CoreTest::analyzeExportTsvDropsClips()
+{
+    drift::Project p;
+    for (int i = 0; i < 3; ++i) {
+        drift::Clip c;
+        c.id = QStringLiteral("c%1").arg(i);
+        c.timelineStart = drift::secondsToUs(i);
+        c.timelineDuration = drift::secondsToUs(1.0);
+        p.tracks()[0].clips.append(c);
+    }
+    const auto report = drift::interchange::analyzeExport(p, QStringLiteral("tsv"));
+    QCOMPARE(report.issues.size(), 1);
+    QCOMPARE(report.issues.first().category, QStringLiteral("clips"));
+    QCOMPARE(report.issues.first().count, 3);
 }
 
 void CoreTest::timelineExporterRoundTripsFcpxmlEdlOtioAndTsv()

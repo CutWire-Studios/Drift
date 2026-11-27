@@ -24,6 +24,8 @@
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/bin/MediaBinController.h"
+#include "app/editor/InterchangeController.h"
+#include "app/editor/ProjectFileController.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "ui/preview/PreviewController.h"
 #include "ui/preview/Outliner3dModel.h"
@@ -321,6 +323,7 @@ private slots:
     void sourceLabStreamCopyPlanReportsSnappedIn();
     void mogrtImportIntoExistingProject();
     void newProjectClearsEverything();
+    void interchangeEntryPointsAndImport();
     void projectSetupOnPristineProjectStaysClean();
     void projectFpsCanChangeAfterSetup();
     void darkModePreferencePersistsAcrossSessions();
@@ -601,7 +604,7 @@ private slots:
     void splatInputsAreModelPaths();
     void convertToProResTranscodesAndRelinks();
     void convertToProResNeverTouchesExistingFiles();
-    void loadVegasProjectViaLoadProject();
+    void loadVegasProjectViaInterchange();
 };
 
 // A file dragged in from the file manager has no bin row yet, so the timeline's drop preview
@@ -5703,7 +5706,13 @@ void EditorStateTest::mogrtImportIntoExistingProject()
     state.setPlayheadUs(5000000LL);
 
     // Import into existing project
-    state.projectFile()->importMogrt(QUrl::fromLocalFile(mogrtPath));
+    QSignalSpy imported(state.interchange(), &InterchangeController::importFinished);
+    state.interchange()->analyze(QUrl::fromLocalFile(mogrtPath));
+    QTRY_VERIFY(!state.interchange()->busy());
+    QVERIFY(state.interchange()->analysis().value(QStringLiteral("ok")).toBool());
+    state.interchange()->importAnalyzed();
+    QTRY_COMPARE(imported.count(), 1);
+    QVERIFY(imported.first().first().toBool());
 
     // Existing clip at 0 should be intact
     bool foundExisting = false;
@@ -5724,6 +5733,60 @@ void EditorStateTest::mogrtImportIntoExistingProject()
 
     QVERIFY(foundExisting);
     QVERIFY(foundImported);
+}
+
+void EditorStateTest::interchangeEntryPointsAndImport()
+{
+    AssetLibrary library;
+    AppController state(&library);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString otioPath = dir.filePath(QStringLiteral("cut.otio"));
+    QFile file(otioPath);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write(R"({
+      "OTIO_SCHEMA": "Timeline.1", "name": "t",
+      "tracks": {"OTIO_SCHEMA": "Stack.1", "children": [
+        {"OTIO_SCHEMA": "Track.1", "kind": "Video", "children": [
+          {"OTIO_SCHEMA": "Clip.1", "name": "c",
+           "source_range": {"start_time": {"value": 0, "rate": 24}, "duration": {"value": 24, "rate": 24}},
+           "effects": [{"OTIO_SCHEMA": "Effect.1", "name": "Blur"}],
+           "media_reference": {"OTIO_SCHEMA": "ExternalReference.1", "target_url": "/tmp/x.mp4"}},
+          {"OTIO_SCHEMA": "Transition.1", "name": "Dissolve"}
+        ]}
+      ]}
+    })");
+    file.close();
+
+    QSignalSpy loadSpy(state.projectFile(), &ProjectFileController::projectLoadFinished);
+    state.projectFile()->loadProject(QUrl::fromLocalFile(otioPath));
+    QCOMPARE(loadSpy.count(), 1);
+    QVERIFY(!loadSpy.first().at(0).toBool());
+    QVERIFY(loadSpy.first().at(1).toString().contains(QStringLiteral("Import/Export")));
+
+    InterchangeController *interchange = state.interchange();
+    QVERIFY(!interchange->formats().isEmpty());
+    interchange->analyze(QUrl::fromLocalFile(otioPath));
+    QTRY_VERIFY(!interchange->busy());
+    const QVariantMap analysis = interchange->analysis();
+    QVERIFY(analysis.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(analysis.value(QStringLiteral("formatId")).toString(), QStringLiteral("otio"));
+    QCOMPARE(analysis.value(QStringLiteral("clips")).toInt(), 1);
+    const QVariantList issues = analysis.value(QStringLiteral("issues")).toList();
+    QVERIFY(!issues.isEmpty());
+    QCOMPARE(issues.first().toMap().value(QStringLiteral("severity")).toString(), QStringLiteral("dropped"));
+
+    QSignalSpy imported(interchange, &InterchangeController::importFinished);
+    interchange->importAnalyzed();
+    QTRY_COMPARE(imported.count(), 1);
+    QVERIFY(imported.first().first().toBool());
+    int clips = 0;
+    for (const auto &track : state.project()->tracks())
+        clips += track.clips.size();
+    QCOMPARE(clips, 1);
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    QVERIFY(state.projectFile()->currentProjectPath().isEmpty());
 }
 
 // resetToDefaultTimeline() only clears the tracks, so New Project used to keep the asset pool,
@@ -20166,7 +20229,7 @@ void EditorStateTest::convertToProResNeverTouchesExistingFiles()
     QCOMPARE(b->codecName, QStringLiteral("prores"));
 }
 
-void EditorStateTest::loadVegasProjectViaLoadProject()
+void EditorStateTest::loadVegasProjectViaInterchange()
 {
     const QString testVeg = QDir(QStringLiteral(QT_TESTCASE_SOURCEDIR "/data")).filePath(QStringLiteral("sample.veg"));
     if (!QFile::exists(testVeg)) {
@@ -20175,12 +20238,14 @@ void EditorStateTest::loadVegasProjectViaLoadProject()
 
     AssetLibrary library;
     AppController state(&library);
-    QSignalSpy loadFinished(state.projectFile(), &ProjectFileController::projectLoadFinished);
+    QSignalSpy imported(state.interchange(), &InterchangeController::importFinished);
 
-    state.projectFile()->loadProject(QUrl::fromLocalFile(testVeg));
-    QTRY_VERIFY_WITH_TIMEOUT(!state.projectFile()->projectLoadPending(), 10000);
-    QCOMPARE(loadFinished.count(), 1);
-    QVERIFY(loadFinished.at(0).at(0).toBool());
+    state.interchange()->analyze(QUrl::fromLocalFile(testVeg));
+    QTRY_VERIFY_WITH_TIMEOUT(!state.interchange()->busy(), 10000);
+    QVERIFY(state.interchange()->analysis().value(QStringLiteral("ok")).toBool());
+    state.interchange()->importAnalyzed();
+    QTRY_COMPARE_WITH_TIMEOUT(imported.count(), 1, 10000);
+    QVERIFY(imported.at(0).at(0).toBool());
     QVERIFY(state.tracks().size() >= 1);
     QVERIFY(!state.project()->assets().isEmpty());
 }

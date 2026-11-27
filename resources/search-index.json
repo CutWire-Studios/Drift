@@ -1,6 +1,30 @@
 {
   "entries": [
     {
+      "id": "interchange-window",
+      "target": "dialog:interchange",
+      "context": "InterchangeWindow",
+      "source": "Import / Export",
+      "keywords": "import export premiere resolve kdenlive shotcut vegas edl otio fcpxml mogrt timeline interchange",
+      "needs": []
+    },
+    {
+      "id": "interchange-import",
+      "target": "dialog:interchange?tab=import",
+      "context": "InterchangeWindow",
+      "source": "Import a project from another editor",
+      "keywords": "import premiere prproj resolve drp kdenlive shotcut mlt vegas veg edl otio mogrt analyze",
+      "needs": []
+    },
+    {
+      "id": "interchange-export",
+      "target": "dialog:interchange?tab=export",
+      "context": "InterchangeWindow",
+      "source": "Export the timeline for another editor",
+      "keywords": "export fcpxml edl otio markers tsv timeline interchange",
+      "needs": []
+    },
+    {
       "id": "agent-log-panel",
       "target": "panel:agentLog#agent-log-panel",
       "context": "AgentLogPanel",

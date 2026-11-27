@@ -3756,6 +3756,28 @@
       "tileForegroundOnAccent": "$semantic.onMedia",
       "tileRadius": "$metrics.radius.md"
     },
+    "interchange": {
+      "background": "$semantic.surface.app",
+      "borderWidth": "$metrics.borderWidth",
+      "chipBackground": "$semantic.panel.accent",
+      "chipForeground": "$semantic.mutedForeground",
+      "chipRadius": "$metrics.radius.pill",
+      "foreground": "$semantic.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "groupHeaderHover": "$semantic.popoverHover",
+      "itemHover": "$semantic.popoverHover",
+      "itemSelected": "$semantic.panel.accent",
+      "missingAssets": "$semantic.warning",
+      "panelBackground": "$semantic.surface.panel",
+      "panelBorder": "$semantic.panel.border",
+      "radius": "$metrics.radius.md",
+      "severityDegraded": "$semantic.primary",
+      "severityDropped": "$semantic.warning",
+      "severityError": "$semantic.destructive",
+      "severityInfo": "$semantic.mutedForeground",
+      "success": "$semantic.constructive",
+      "summaryBackground": "$semantic.panel.accent"
+    },
     "maskPresetCard": {
       "background": "$semantic.panel.accent",
       "backgroundHover": "$semantic.popoverHover",

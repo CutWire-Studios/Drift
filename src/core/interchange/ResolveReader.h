@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/interchange/InterchangeReport.h"
 #include "core/project/Project.h"
 
 #include <optional>
@@ -15,17 +16,21 @@ bool isResolveProject(const QString &filePath);
 bool isResolveData(const QByteArray &data);
 
 // Reads a DaVinci Resolve Project (.drp) archive or FCPXML (.fcpxml) from disk and imports it as a drift::Project.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr);
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr,
+                                   drift::interchange::InterchangeReport *report = nullptr);
 
 // Reads raw XML data (FCPXML or Resolve timeline XML) and converts it to a drift::Project.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                      QString *error = nullptr,
+                                      drift::interchange::InterchangeReport *report = nullptr);
 
 // Reads an extracted or archived DaVinci Resolve .drp package.
-std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error = nullptr);
+std::optional<Project> readDrpArchive(const QString &drpFilePath, QString *error = nullptr,
+                                       drift::interchange::InterchangeReport *report = nullptr);
 
 // Reads FCPXML (<fcpxml>) data.
 std::optional<Project> readFcpxmlData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                      QString *error = nullptr,
+                                      drift::interchange::InterchangeReport *report = nullptr);
 
 } // namespace drift::resolve

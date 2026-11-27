@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/interchange/InterchangeReport.h"
 #include "core/project/Project.h"
 
 #include <optional>
@@ -15,12 +16,12 @@ bool isOtioTimeline(const QString &filePath);
 bool isOtioData(const QByteArray &data);
 
 // Reads an OpenTimelineIO (.otio) file from disk and imports it as a drift::Project.
-// skippedOut receives how many effects, transitions and unlinked items had no Drift equivalent.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr, int *skippedOut = nullptr);
+// report, when given, receives everything that had no Drift equivalent.
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr, drift::interchange::InterchangeReport *report = nullptr);
 
 // Reads raw OTIO JSON data and converts it to a drift::Project.
 // sourceDir is used to resolve relative media references.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr, int *skippedOut = nullptr);
+                                      QString *error = nullptr, drift::interchange::InterchangeReport *report = nullptr);
 
 } // namespace drift::otio

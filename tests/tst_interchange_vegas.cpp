@@ -370,10 +370,10 @@ void TestInterchangeVegas::nestedProjectIsParsedOncePerImport()
     write(QStringLiteral("outer.veg"), makeProject(pool, makeEvent(0, 10000000, 1) + makeEvent(10000000, 10000000, 2)));
 
     QString err;
-    int skipped = -1;
-    const auto optProj = drift::vegas::readProject(dir.filePath(QStringLiteral("outer.veg")), &err, &skipped);
+    drift::interchange::InterchangeReport report;
+    const auto optProj = drift::vegas::readProject(dir.filePath(QStringLiteral("outer.veg")), &err, &report);
     QVERIFY2(optProj.has_value(), qPrintable(err));
-    QCOMPARE(skipped, 0);
+    QCOMPARE(report.droppedCount(), 0);
     QCOMPARE(optProj->sequenceIds().size(), 1);
     const auto &clips = optProj->tracks()[0].clips;
     QCOMPARE(clips.size(), 2);
@@ -393,10 +393,10 @@ void TestInterchangeVegas::selfReferencingProjectIsCounted()
     file.close();
 
     QString err;
-    int skipped = 0;
-    const auto optProj = drift::vegas::readProject(file.fileName(), &err, &skipped);
+    drift::interchange::InterchangeReport report;
+    const auto optProj = drift::vegas::readProject(file.fileName(), &err, &report);
     QVERIFY2(optProj.has_value(), qPrintable(err));
-    QCOMPARE(skipped, 1);
+    QCOMPARE(report.droppedCount(), 1);
     QVERIFY(optProj->sequenceIds().isEmpty());
 }
 

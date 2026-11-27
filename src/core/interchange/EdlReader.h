@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/interchange/InterchangeReport.h"
 #include "core/project/Project.h"
 
 #include <optional>
@@ -15,11 +16,13 @@ bool isEdlTimeline(const QString &filePath);
 bool isEdlData(const QByteArray &data);
 
 // Reads an EDL (.edl) file from disk and imports it as a drift::Project.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr);
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr,
+                                   drift::interchange::InterchangeReport *report = nullptr);
 
 // Reads raw EDL text data and converts it to a drift::Project.
 // sourceDir is used to resolve relative media references.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                      QString *error = nullptr,
+                                      drift::interchange::InterchangeReport *report = nullptr);
 
 } // namespace drift::edl

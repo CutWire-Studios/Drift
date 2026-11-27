@@ -23,14 +23,7 @@ Popup {
     signal saveFolderRequested()
     signal exportBundleRequested()
     signal renderTemplateRequested()
-    signal importKdenliveRequested()
-    signal importOtioRequested()
-    // Disabled: these external project imports need more fixing before shipping. Re-enable the
-    // signals and ActionRows below together with the loadProject() routing in AppController.
-    // signal importPremiereRequested()
-    // signal importMogrtRequested()
-    // signal importResolveRequested()
-    // signal importEdlRequested()
+    signal importExportRequested()
     signal propertiesRequested()
     signal healthRequested()
 
@@ -305,13 +298,8 @@ Popup {
                 }
 
                 ThemedMenuItem {
-                    text: qsTr("Import Kdenlive / Shotcut project (experimental)…")
-                    onTriggered: { root.close(); root.importKdenliveRequested() }
-                }
-
-                ThemedMenuItem {
-                    text: qsTr("Import OpenTimelineIO (.otio) (experimental)…")
-                    onTriggered: { root.close(); root.importOtioRequested() }
+                    text: qsTr("Import/Export…")
+                    onTriggered: { root.close(); root.importExportRequested() }
                 }
             }
         }

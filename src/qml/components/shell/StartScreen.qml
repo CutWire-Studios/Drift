@@ -11,6 +11,7 @@ Item {
 
     signal newProjectRequested()
     signal openProjectRequested()
+    signal importExportRequested()
     signal openRecentRequested(string path)
     // The header's app-level entries, which do not need a project: without them here,
     // turning on agent access or changing a setting meant creating an empty project first.
@@ -116,6 +117,7 @@ Item {
                 width: parent.width
                 onNewProjectRequested: root.newProjectRequested()
                 onOpenProjectRequested: root.openProjectRequested()
+                onImportExportRequested: root.importExportRequested()
             }
 
             StartScreenRecents {

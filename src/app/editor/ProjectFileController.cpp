@@ -10,14 +10,8 @@
 
 #include "app/bin/AssetLibrary.h"
 #include "app/platform/RunningInstances.h"
-#include "core/interchange/EdlReader.h"
 #include "core/project/media/ImageSequence.h"
-#include "core/interchange/KdenliveReader.h"
-#include "core/interchange/premiere/MogrtReader.h"
-#include "core/interchange/OtioReader.h"
-#include "core/interchange/VegasReader.h"
-#include "core/interchange/premiere/PrprojReader.h"
-#include "core/interchange/ResolveReader.h"
+#include "core/interchange/InterchangeFormats.h"
 #include "engine/addons/AddonRegistry.h"
 #include "app/editor/AppControllerDetail.h"
 #include "engine/decode/probe/MediaProbe.h"
@@ -947,7 +941,7 @@ std::optional<AppController::ParsedProject> readRecoveryFile(const QString &path
 
 struct ProjectFileController::LoadResult
 {
-    enum class Kind { Bundle, Json, Recovery, Vegas };
+    enum class Kind { Bundle, Json, Recovery, Interchange };
 
     QString error;
     Kind kind = Kind::Bundle;
@@ -956,7 +950,7 @@ struct ProjectFileController::LoadResult
     // Recovery loads only: the file the snapshot was taken of.
     QString originalPath;
     QString projectName;
-    // VEGAS imports only: nested projects that could not be brought in.
+    // Interchange imports only: items the reader left out.
     int skipped = 0;
     // Bundle loads only.
     drift::bundle::BundleInfo bundle;
@@ -1010,249 +1004,6 @@ void ProjectFileController::loadProjectJson(const QUrl &url)
             this, [this, generation, url, result]() { finishLoad(generation, url, result); },
             Qt::QueuedConnection);
     });
-}
-
-void ProjectFileController::loadPremiereProject(const QUrl &url)
-{
-    const QString path = readTargetPath(url);
-    if (path.isEmpty()) {
-        m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
-        return;
-    }
-
-    QString readError;
-    const std::optional<drift::Project> proj = drift::prproj::readProject(path, &readError);
-    if (!proj) {
-        m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open Premiere Pro project") : readError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    // Drop an in-flight bundle extract so it cannot land on top of this document.
-    ++m_loadGeneration;
-
-    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
-
-    QString error;
-    if (!m_app->applyProjectJson(data, &error)) {
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        return;
-    }
-
-    m_embeddedSources.clear();
-    // Untitled: Save must not write a .drift bundle over this .prproj, and recents stay .drift.
-    setCurrentProjectPath(QString());
-    setDirty(true);
-    deleteRecoveryFile();
-    m_app->setProjectLayoutChosen(true);
-    m_app->setLastMessage(tr("Premiere Pro project imported: %1").arg(proj->name()), QStringLiteral("success"));
-}
-
-void ProjectFileController::importMogrt(const QUrl &url)
-{
-    const QString path = readTargetPath(url);
-    if (path.isEmpty()) {
-        m_app->setLastMessage(tr("That template location isn’t valid"), QStringLiteral("error"));
-        return;
-    }
-
-    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    const QString destDir =
-        QDir(base).filePath(QStringLiteral("templates/%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
-    QDir().mkpath(destDir);
-
-    QString readError;
-    const std::optional<drift::mogrt::MogrtTemplate> tmpl = drift::mogrt::readTemplate(path, destDir, &readError);
-    if (!tmpl) {
-        m_app->setLastMessage(readError.isEmpty() ? tr("Failed to unpack Motion Graphics Template") : readError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    const drift::Project before = m_app->m_project;
-
-    // Insert at current playhead if project already has clips; otherwise at start (0).
-    drift::TimeUs insertTime = 0;
-    bool hasClips = false;
-    for (const drift::Track &t : m_app->m_project.tracks()) {
-        if (!t.clips.isEmpty()) {
-            hasClips = true;
-            break;
-        }
-    }
-    if (hasClips) {
-        insertTime = m_app->m_playheadUs;
-    }
-
-    QString applyError;
-    if (!drift::mogrt::applyTemplateToProject(*tmpl, m_app->m_project, insertTime, &applyError)) {
-        m_app->setLastMessage(applyError.isEmpty() ? tr("Failed to apply template to project") : applyError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    m_app->pushProjectEdit(before, tr("Import template: %1").arg(tmpl->title));
-
-    if (m_app->m_assetLibrary)
-        m_app->m_assetLibrary->setProject(&m_app->m_project);
-    m_app->m_bin->folderModel()->setProject(&m_app->m_project);
-
-    setDirty(true);
-    m_app->finishEdit(tr("Template imported: %1").arg(tmpl->title));
-    m_app->setLastMessage(tr("Template imported: %1").arg(tmpl->title), QStringLiteral("success"));
-}
-
-void ProjectFileController::loadKdenliveProject(const QUrl &url)
-{
-    const QString path = readTargetPath(url);
-    if (path.isEmpty()) {
-        m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
-        return;
-    }
-
-    QString readError;
-    int skipped = 0;
-    const std::optional<drift::Project> proj = drift::kdenlive::readProject(path, &readError, &skipped);
-    if (!proj) {
-        m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open Kdenlive / MLT project") : readError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    // Drop an in-flight bundle extract so it cannot land on top of this document.
-    ++m_loadGeneration;
-
-    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
-
-    QString error;
-    if (!m_app->applyProjectJson(data, &error)) {
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        return;
-    }
-
-    m_embeddedSources.clear();
-    // Untitled: Save must not write a .drift bundle over this project, and recents stay .drift.
-    setCurrentProjectPath(QString());
-    setDirty(true);
-    deleteRecoveryFile();
-    m_app->setProjectLayoutChosen(true);
-    if (skipped > 0)
-        m_app->setLastMessage(tr("Project imported: %1. %n effect(s), transition(s) or generated clip(s) have no Drift "
-                                 "equivalent and were left out.", nullptr, skipped)
-                                  .arg(proj->name()),
-                              QStringLiteral("warning"));
-    else
-        m_app->setLastMessage(tr("Project imported: %1").arg(proj->name()), QStringLiteral("success"));
-}
-
-void ProjectFileController::loadResolveProject(const QUrl &url)
-{
-    const QString path = readTargetPath(url);
-    if (path.isEmpty()) {
-        m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
-        return;
-    }
-
-    QString readError;
-    const std::optional<drift::Project> proj = drift::resolve::readProject(path, &readError);
-    if (!proj) {
-        m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open DaVinci Resolve project / timeline") : readError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    // Drop an in-flight bundle extract so it cannot land on top of this document.
-    ++m_loadGeneration;
-
-    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
-
-    QString error;
-    if (!m_app->applyProjectJson(data, &error)) {
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        return;
-    }
-
-    m_embeddedSources.clear();
-    setCurrentProjectPath(QString());
-    setDirty(true);
-    deleteRecoveryFile();
-    m_app->setProjectLayoutChosen(true);
-    m_app->setLastMessage(tr("DaVinci Resolve project imported: %1").arg(proj->name()), QStringLiteral("success"));
-}
-
-void ProjectFileController::loadEdlTimeline(const QUrl &url)
-{
-    const QString path = readTargetPath(url);
-    if (path.isEmpty()) {
-        m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
-        return;
-    }
-
-    QString readError;
-    const std::optional<drift::Project> proj = drift::edl::readProject(path, &readError);
-    if (!proj) {
-        m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open Edit Decision List (.edl)") : readError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    ++m_loadGeneration;
-
-    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
-
-    QString error;
-    if (!m_app->applyProjectJson(data, &error)) {
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        return;
-    }
-
-    m_embeddedSources.clear();
-    setCurrentProjectPath(QString());
-    setDirty(true);
-    deleteRecoveryFile();
-    m_app->setProjectLayoutChosen(true);
-    m_app->setLastMessage(tr("EDL imported: %1").arg(proj->name()), QStringLiteral("success"));
-}
-
-void ProjectFileController::loadOtioTimeline(const QUrl &url)
-{
-    const QString path = readTargetPath(url);
-    if (path.isEmpty()) {
-        m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
-        return;
-    }
-
-    QString readError;
-    int skipped = 0;
-    const std::optional<drift::Project> proj = drift::otio::readProject(path, &readError, &skipped);
-    if (!proj) {
-        m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open OpenTimelineIO (.otio) sequence") : readError,
-                       QStringLiteral("error"));
-        return;
-    }
-
-    ++m_loadGeneration;
-
-    const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
-
-    QString error;
-    if (!m_app->applyProjectJson(data, &error)) {
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        return;
-    }
-
-    m_embeddedSources.clear();
-    setCurrentProjectPath(QString());
-    setDirty(true);
-    deleteRecoveryFile();
-    m_app->setProjectLayoutChosen(true);
-    if (skipped > 0)
-        m_app->setLastMessage(tr("OpenTimelineIO imported: %1. %n effect(s), transition(s) or unlinked item(s) have no "
-                                 "Drift equivalent and were left out.", nullptr, skipped)
-                                  .arg(proj->name()),
-                              QStringLiteral("warning"));
-    else
-        m_app->setLastMessage(tr("OpenTimelineIO imported: %1").arg(proj->name()), QStringLiteral("success"));
 }
 
 void ProjectFileController::packageProject(const QUrl &url)
@@ -1463,6 +1214,26 @@ void ProjectFileController::loadProject(const QUrl &url)
         loadProjectFolder(url.toLocalFile());
         return;
     }
+    {
+        const QString local = AndroidUri::filePath(url);
+        const QString suffix = QFileInfo(local).suffix().toLower();
+        const QString formatId = suffix == QLatin1String("drift") || suffix == QLatin1String("json")
+            ? QString()
+            : drift::interchange::detectImportFormat(local);
+        if (!formatId.isEmpty()) {
+            QString formatName;
+            for (const drift::interchange::InterchangeFormat &format : drift::interchange::interchangeFormats()) {
+                if (format.canImport && format.id == formatId) {
+                    formatName = QCoreApplication::translate("Interchange", format.displayName.toUtf8().constData());
+                    break;
+                }
+            }
+            const QString message = tr("%1 files open from File › Import/Export…").arg(formatName);
+            m_app->setLastMessage(message, QStringLiteral("error"));
+            emit projectLoadFinished(false, message);
+            return;
+        }
+    }
     if (!beginProjectLoad()) {
         m_app->setLastMessage(tr("Still opening a project — try again in a moment."),
                        QStringLiteral("warning"));
@@ -1488,66 +1259,6 @@ void ProjectFileController::loadProject(const QUrl &url)
         const QString path = readTargetPath(url);
         if (path.isEmpty()) {
             result->error = tr("That project location isn’t valid");
-            deliver();
-            return;
-        }
-
-        // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, Kdenlive/Shotcut,
-        // .mogrt, EDL, OTIO) landed in the last two weeks but need more fixing before they ship. Leave
-        // the branches commented out; uncomment to re-enable once the readers are stable.
-        // This is the load worker now and those importers apply on the spot, so hop them back to
-        // the GUI thread when they return.
-        // if (path.endsWith(QLatin1String(".prproj"), Qt::CaseInsensitive)
-        //     || path.endsWith(QLatin1String(".xml"), Qt::CaseInsensitive)
-        //     || drift::prproj::isPremiereProject(path)) {
-        //     loadPremiereProject(url);
-        //     return;
-        // }
-        //
-        // if (path.endsWith(QLatin1String(".drp"), Qt::CaseInsensitive)
-        //     || path.endsWith(QLatin1String(".fcpxml"), Qt::CaseInsensitive)
-        //     || drift::resolve::isResolveProject(path)) {
-        //     loadResolveProject(url);
-        //     return;
-        // }
-        //
-        // if (path.endsWith(QLatin1String(".mogrt"), Qt::CaseInsensitive)
-        //     || drift::mogrt::isMogrtFile(path)) {
-        //     importMogrt(url);
-        //     return;
-        // }
-        //
-        // if (path.endsWith(QLatin1String(".kdenlive"), Qt::CaseInsensitive)
-        //     || path.endsWith(QLatin1String(".mlt"), Qt::CaseInsensitive)
-        //     || drift::kdenlive::isKdenliveProject(path)) {
-        //     loadKdenliveProject(url);
-        //     return;
-        // }
-        //
-        // if (path.endsWith(QLatin1String(".edl"), Qt::CaseInsensitive)
-        //     || drift::edl::isEdlTimeline(path)) {
-        //     loadEdlTimeline(url);
-        //     return;
-        // }
-        //
-        // if (path.endsWith(QLatin1String(".otio"), Qt::CaseInsensitive)
-        //     || drift::otio::isOtioTimeline(path)) {
-        //     loadOtioTimeline(url);
-        //     return;
-        // }
-
-        if (path.endsWith(QLatin1String(".veg"), Qt::CaseInsensitive)
-            || drift::vegas::isVegasProject(path)) {
-            result->kind = LoadResult::Kind::Vegas;
-            QString readError;
-            const auto proj = drift::vegas::readProject(path, &readError, &result->skipped);
-            if (!proj) {
-                result->error = readError.isEmpty() ? tr("Failed to open VEGAS Pro project") : readError;
-            } else {
-                result->projectName = proj->name();
-                const QByteArray data = QJsonDocument(proj->toJson()).toJson(QJsonDocument::Compact);
-                result->parsed = AppController::parseProjectJson(data, &result->error);
-            }
             deliver();
             return;
         }
@@ -1601,6 +1312,31 @@ void ProjectFileController::loadProject(const QUrl &url)
         result->parsed = AppController::parseProjectJson(info->document, &result->error);
         deliver();
     });
+}
+
+bool ProjectFileController::loadInterchangeProject(const drift::Project &project,
+                                                   const drift::interchange::InterchangeReport &report)
+{
+    if (!beginProjectLoad()) {
+        m_app->setLastMessage(tr("Still opening a project — try again in a moment."),
+                       QStringLiteral("warning"));
+        return false;
+    }
+
+    const int generation = ++m_loadGeneration;
+    const int dropped = report.droppedCount();
+    (void)QtConcurrent::run([this, project, dropped, generation]() {
+        auto result = std::make_shared<LoadResult>();
+        result->kind = LoadResult::Kind::Interchange;
+        result->skipped = dropped;
+        result->projectName = project.name();
+        const QByteArray data = QJsonDocument(project.toJson()).toJson(QJsonDocument::Compact);
+        result->parsed = AppController::parseProjectJson(data, &result->error);
+        QMetaObject::invokeMethod(
+            this, [this, generation, result]() { finishLoad(generation, QUrl(), result); },
+            Qt::QueuedConnection);
+    });
+    return true;
 }
 
 void ProjectFileController::finishLoad(int generation, const QUrl &url,
@@ -1735,7 +1471,7 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
         return QStringLiteral("%1. %2")
             .arg(message, tr("Relinked %n clip(s) to ProRes transcodes", nullptr, relinked));
     };
-    if (result->kind == LoadResult::Kind::Vegas) {
+    if (result->kind == LoadResult::Kind::Interchange) {
         m_app->applyParsedProject(std::move(*result->parsed));
         m_embeddedSources.clear();
         setCurrentProjectPath(QString());
@@ -1746,13 +1482,12 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
             m_app->m_assetLibrary->setProject(&m_app->m_project);
         const int missing = m_app->m_assetLibrary ? m_app->m_assetLibrary->missingCount() : 0;
         const QString name = result->projectName.isEmpty() ? projectNameForUrl(url) : result->projectName;
-        QString message = missing > 0
-            ? tr("VEGAS Pro project imported: %1, but %n media file(s) could not be found", nullptr, missing)
+        QString message = result->skipped > 0
+            ? tr("Imported %1 — %n item(s) left out. See Import/Export for details.", nullptr, result->skipped)
                   .arg(name)
-            : tr("VEGAS Pro project imported: %1").arg(name);
-        if (result->skipped > 0)
-            message += QLatin1Char(' ')
-                + tr("%n nested VEGAS Pro project(s) could not be imported.", nullptr, result->skipped);
+            : tr("Imported %1").arg(name);
+        if (missing > 0)
+            message += QLatin1Char(' ') + tr("%n media file(s) could not be found.", nullptr, missing);
         m_app->setLastMessage(message, missing > 0 || result->skipped > 0 ? QStringLiteral("warning")
                                                                            : QStringLiteral("success"));
         finishProjectLoad(true, message);

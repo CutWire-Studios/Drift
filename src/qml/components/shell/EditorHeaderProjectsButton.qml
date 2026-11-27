@@ -19,8 +19,7 @@ Rectangle {
     signal saveFolderRequested()
     signal exportBundleRequested()
     signal renderTemplateRequested()
-    signal importKdenliveRequested()
-    signal importOtioRequested()
+    signal importExportRequested()
     signal propertiesRequested()
     signal healthRequested()
 
@@ -120,13 +119,7 @@ Rectangle {
                 onSaveFolderRequested: projectsButton.saveFolderRequested()
                 onExportBundleRequested: projectsButton.exportBundleRequested()
                 onRenderTemplateRequested: projectsButton.renderTemplateRequested()
-                onImportKdenliveRequested: projectsButton.importKdenliveRequested()
-                onImportOtioRequested: projectsButton.importOtioRequested()
-                // Disabled: external project imports. Uncomment with the open*() functions in EditorHeader.
-                // onImportPremiereRequested: root.openPremiereProject()
-                // onImportMogrtRequested: root.openMogrt()
-                // onImportResolveRequested: root.openResolveProject()
-                // onImportEdlRequested: root.openEdlTimeline()
+                onImportExportRequested: projectsButton.importExportRequested()
                 onPropertiesRequested: projectsButton.propertiesRequested()
                 onHealthRequested: projectsButton.healthRequested()
             }

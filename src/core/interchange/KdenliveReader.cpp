@@ -6,6 +6,7 @@
 #include "core/project/Track.h"
 
 #include <QColor>
+#include <QCoreApplication>
 #include <QDir>
 #include <QDomDocument>
 #include <QDomElement>
@@ -13,6 +14,8 @@
 #include <QFileInfo>
 #include <QHash>
 #include <QMap>
+#include <QRegularExpression>
+#include <QSet>
 #include <QUrl>
 #include <QUuid>
 #include <QtMath>
@@ -253,8 +256,16 @@ struct MltProducer
     ParsedTitleInfo titleInfo;
     QString assetId;
     double speed = 1.0; // timewarp; negative plays backward
-    int userFilterCount = 0;
+    QStringList userFilterNames;
 };
+
+QString propertyValue(const QDomElement &el, const QString &name);
+
+QString serviceLabel(const QDomElement &el)
+{
+    const QString id = propertyValue(el, QStringLiteral("kdenlive_id"));
+    return id.isEmpty() ? propertyValue(el, QStringLiteral("mlt_service")) : id;
+}
 
 QString propertyValue(const QDomElement &el, const QString &name)
 {
@@ -293,7 +304,7 @@ bool isKdenliveData(const QByteArray &data)
     return data.contains("<mlt");
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error, int *skippedOut)
+std::optional<Project> readProject(const QString &filePath, QString *error, drift::interchange::InterchangeReport *report)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -304,11 +315,11 @@ std::optional<Project> readProject(const QString &filePath, QString *error, int 
 
     const QByteArray data = file.readAll();
     const QString sourceDir = QFileInfo(filePath).canonicalPath();
-    return readProjectData(data, sourceDir, error, skippedOut);
+    return readProjectData(data, sourceDir, error, report);
 }
 
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
-                                      int *skippedOut)
+                                      drift::interchange::InterchangeReport *report)
 {
     const QByteArray xmlData = isGzip(data) ? decompressGzip(data) : data;
     if (xmlData.isEmpty()) {
@@ -336,7 +347,14 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     }
 
     Project project;
-    int skipped = 0;
+
+    using Severity = drift::interchange::InterchangeIssue::Severity;
+    const auto note = [report](Severity severity, const char *category, const QString &message,
+                               const QString &itemName = {}) {
+        if (report)
+            report->add(severity, QString::fromLatin1(category), message, itemName);
+    };
+    const auto tr = [](const char *text) { return QCoreApplication::translate("Interchange", text); };
 
     // Shotcut and Kdenlive write resources relative to <mlt root="...">; fall back to the
     // project's own folder for a project moved together with its media.
@@ -462,6 +480,8 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     // Kdenlive gives every timeline clip its own chain of the same file, and Shotcut does too.
     QHash<QString, QString> assetIdByPath;
 
+    QHash<QString, QString> generatorProducers;
+
     const auto processProducerElement = [&](const QDomElement &pEl) {
         const QString id = pEl.attribute(QStringLiteral("id"));
         if (id.isEmpty())
@@ -497,7 +517,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
         for (auto f = pEl.firstChildElement(QStringLiteral("filter")); !f.isNull(); f = f.nextSiblingElement(QStringLiteral("filter")))
             if (propertyValue(f, QStringLiteral("internal_added")).isEmpty())
-                ++prod.userFilterCount;
+                prod.userFilterNames.append(serviceLabel(f));
 
         for (auto p = pEl.firstChildElement(QStringLiteral("property")); !p.isNull(); p = p.nextSiblingElement(QStringLiteral("property"))) {
             const QString key = p.attribute(QStringLiteral("name"));
@@ -529,8 +549,10 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         // Generated sources (colour, noise, count...) have no file to import; their entries are
         // reported as skipped.
         if (service == QLatin1String("color") || service == QLatin1String("colour") || service == QLatin1String("noise")
-            || service == QLatin1String("count"))
+            || service == QLatin1String("count")) {
+            generatorProducers.insert(id, service);
             return;
+        }
 
         // timewarp resource is "<speed>:<path>", the path itself possibly "C:/...".
         if (service == QLatin1String("timewarp")) {
@@ -631,6 +653,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         if (!pid.isEmpty())
             playlistsById.insert(pid, pl);
     }
+    QSet<QString> expandedTractors;
     QMap<QString, QDomElement> tractorsById;
     QDomElement rootTractor;
     for (auto tr = root.firstChildElement(QStringLiteral("tractor")); !tr.isNull(); tr = tr.nextSiblingElement(QStringLiteral("tractor"))) {
@@ -644,13 +667,22 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         return !propertyValue(el, QStringLiteral("internal_added")).isEmpty()
             || propertyValue(el, QStringLiteral("always_active")) == QLatin1String("1");
     };
+    static const QRegularExpression keyframeValue(QStringLiteral("^\\s*(\\d+:\\d+:\\d+[.,]\\d+|\\d+)\\s*[=~|]"));
     const auto countUserServices = [&](const QDomElement &el) {
-        for (auto f = el.firstChildElement(QStringLiteral("filter")); !f.isNull(); f = f.nextSiblingElement(QStringLiteral("filter")))
-            if (!isStructural(f))
-                ++skipped;
+        for (auto f = el.firstChildElement(QStringLiteral("filter")); !f.isNull(); f = f.nextSiblingElement(QStringLiteral("filter"))) {
+            if (isStructural(f))
+                continue;
+            note(Severity::Dropped, "effect", tr("Filters are not imported."), serviceLabel(f));
+            for (auto p = f.firstChildElement(QStringLiteral("property")); !p.isNull(); p = p.nextSiblingElement(QStringLiteral("property"))) {
+                if (p.text().contains(QLatin1Char(';')) && keyframeValue.match(p.text()).hasMatch()) {
+                    note(Severity::Info, "keyframes", tr("Filter keyframes are not imported."), serviceLabel(f));
+                    break;
+                }
+            }
+        }
         for (auto t = el.firstChildElement(QStringLiteral("transition")); !t.isNull(); t = t.nextSiblingElement(QStringLiteral("transition")))
             if (!isStructural(t))
-                ++skipped;
+                note(Severity::Dropped, "transition", tr("Transitions are not imported."), serviceLabel(t));
     };
 
     struct LeafTrack
@@ -665,6 +697,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
     std::function<void(const QDomElement &, int)> expand = [&](const QDomElement &tractor, int depth) {
         countUserServices(tractor);
+        expandedTractors.insert(tractor.attribute(QStringLiteral("id")));
         const bool audioTractor = propertyValue(tractor, QStringLiteral("kdenlive:audio_track")) == QLatin1String("1");
         const QDomElement mt = tractor.firstChildElement(QStringLiteral("multitrack"));
         const QDomElement trackParent = mt.isNull() ? tractor : mt;
@@ -685,6 +718,34 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     };
     if (!rootTractor.isNull())
         expand(rootTractor, 0);
+
+    for (auto it = tractorsById.constBegin(); it != tractorsById.constEnd(); ++it) {
+        if (expandedTractors.contains(it.key()))
+            continue;
+        const QDomElement mt = it.value().firstChildElement(QStringLiteral("multitrack"));
+        const QDomElement trackParent = mt.isNull() ? it.value() : mt;
+        if (trackParent.firstChildElement(QStringLiteral("track")).isNull())
+            continue;
+        const QString name = propertyValue(it.value(), QStringLiteral("kdenlive:clipname"));
+        note(Severity::Dropped, "sequence", tr("Only the last sequence is imported; other sequences are ignored."),
+             name.isEmpty() ? it.key() : name);
+    }
+
+    {
+        const QDomNodeList props = root.elementsByTagName(QStringLiteral("property"));
+        for (int i = 0; i < props.size(); ++i) {
+            const QDomElement p = props.at(i).toElement();
+            const QString key = p.attribute(QStringLiteral("name"));
+            const QString text = p.text().trimmed();
+            if (text.isEmpty() || text == QLatin1String("[]"))
+                continue;
+            if (key.endsWith(QLatin1String(".guides")) || key == QLatin1String("kdenlive:guides")
+                || key == QLatin1String("shotcut:markers")) {
+                note(Severity::Dropped, "marker", tr("Guides and markers are not imported."));
+                break;
+            }
+        }
+    }
 
     // No tractor: a bare MLT file of playlists. Take every playlist that is not the project bin.
     if (leaves.isEmpty()) {
@@ -762,13 +823,20 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
 
                 // Colour clips, nested sequences and the like: keep the gap so later clips stay put.
                 if (!prod) {
-                    ++skipped;
+                    const auto gen = generatorProducers.constFind(prodId);
+                    if (gen != generatorProducers.constEnd())
+                        note(Severity::Dropped, "generator", tr("Generated clips (colour, noise, counters) are left as a gap."),
+                             gen.value());
+                    else
+                        note(Severity::Dropped, "nested", tr("Clips that point at another sequence or an unknown source are left as a gap."),
+                             prodId);
                     currentTimelineUs += durationUs;
                     continue;
                 }
 
                 countUserServices(child);
-                skipped += prod->userFilterCount;
+                for (const QString &filterName : prod->userFilterNames)
+                    note(Severity::Dropped, "effect", tr("Filters are not imported."), filterName);
 
                 // A timewarp producer's in/out count warped frames; the source moves |speed| times faster.
                 const double speed = qAbs(prod->speed);
@@ -839,8 +907,6 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     std::stable_partition(builtTracks.begin(), builtTracks.end(),
                           [](const Track &t) { return t.type != TrackType::Audio; });
     project.tracks() = builtTracks;
-    if (skippedOut)
-        *skippedOut = skipped;
 
     // If no tracks were found, ensure default tracks
     if (project.tracks().isEmpty()) {

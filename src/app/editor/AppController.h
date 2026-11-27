@@ -41,6 +41,7 @@ class AssetLibrary;
 class CloudProviders;
 class MediaBinController;
 class SourceLabController;
+class InterchangeController;
 class PreviewController;
 class AssetPreviewController;
 class CurveEditorController;
@@ -117,6 +118,7 @@ class AppController : public QObject
     friend class TrackingController;
     friend class MediaBinController;
     friend class SourceLabController;
+    friend class InterchangeController;
     friend class TtsController;
     friend class VoiceLibrary;
 
@@ -124,6 +126,7 @@ class AppController : public QObject
     Q_MOC_INCLUDE("app/online/CloudProviders.h")
     Q_MOC_INCLUDE("app/bin/MediaBinController.h")
     Q_MOC_INCLUDE("app/bin/SourceLabController.h")
+    Q_MOC_INCLUDE("app/editor/InterchangeController.h")
     Q_MOC_INCLUDE("ui/preview/PreviewController.h")
     Q_MOC_INCLUDE("app/bin/AssetPreviewController.h")
     Q_MOC_INCLUDE("app/editor/sessions/CurveEditorController.h")
@@ -159,6 +162,8 @@ class AppController : public QObject
     Q_PROPERTY(MediaBinController *bin READ bin CONSTANT)
     // Source Lab: ranges, markers, ratings and the transient edit recipe. QML: EditorState.sourceLab.
     Q_PROPERTY(SourceLabController *sourceLab READ sourceLab CONSTANT)
+    // Import/Export window: analyse, import and export interchange formats. QML: EditorState.interchange.
+    Q_PROPERTY(InterchangeController *interchange READ interchange CONSTANT)
     Q_PROPERTY(PlaybackEngine *playback READ playback CONSTANT)
     // The preview area's editor state, tools and overlay maths.
     Q_PROPERTY(PreviewController *preview READ preview CONSTANT)
@@ -406,6 +411,7 @@ public:
     CloudProviders *cloudProviders() const { return m_cloud; }
     MediaBinController *bin() const { return m_bin; }
     SourceLabController *sourceLab() const { return m_sourceLab; }
+    InterchangeController *interchange() const { return m_interchange; }
     PlaybackEngine *playback() { return &m_playback; }
     PreviewController *preview() const { return m_preview; }
     drift::manip::DragSession *drag() const { return m_drag; }
@@ -2825,6 +2831,7 @@ protected:
     TrackingController *m_tracking = nullptr;
     MediaBinController *m_bin = nullptr;
     SourceLabController *m_sourceLab = nullptr;
+    InterchangeController *m_interchange = nullptr;
     TtsController *m_tts = nullptr;
     VoiceLibrary *m_voices = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};

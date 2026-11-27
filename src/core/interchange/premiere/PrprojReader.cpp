@@ -7,6 +7,7 @@
 #include "core/project/Project.h"
 #include "core/project/Track.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QDirIterator>
 #include <QDomDocument>
@@ -16,6 +17,7 @@
 #include <QUuid>
 #include <QtMath>
 #include <cstring>
+#include <functional>
 #include <zlib.h>
 
 namespace drift::prproj {
@@ -24,6 +26,16 @@ namespace {
 
 constexpr qint64 kPremiereTicksPerSecond = 254016000000LL;
 constexpr qint64 kTicksPerMicrosecond = 254016LL;
+
+using Severity = drift::interchange::InterchangeIssue::Severity;
+
+void note(drift::interchange::InterchangeReport *report, Severity severity, const char *category,
+          const char *message, const QString &itemName = {}, TimeUs at = -1)
+{
+    if (report)
+        report->add(severity, QString::fromLatin1(category), QCoreApplication::translate("Interchange", message),
+                    itemName, at);
+}
 
 bool isGzip(const QByteArray &data)
 {
@@ -255,7 +267,8 @@ void parseTrackClips(const QDomElement &trackElem,
                      int fps,
                      const QHash<QString, QDomElement> &objects,
                      const QString &sourceDir,
-                     Project &project)
+                     Project &project,
+                     drift::interchange::InterchangeReport *report)
 {
     // Collect track item elements: <TrackItem>, <VideoClipTrackItem>, <AudioClipTrackItem>, <clipitem>
     QList<QDomElement> items;
@@ -273,6 +286,11 @@ void parseTrackClips(const QDomElement &trackElem,
             } else {
                 items.append(el);
             }
+        } else if (tag == QLatin1String("transitionitem")) {
+            const QString tStart = el.firstChildElement(QStringLiteral("start")).text();
+            note(report, Severity::Dropped, "transition", "Transitions are not imported.",
+                 el.firstChildElement(QStringLiteral("name")).text(),
+                 tStart.isEmpty() ? -1 : ticksToTimeUs(tStart.toLongLong(), fps));
         } else if (tag == QLatin1String("trackitems") || tag == QLatin1String("clips")) {
             for (QDomNode m = el.firstChild(); !m.isNull(); m = m.nextSibling()) {
                 if (!m.isElement())
@@ -299,8 +317,11 @@ void parseTrackClips(const QDomElement &trackElem,
             || itemType.compare(QLatin1String("gap"), Qt::CaseInsensitive) == 0) {
             continue;
         }
-        if (itemEl.tagName().compare(QLatin1String("transitionitem"), Qt::CaseInsensitive) == 0)
+        if (itemEl.tagName().compare(QLatin1String("transitionitem"), Qt::CaseInsensitive) == 0) {
+            note(report, Severity::Dropped, "transition", "Transitions are not imported.",
+                 itemEl.firstChildElement(QStringLiteral("Name")).text());
             continue;
+        }
 
         const qint64 startTicks = itemEl.firstChildElement(QStringLiteral("Start")).isNull()
             ? itemEl.firstChildElement(QStringLiteral("start")).text().toLongLong()
@@ -348,6 +369,30 @@ void parseTrackClips(const QDomElement &trackElem,
             clip.timelineDuration = 1000000;
         if (clip.srcOut <= clip.srcIn)
             clip.srcOut = clip.srcIn + clip.timelineDuration;
+
+        if (report) {
+            const std::function<void(const QDomElement &)> scan = [&](const QDomElement &el) {
+                for (QDomElement c = el.firstChildElement(); !c.isNull(); c = c.nextSiblingElement()) {
+                    const QString t = c.tagName().toLower();
+                    if (t.contains(QLatin1String("keyframe")))
+                        note(report, Severity::Dropped, "keyframes", "Keyframes are not imported.", clip.name,
+                             clip.timelineStart);
+                    else if (t.contains(QLatin1String("filter")) || t.contains(QLatin1String("effect")))
+                        note(report, Severity::Dropped, "effect", "Effects are not imported.", clip.name,
+                             clip.timelineStart);
+                    else if (t == QLatin1String("volume") || t == QLatin1String("level") || t == QLatin1String("pan")
+                             || t == QLatin1String("audiolevel"))
+                        note(report, Severity::Dropped, "audio", "Audio levels and pan are not imported.", clip.name,
+                             clip.timelineStart);
+                    else if (t.contains(QLatin1String("opacity")) || t.contains(QLatin1String("motion")))
+                        note(report, Severity::Degraded, "effect",
+                             "Position, scale, rotation and opacity are reset to their defaults.", clip.name,
+                             clip.timelineStart);
+                    scan(c);
+                }
+            };
+            scan(itemEl);
+        }
 
         // Retime / Speed
         const QString speedStr = itemEl.firstChildElement(QStringLiteral("Speed")).text();
@@ -550,7 +595,7 @@ bool isPremiereData(const QByteArray &data)
         || text.contains(QLatin1String("<xmeml"), Qt::CaseInsensitive);
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error)
+std::optional<Project> readProject(const QString &filePath, QString *error, drift::interchange::InterchangeReport *report)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -561,10 +606,11 @@ std::optional<Project> readProject(const QString &filePath, QString *error)
 
     const QByteArray rawData = file.readAll();
     const QString sourceDir = QFileInfo(filePath).absolutePath();
-    return readProjectData(rawData, sourceDir, error);
+    return readProjectData(rawData, sourceDir, error, report);
 }
 
-std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error)
+std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
+                                      drift::interchange::InterchangeReport *report)
 {
     if (data.isEmpty()) {
         if (error)
@@ -648,6 +694,19 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
     if (seqElem.isNull())
         seqElem = doc.elementsByTagName(QStringLiteral("sequence")).item(0).toElement();
 
+    {
+        QDomNodeList seqs = doc.elementsByTagName(QStringLiteral("Sequence"));
+        if (seqs.isEmpty())
+            seqs = doc.elementsByTagName(QStringLiteral("sequence"));
+        for (int i = 1; i < seqs.size(); ++i) {
+            const QDomElement e = seqs.at(i).toElement();
+            QString n = e.firstChildElement(QStringLiteral("Name")).text();
+            if (n.isEmpty())
+                n = e.firstChildElement(QStringLiteral("name")).text();
+            note(report, Severity::Dropped, "sequence", "Only the first sequence is imported.", n);
+        }
+    }
+
     int width = 1920;
     int height = 1080;
     int fps = 30;
@@ -704,7 +763,7 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         const QString name = vtElem.firstChildElement(QStringLiteral("Name")).text();
         track.name = name.isEmpty() ? QObject::tr("V%1").arg(i + 1) : name;
 
-        parseTrackClips(vtElem, track, false, fps, objects, sourceDir, project);
+        parseTrackClips(vtElem, track, false, fps, objects, sourceDir, project, report);
         project.tracks().append(track);
     }
 
@@ -716,12 +775,13 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         const QString name = atElem.firstChildElement(QStringLiteral("Name")).text();
         track.name = name.isEmpty() ? QObject::tr("A%1").arg(i + 1) : name;
 
-        parseTrackClips(atElem, track, true, fps, objects, sourceDir, project);
+        parseTrackClips(atElem, track, true, fps, objects, sourceDir, project, report);
         project.tracks().append(track);
     }
 
     // If no tracks were imported, provide a default timeline
     if (project.tracks().isEmpty()) {
+        note(report, Severity::Error, "format", "No tracks were found; the default timeline was used.");
         project.resetToDefaultTimeline();
     }
 

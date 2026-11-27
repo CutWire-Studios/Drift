@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/edit/commands/ProjectCommands.h"
+#include "core/interchange/InterchangeReport.h"
 #include "core/project/Project.h"
 #include "core/project/folder/ProjectFolder.h"
 #include "engine/project/ProjectBundle.h"
@@ -152,21 +153,9 @@ public:
     // Save cannot overwrite the .json with a .drift bundle. loadProject routes here when the file
     // is JSON, so a dropped / CLI / MCP path works without a second entry point.
     Q_INVOKABLE void loadProjectJson(const QUrl &url);
-    // Imports an Adobe Premiere Pro project (.prproj) or Final Cut Pro XML (.xml),
-    // mapping sequences, video/audio tracks, clips, in/out trimming, and media assets.
-    Q_INVOKABLE void loadPremiereProject(const QUrl &url);
-    // Unpacks and imports a Motion Graphics Template (.mogrt), extracting assets and mapping
-    // editable text, colors, and media overlays onto the timeline and media library.
-    Q_INVOKABLE void importMogrt(const QUrl &url);
-    // Imports a Kdenlive (.kdenlive) or Shotcut MLT (.mlt) project, mapping
-    // multitrack playlists, video/audio cuts, title text clips, and bin folders.
-    Q_INVOKABLE void loadKdenliveProject(const QUrl &url);
-    // Imports a DaVinci Resolve project (.drp) or Final Cut Pro X XML (.fcpxml).
-    Q_INVOKABLE void loadResolveProject(const QUrl &url);
-    // Imports a CMX 3600 Edit Decision List (.edl).
-    Q_INVOKABLE void loadEdlTimeline(const QUrl &url);
-    // Imports an OpenTimelineIO (.otio) sequence.
-    Q_INVOKABLE void loadOtioTimeline(const QUrl &url);
+    // Opens an already-parsed interchange import (see InterchangeController) as a new untitled, dirty
+    // project through the same worker -> finishLoad path as loadProject. False if a load is pending.
+    bool loadInterchangeProject(const drift::Project &project, const drift::interchange::InterchangeReport &report);
     // Copies (or moves) every file the project uses — bin media, the images Lottie/SVG documents
     // load, textures and the derived mattes, face tracks, depth maps and stabilized renders — into
     // Video/Audio/Images/Derived/Other under the chosen folder, then relinks the project to them.

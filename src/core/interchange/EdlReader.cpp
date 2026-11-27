@@ -5,6 +5,7 @@
 #include "core/project/Project.h"
 #include "core/project/Track.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -124,7 +125,7 @@ bool isEdlData(const QByteArray &data)
     return eventPattern.match(text).hasMatch();
 }
 
-std::optional<Project> readProject(const QString &filePath, QString *error)
+std::optional<Project> readProject(const QString &filePath, QString *error, drift::interchange::InterchangeReport *report)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -135,16 +136,25 @@ std::optional<Project> readProject(const QString &filePath, QString *error)
 
     const QByteArray data = file.readAll();
     const QString sourceDir = QFileInfo(filePath).absolutePath();
-    return readProjectData(data, sourceDir, error);
+    return readProjectData(data, sourceDir, error, report);
 }
 
-std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error)
+std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir, QString *error,
+                                      drift::interchange::InterchangeReport *report)
 {
     if (data.isEmpty()) {
         if (error)
             *error = QObject::tr("File is empty");
         return std::nullopt;
     }
+
+    using Severity = drift::interchange::InterchangeIssue::Severity;
+    const auto note = [report](Severity severity, const char *category, const QString &message,
+                               const QString &itemName = {}, TimeUs at = -1) {
+        if (report)
+            report->add(severity, QString::fromLatin1(category), message, itemName, at);
+    };
+    const auto tr = [](const char *text) { return QCoreApplication::translate("Interchange", text); };
 
     const QString text = QString::fromUtf8(data);
     const QStringList lines = text.split(QLatin1Char('\n'));
@@ -224,6 +234,12 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
         // Parse Event Row
         // e.g. "001  AX       V     C        00:00:00:00 00:00:05:00 01:00:00:00 01:00:05:00"
         const QStringList tokens = line.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+        if (tokens.first().compare(QLatin1String("M2"), Qt::CaseInsensitive) == 0) {
+            note(Severity::Dropped, "speed", tr("Speed changes (M2) are not imported."),
+                 events.isEmpty() ? QString() : events.last().clipName,
+                 events.isEmpty() ? -1 : events.last().recIn);
+            continue;
+        }
         if (tokens.size() < 6)
             continue;
 
@@ -302,6 +318,16 @@ std::optional<Project> readProjectData(const QByteArray &data, const QString &so
             Clip clip;
             clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
             clip.name = !ev.clipName.isEmpty() ? ev.clipName : (!ev.reel.isEmpty() ? ev.reel : QStringLiteral("Event %1").arg(ev.eventNum));
+
+            if (ev.transition != QLatin1String("C")) {
+                note(Severity::Dropped, "transition", tr("Transitions (dissolves and wipes) are not imported."),
+                     clip.name, ev.recIn);
+            } else {
+                const TimeUs srcDur = ev.srcOut - ev.srcIn;
+                const TimeUs recDur = ev.recOut - ev.recIn;
+                if (srcDur > 0 && recDur > 0 && qAbs(srcDur - recDur) > static_cast<TimeUs>(1000000.0 / fps) + 1)
+                    note(Severity::Dropped, "speed", tr("Retimed clips play at normal speed."), clip.name, ev.recIn);
+            }
             clip.timelineStart = ev.recIn;
             clip.timelineDuration = durUs;
             clip.srcIn = ev.srcIn;

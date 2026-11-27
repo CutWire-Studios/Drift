@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/interchange/InterchangeReport.h"
 #include "core/project/Project.h"
 
 #include <optional>
@@ -15,11 +16,13 @@ bool isPremiereProject(const QString &filePath);
 bool isPremiereData(const QByteArray &data);
 
 // Reads a Premiere Pro project (.prproj or .xml) from disk and imports it as a drift::Project.
-std::optional<Project> readProject(const QString &filePath, QString *error = nullptr);
+std::optional<Project> readProject(const QString &filePath, QString *error = nullptr,
+                                   drift::interchange::InterchangeReport *report = nullptr);
 
 // Reads raw project data (either gzipped or uncompressed XML) and converts it to a drift::Project.
 // sourceDir is used to attempt relative media resolution if original absolute paths do not exist.
 std::optional<Project> readProjectData(const QByteArray &data, const QString &sourceDir = QString(),
-                                      QString *error = nullptr);
+                                      QString *error = nullptr,
+                                      drift::interchange::InterchangeReport *report = nullptr);
 
 } // namespace drift::prproj

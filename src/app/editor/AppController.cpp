@@ -25,6 +25,7 @@
 #include "app/jobs/vision/SegmentationController.h"
 #include "app/bin/MediaBinController.h"
 #include "app/bin/SourceLabController.h"
+#include "app/editor/InterchangeController.h"
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/commandbar/CommandBarController.h"
 #include "app/jobs/vision/TrackingController.h"
@@ -636,6 +637,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_tracking = new TrackingController(this, this);
     m_bin = new MediaBinController(this, this);
     m_sourceLab = new SourceLabController(this, this);
+    m_interchange = new InterchangeController(this, this);
     m_tts = new TtsController(this, this);
     m_voices = new VoiceLibrary(this, m_tts, this);
     m_tts->setVoices(m_voices);

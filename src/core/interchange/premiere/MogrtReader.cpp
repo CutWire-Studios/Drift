@@ -6,6 +6,7 @@
 #include "core/project/Project.h"
 #include "core/project/Track.h"
 #include "core/base/ZipArchive.h"
+#include "core/interchange/ZipEntries.h"
 
 #include <QColor>
 #include <QDir>
@@ -332,6 +333,141 @@ std::optional<MogrtTemplate> readTemplate(const QString &filePath,
         tmpl.title = QFileInfo(filePath).completeBaseName();
 
     return tmpl;
+}
+
+bool analyzeTemplate(const QString &path, MogrtTemplate *out, drift::interchange::InterchangeReport *report,
+                     QString *error)
+{
+    using Severity = drift::interchange::InterchangeIssue::Severity;
+
+    QString zipError;
+    const QList<drift::interchange::ZipEntryData> metaEntries = drift::interchange::readZipEntries(
+        path,
+        [](const QString &name) {
+            const QString fileName = QFileInfo(name).fileName();
+            return fileName.compare(QLatin1String("definition.json"), Qt::CaseInsensitive) == 0
+                || fileName.compare(QLatin1String("manifest.xml"), Qt::CaseInsensitive) == 0;
+        },
+        &zipError);
+    if (!zipError.isEmpty()) {
+        if (error)
+            *error = zipError;
+        return false;
+    }
+
+    // Names only: media and inner projects can be large, and nothing here needs their bytes.
+    bool hasPrproj = false;
+    int mediaCount = 0;
+    for (const QString &name : drift::interchange::zipEntryNames(path)) {
+        const QString ext = QFileInfo(name).suffix().toLower();
+        if (ext == QLatin1String("prproj"))
+            hasPrproj = true;
+        else if (isMediaExtension(ext))
+            mediaCount++;
+    }
+
+    MogrtTemplate tmpl;
+    tmpl.width = 0;
+    tmpl.height = 0;
+    tmpl.fps = 0;
+    tmpl.durationUs = 0;
+    tmpl.title = QFileInfo(path).completeBaseName();
+
+    QByteArray definitionJsonData;
+    QByteArray manifestXmlData;
+    for (const drift::interchange::ZipEntryData &entry : metaEntries) {
+        const QString fileName = QFileInfo(entry.name).fileName();
+        if (fileName.compare(QLatin1String("definition.json"), Qt::CaseInsensitive) == 0)
+            definitionJsonData = entry.data;
+        else
+            manifestXmlData = entry.data;
+    }
+
+    if (!definitionJsonData.isEmpty())
+        parseDefinitionJson(definitionJsonData, tmpl);
+    else if (!manifestXmlData.isEmpty())
+        parseManifestXml(manifestXmlData, tmpl);
+
+    if (report) {
+        report->formatId = QStringLiteral("mogrt");
+        if (definitionJsonData.isEmpty() && manifestXmlData.isEmpty()) {
+            report->add(Severity::Error, QStringLiteral("format"),
+                        QObject::tr("The archive has no definition.json or manifest.xml, so it is not a Premiere "
+                                    "motion graphics template."));
+        }
+        if (tmpl.width <= 0 || tmpl.height <= 0) {
+            report->add(Severity::Degraded, QStringLiteral("format"),
+                        QObject::tr("The template size was not found; 1920x1080 was assumed."));
+        }
+        if (tmpl.fps <= 0) {
+            report->add(Severity::Degraded, QStringLiteral("format"),
+                        QObject::tr("The template frame rate was not found; 30 fps was assumed."));
+        }
+        if (tmpl.durationUs <= 0) {
+            report->add(Severity::Degraded, QStringLiteral("format"),
+                        QObject::tr("The template duration was not found; 5 seconds was assumed."));
+        }
+    }
+    if (tmpl.width <= 0 || tmpl.height <= 0) {
+        tmpl.width = 1920;
+        tmpl.height = 1080;
+    }
+    if (tmpl.fps <= 0)
+        tmpl.fps = 30;
+    if (tmpl.durationUs <= 0)
+        tmpl.durationUs = 5000000;
+
+    bool hasText = false;
+    for (const MogrtProperty &p : tmpl.properties) {
+        if ((p.type == QLatin1String("text") || p.type == QLatin1String("string"))
+            && !p.stringValue.trimmed().isEmpty())
+            hasText = true;
+    }
+
+    if (report) {
+        if (hasPrproj) {
+            report->add(Severity::Degraded, QStringLiteral("nested"),
+                        QObject::tr("The bundled Premiere project is imported as tracks. Its effects, transitions "
+                                    "and keyframes are not reproduced."));
+            if (hasText) {
+                report->add(Severity::Dropped, QStringLiteral("text"),
+                            QObject::tr("Text properties are not applied when the template bundles a Premiere project."));
+            }
+            if (mediaCount > 0) {
+                report->add(Severity::Dropped, QStringLiteral("media"),
+                            QObject::tr("Media files are added to the bin only, not placed on the timeline."));
+            }
+        } else {
+            if (hasText) {
+                report->add(Severity::Degraded, QStringLiteral("text"),
+                            QObject::tr("Text is placed at a guessed position and size. The template's layout, "
+                                        "font weight and animation are not reproduced."));
+            }
+            for (const MogrtProperty &p : tmpl.properties) {
+                if (p.type == QLatin1String("text") || p.type == QLatin1String("string")
+                    || p.type == QLatin1String("color"))
+                    continue;
+                if (p.type == QLatin1String("image")) {
+                    report->add(Severity::Dropped, QStringLiteral("media"),
+                                QObject::tr("Image controls are not applied."), p.name);
+                } else {
+                    report->add(Severity::Dropped, QStringLiteral("effect"),
+                                QObject::tr("Controls of type \"%1\" are not applied.").arg(p.type), p.name);
+                }
+            }
+        }
+
+        report->add(Severity::Info, QStringLiteral("format"),
+                    QObject::tr("The template size and frame rate are applied only to an empty project."));
+        if (!hasPrproj && !hasText && mediaCount == 0) {
+            report->add(Severity::Error, QStringLiteral("format"),
+                        QObject::tr("The template has no text or media that this import can use."));
+        }
+    }
+
+    if (out)
+        *out = tmpl;
+    return true;
 }
 
 bool applyTemplateToProject(const MogrtTemplate &tmpl,
