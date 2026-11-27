@@ -2050,6 +2050,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         scene.backgroundColor = Qt::black;
         scene.backgroundBlur = true;
         scene.blurStrengthPx = bg.blurStrength;
+        scene.blurReferenceSize = QSize(projectWidth, projectHeight);
         // The bottommost visual frame, decoded once — the CPU path decoded it a
         // second time here, effects and all.
         scene.blurSource = bottommostVisualFrame(project, timelineUs, width, height);

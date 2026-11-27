@@ -345,7 +345,7 @@ constexpr const char *kBlurFragShader = R"(#version 330 core
 in vec2 v_texCoord;
 out vec4 fragColor;
 uniform sampler2D u_currentTexture;
-uniform vec2 u_texel;    // direction * 1/size
+uniform vec2 u_texel;    // direction * inverse project dimensions
 uniform float u_radius;  // in taps
 void main() {
     vec4 sum = vec4(0.0);
@@ -2078,6 +2078,7 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
     }
 
     const float radius = float(qBound(1.0, scene.blurStrengthPx, 64.0));
+    const QSize referenceSize = scene.blurReferenceSize.isEmpty() ? canvasSize : scene.blurReferenceSize;
     GlTarget pass = rt.acquireTarget(canvasSize.width(), canvasSize.height());
     if (!pass.isValid()) {
         rt.releaseTarget(std::move(coverTarget));
@@ -2091,7 +2092,7 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
         blur->bind();
         blur->setUniformValue("u_currentTexture", 0);
         blur->setUniformValue("u_radius", radius);
-        blur->setUniformValue("u_texel", QVector2D(dx / canvasSize.width(), dy / canvasSize.height()));
+        blur->setUniformValue("u_texel", QVector2D(dx / referenceSize.width(), dy / referenceSize.height()));
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, in.texture());
         bindQuad(rt, gl);
