@@ -244,6 +244,7 @@ struct GpuScene
     QColor backgroundColor = Qt::black;
     bool backgroundBlur = false;
     double blurStrengthPx = 20.0;
+    QSize blurReferenceSize; // project dimensions for the blur sample spacing
     QImage blurSource; // bottommost visual frame, already decoded
     QList<GpuItem> items; // back-to-front
     // Paused preview: keep converted video sources on the GPU between composites.
