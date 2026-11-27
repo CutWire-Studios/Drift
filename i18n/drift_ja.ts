@@ -10680,10 +10680,6 @@
         <translation>すべてのファイル (*)</translation>
     </message>
     <message>
-        <source>Sony / MAGIX VEGAS Pro (*.veg)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Name your project</source>
         <translation>プロジェクトに名前を付ける</translation>
     </message>
@@ -10705,30 +10701,6 @@
     </message>
     <message>
         <source>Export .drift Bundle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import Kdenlive / Shotcut Project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Kdenlive &amp; Shotcut project (*.kdenlive *.mlt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Kdenlive project (*.kdenlive)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shotcut project (*.mlt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import OpenTimelineIO (.otio)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO sequence (*.otio)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14395,6 +14367,452 @@
     <message>
         <source>Hide this tip</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Interchange</name>
+    <message>
+        <source>Sony/MAGIX VEGAS Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects other than Levels, Color Corrector and Sharpen are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Envelopes and keyframes are not read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nested projects that cannot be opened are left out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adobe Premiere Pro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects and keyframes are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio levels and opacity are not read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the first sequence is imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve / FCPXML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The timeline is flattened to one video track and one audio track.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects, transitions, keyframes, retiming and audio levels are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Markers and compound or multicam clips are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A .drp project is always opened at 1080p 24 fps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When the chosen timeline is not found, the default timeline is used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive / Shotcut (MLT)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guides and markers are not read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the last sequence is imported; earlier ones are ignored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filters and transitions are dropped, including their keyframes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour, noise and count generators are left as gaps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume and pan are not read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported as a single clip inserted into the current project.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the properties the template exposes are carried over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CMX 3600 EDL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed changes (M2) and retiming are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips and tracks are not written; only markers are exported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjustment tracks are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden tracks are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabled clips are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text clips are not written with their text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nested sequence clips are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed changes are not written; the clip plays at normal speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the open timeline is written; other sequences are left out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marker colours are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects other than a constant speed change are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nested stacks and generator references are left as gaps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the first stack is read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution and frame rate are guessed when the file does not say.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects, transitions and keyframes are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed changes and text clips are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nested sequences and other sequences are not written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Final Cut Pro XML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabled clips are dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>VEGAS markers (TSV)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only markers and regions are written; clips are not exported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This VEGAS plugin is not supported and was dropped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A nested VEGAS project could not be imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InterchangeController</name>
+    <message>
+        <source>That file location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift doesn’t recognise this file as an importable format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to read the Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to read this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation type="unfinished">モーショングラフィックス テンプレートの展開に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation type="unfinished">プロジェクトへのテンプレートの適用に失敗しました</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation type="unfinished">テンプレートをインポート : %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation type="unfinished">テンプレートをインポートしました : %1</translation>
+    </message>
+    <message>
+        <source>That export location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export failed</source>
+        <translation type="unfinished">書き出しに失敗しました</translation>
+    </message>
+    <message>
+        <source>Exported %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InterchangeGapList</name>
+    <message>
+        <source>Known limitations</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InterchangeReportView</name>
+    <message>
+        <source>Nothing is lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dropped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Degraded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Speed changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">キーフレーム</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">テキスト</translation>
+    </message>
+    <message>
+        <source>Nested sequences</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sequences</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Markers</source>
+        <translation type="unfinished">マーカー</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">オーディオ</translation>
+    </message>
+    <message>
+        <source>Generators</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media</source>
+        <translation type="unfinished">メディア</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disabled clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Assets</source>
+        <translation type="unfinished">アセット</translation>
+    </message>
+    <message>
+        <source>Missing assets</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InterchangeStabilityChip</name>
+    <message>
+        <source>Stable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Experimental</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InterchangeWindow</name>
+    <message>
+        <source>Import / Export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>All supported (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a file to import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a project from another editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export the timeline for another editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">インポート</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">エクスポート</translation>
+    </message>
+    <message>
+        <source>Choose file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is lost in this import.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported. The report stays here for reference.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds to the current project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens as a new untitled project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is lost in this export.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export…</source>
+        <translation type="unfinished">エクスポート…</translation>
     </message>
 </context>
 <context>
@@ -20566,42 +20984,6 @@ If playback stutters, try another.</source>
         <translation>プロジェクトの読み込み中です — しばらくしてからもう一度試してください。</translation>
     </message>
     <message numerus="yes">
-        <source>Project imported: %1. %n effect(s), transition(s) or generated clip(s) have no Drift equivalent and were left out.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Project imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>OpenTimelineIO imported: %1. %n effect(s), transition(s) or unlinked item(s) have no Drift equivalent and were left out.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Failed to open VEGAS Pro project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>VEGAS Pro project imported: %1, but %n media file(s) could not be found</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>VEGAS Pro project imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n nested VEGAS Pro project(s) could not be imported.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Relinked %n clip(s) to ProRes transcodes</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -20616,10 +20998,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Project JSON loaded</source>
         <translation>プロジェクト JSON を読み込みました</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Premiere Pro プロジェクトを開けません</translation>
     </message>
     <message>
         <source>This project uses %1 effects, transitions or animations that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
@@ -20648,58 +21026,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t read %1</source>
         <translation>%1 を読み込めませんでした</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>インポートされたPremiere Proプロジェクト : %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>そのテンプレートの場所は無効です</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>モーショングラフィックス テンプレートの展開に失敗しました</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>プロジェクトへのテンプレートの適用に失敗しました</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>テンプレートをインポート : %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>テンプレートをインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Kdenlive / MLT プロジェクトのオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>DaVinci Resolve プロジェクト / タイムラインのオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>DaVinci Resolve プロジェクトをインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Edit Decision List (.edl) のオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>EDL をインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>OpenTimelineIO (.otio) シーケンスのオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>OpenTimelineIO をインポートしました : %1</translation>
     </message>
     <message>
         <source>That folder isn’t valid</source>
@@ -20760,6 +21086,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Unpacking project media…</source>
         <translation>プロジェクトメディアを展開中…</translation>
+    </message>
+    <message>
+        <source>%1 files open from File › Import/Export…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %1 — %n item(s) left out. See Import/Export for details.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Imported %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n media file(s) could not be found.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 isn’t a project folder (there is no project.json in it)</source>
@@ -21648,6 +21994,54 @@ If playback stutters, try another.</source>
         <translation>MOGRT アーカイブが空か、または無効です</translation>
     </message>
     <message>
+        <source>The archive has no definition.json or manifest.xml, so it is not a Premiere motion graphics template.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template size was not found; 1920x1080 was assumed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template frame rate was not found; 30 fps was assumed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template duration was not found; 5 seconds was assumed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The bundled Premiere project is imported as tracks. Its effects, transitions and keyframes are not reproduced.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text properties are not applied when the template bundles a Premiere project.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media files are added to the bin only, not placed on the timeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text is placed at a guessed position and size. The template&apos;s layout, font weight and animation are not reproduced.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image controls are not applied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Controls of type &quot;%1&quot; are not applied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template size and frame rate are applied only to an empty project.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template has no text or media that this import can use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not open file: %1</source>
         <translation>ファイルを開けませんでした : %1</translation>
     </message>
@@ -21670,14 +22064,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Root element is &lt;%1&gt;, expected &lt;fcpxml&gt;</source>
         <translation>ルート要素が &lt;%1&gt; です 期待値 &lt;fcpxml&gt;</translation>
-    </message>
-    <message>
-        <source>Cannot open DaVinci Resolve project archive: %1</source>
-        <translation>DaVinci Resolve プロジェクトアーカイブを開けません : %1</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project archive is empty or invalid</source>
-        <translation>DaVinci Resolve プロジェクトアーカイブが空か、または無効です</translation>
     </message>
     <message>
         <source>No edit events found in EDL</source>
@@ -21857,6 +22243,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No timeline tracks found in the VEGAS Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ZIP archive is empty</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -22348,6 +22738,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Import/Export…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Check for missing media…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -22358,14 +22752,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Save with media…</source>
         <translation>メディアと共に保存…</translation>
-    </message>
-    <message>
-        <source>Import Kdenlive / Shotcut project (experimental)…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import OpenTimelineIO (.otio) (experimental)…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Project properties…</source>
@@ -28407,6 +28793,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Open Project…</source>
         <translation>プロジェクトを開く…</translation>
+    </message>
+    <message>
+        <source>Import/Export…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -35915,6 +36305,21 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>drift::edl</name>
+    <message>
+        <source>Speed changes (M2) are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions (dissolves and wipes) are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retimed clips play at normal speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>drift::farm::RenderQueue</name>
     <message>
         <source>Couldn’t copy the project into the render queue</source>
@@ -35938,6 +36343,48 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>This computer (editor)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::interchange</name>
+    <message>
+        <source>Motion graphics templates are not opened as projects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown import format.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::kdenlive</name>
+    <message>
+        <source>Filters are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter keyframes are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the last sequence is imported; other sequences are ignored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guides and markers are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generated clips (colour, noise, counters) are left as a gap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips that point at another sequence or an unknown source are left as a gap.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -36078,6 +36525,45 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
         <translation>マーケットプレイスに接続できませんでした。ネットワーク接続を確認して再試行してください。</translation>
+    </message>
+</context>
+<context>
+    <name>drift::otio</name>
+    <message>
+        <source>The file does not state a frame rate; 24 fps was assumed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file does not state a resolution; 1920x1080 was assumed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marker colours are not kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track effects are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions are not imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nested stacks and tracks are left as a gap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generated media (such as solid colours) is left as a gap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip has no media file and is left as a gap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects other than a constant speed change are not imported.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
